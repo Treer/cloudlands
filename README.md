@@ -14,7 +14,7 @@ It's a single file with no hard dependencies for easy integration into modpacks 
 
 **Minetest version:** 0.5.x
 
-**Recommends:**
+**Recommended mods:**
 * Vines, or something that contains vines, such as plantlife_modpack or MineClone2. These will grow off the sides of the islands, climate permitting, allowing you to climb, and looking picturesque!
 * [Bridger](https://forum.minetest.net/viewtopic.php?f=9&t=18243) if you want to build nice wooden bridges between islands
 
