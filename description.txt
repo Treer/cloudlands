@@ -1,0 +1,7 @@
+Hallelujah Mountains for Minetest
+
+AKA cloudlands - giant rocks floating suspended in magnetic eddies.
+
+This can be run with or without a normal terrain mapgen, allowing pure skylands or an exotic addition to the landscape.
+
+Configurable settings include the altitude islands appear, and the ability to restrict the area they spawn.

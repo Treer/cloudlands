@@ -1,0 +1,31 @@
+# The average altitude islands are found at
+cloudlands_altitude           (Altitude of islands) int 200
+
+# The rough variance of altitude in islands (plus or minus this value)
+cloudlands_altitude_amplitude (Altitude variance) int 30
+
+# Generates patches of sand and dirt inside island stone cores.
+cloudlands_generate_ores      (Generate ores inside islands - patches of dirt, sand etc.) bool false
+
+# Set this to 0 to disable vines.
+#
+# A percentage value between 0 and 100 which controls the likelyhood of each
+# node on an island edge having a vine growing down it.
+# This option is ignored unless played with a game or mod which provides vines, 
+# such as plantlife_modpack, vines, or MineClone2.
+# This setting does not alter the temperature or humidity determining whether
+# vines will be present on an island.
+cloudlands_vine_coverage      (Vine coverage %) int 30 0 100
+
+# If you wish to have large areas of the map without islands then specify
+# here the area where islands may spawn.
+#
+# The format is: 
+#      minimum_x minimum_z maximum_x maximum_z
+cloudlands_limit_rect         (Limit island locations within rectange) string -32000 -32000 32000 32000
+
+# Leave blank to allow islands to appear in any biome
+# Otherwise list biomes by name, with a space between each one.
+#
+# This feature has not been implemented yet
+cloudlands_limit_biome        (Limit island locations within listed biomes) string <feature not implemented>
