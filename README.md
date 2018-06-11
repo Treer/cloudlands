@@ -1,7 +1,8 @@
 <img src="https://avatars1.githubusercontent.com/u/16545761?s=150&v=4" align="right" />
+
 # Hallelujah Mountains for Minetest
 
-AKA cloudlands - giant rocks floating suspended in magnetic eddies.
+AKA Cloudlands — giant rocks floating suspended in magnetic eddies.
 
 This can be run with or without a normal terrain mapgen, allowing pure skylands or an exotic addition to the landscape.
 
