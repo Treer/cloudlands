@@ -5,7 +5,7 @@ local ALTITUDE_AMPLITUDE   = 30    -- rough island altitude variance (plus or mi
 local EDDYFIELD_SIZE       = 1     -- size of the "eddy field-lines" that smaller islands follow
 local GENERATE_ORES        = false -- set to true for island core stone to contain patches of dirt and sand etc.
 local VINE_COVERAGE        = 0.3   -- set to 0 to turn off vines
-local REEF_RARITY          = 0.025 -- Chance of a viable island having a reef or atoll
+local REEF_RARITY          = 0.015 -- Chance of a viable island having a reef or atoll
 
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
 local NODENAMES_STONE  = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
@@ -524,9 +524,14 @@ local function addDetail_skyReef(decoration_list, core, data, area, minp, maxp)
   local isAtoll = core.radius > core.type.radiusMax * 0.8
   if not (isReef or isAtoll) then return false end
 
+  local fastHash = 3
+  fastHash = (37 * fastHash) + core.x
+  fastHash = (37 * fastHash) + core.z
+  fastHash = (37 * fastHash) + math_floor(core.radius)
+  fastHash = (37 * fastHash) + math_floor(core.depth)
   local rarityAdj = 1
-  if core.type.requiresNexus and isAtoll then rarityAdj = 4.5 end -- humongous islands are very rare, and look good as a atoll
-  if (REEF_RARITY * rarityAdj * 1000) < math_abs(core.x + core.z) % 1000 then return false end
+  if core.type.requiresNexus and isAtoll then rarityAdj = 4 end -- humongous islands are very rare, and look good as a atoll
+  if (REEF_RARITY * rarityAdj * 1000) < math_floor((math_abs(fastHash)) % 1000) then return false end
 
   local coreX = core.x --save doing a table lookup in the loop
   local coreZ = core.z --save doing a table lookup in the loop
