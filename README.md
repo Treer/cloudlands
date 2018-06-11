@@ -9,3 +9,9 @@ This can be run with or without a normal terrain mapgen, allowing pure skylands 
 Configurable settings include the altitude islands appear, and the ability to restrict the area they spawn.
 
 ![default](https://raw.githubusercontent.com/Treer/cloudlands/master/screenshot.png)
+
+![default](https://i.imgur.com/PUjjaIK.jpg)
+
+![default](https://i.imgur.com/rCtczAK.jpg)
+
+![default](https://i.imgur.com/A6vDDGc.jpg)
