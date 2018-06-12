@@ -666,6 +666,7 @@ local function renderCores(cores, minp, maxp, blockseed)
   local nodeId_stoneBase
   local depth_node_top
   local depth_node_filler
+  local fillerFallsWithGravity
   
   for z = minp.z, maxp.z do
 
@@ -698,6 +699,16 @@ local function renderCores(cores, minp, maxp, blockseed)
 
             if core.biome.depth_node_top    == nil then depth_node_top    = 1 else depth_node_top    = core.biome.depth_node_top    end
             if core.biome.depth_node_filler == nil then depth_node_filler = 3 else depth_node_filler = core.biome.depth_node_filler end
+            fillerFallsWithGravity = core.biome.node_filler ~= nil and minetest.registered_items[core.biome.node_filler].groups.falling_node == 1
+
+            --[[Commented out as unnecessary, as a supporting node will be added, but uncommenting 
+                this will make the strata transition less noisey.
+            if fillerFallsWithGravity then
+              -- the filler node is affected by gravity and can fall if unsupported, so keep that layer thinner than
+              -- core.thickness when possible.
+              --depth_node_filler = math_min(depth_node_filler, math_max(1, core.thickness - 1))
+            end--]]
+
             currentBiomeId = core.biomeId
           end
 
@@ -751,6 +762,7 @@ local function renderCores(cores, minp, maxp, blockseed)
           local yBottom       = math_max(minp.y, coreBottom - 4) -- the -4 is for rare instances when density noise pushes the bottom of the island deeper
           local yBottomIndex  = dataBufferIndex + area.ystride * (yBottom - minp.y) -- equivalent to yBottomIndex = area:index(x, yBottom, z)
           local topBlockIndex = -1
+          local bottomBlockIndex = -1
           local vi = yBottomIndex
           local densityNoise  = nil
 
@@ -764,6 +776,7 @@ local function renderCores(cores, minp, maxp, blockseed)
 
             if densityNoise * ((horz_easing + vert_easing) / 2) >= REQUIRED_DENSITY then
               if vi > topBlockIndex then topBlockIndex = vi end
+              if bottomBlockIndex < 0 and y > minp.y then bottomBlockIndex = vi end -- if y==minp.y then we don't know for sure this is the lowest block
 
               if y > coreTop + surface - depth_node_top and data[vi] == nodeId_air then
                 surfaceData[vi] = nodeId_top
@@ -798,6 +811,11 @@ local function renderCores(cores, minp, maxp, blockseed)
                 -- won't prevent tree growth
                 data[topBlockIndex + area.ystride] = nodeId_dust
               end
+            end
+
+            if fillerFallsWithGravity and data[bottomBlockIndex] == nodeId_filler then
+              -- the bottom node is affected by gravity and can fall if unsupported, put some support in
+              data[bottomBlockIndex] = nodeId_stoneBase
             end
           end
 
@@ -887,8 +905,8 @@ local function on_generated(minp, maxp, blockseed)
   if minp.y > ALTITUDE + (ALTITUDE_AMPLITUDE + maxCoreThickness + 5) or
      maxp.y < ALTITUDE - (ALTITUDE_AMPLITUDE + maxCoreThickness + maxCoreDepth + 1) then
     -- Hallelujah Mountains don't generate here
-		return
-	end
+    return
+  end
 
   if noise_eddyField == nil then 
     init_mapgen() 
