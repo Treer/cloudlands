@@ -626,7 +626,7 @@ local function addDetail_skyReef(decoration_list, core, data, area, minp, maxp)
   if isAtoll then
     -- a crown attached to the island
     reefOuterRadius = math_floor(core.radius * 0.8)
-    reefWidth       = math_max(3, math_floor(core.radius * 0.15))
+    reefWidth       = math_max(4, math_floor(core.radius * 0.15))
     reefInnerRadius = reefOuterRadius - reefWidth
     reefUnderhang   = 0
     if maxp.y < reefAltitude - reefUnderhang then return end -- no atoll here
