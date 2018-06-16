@@ -279,7 +279,7 @@ local function init_mapgen()
   if type(limitToBiomesStr) == "string" and string.len(limitToBiomesStr) > 0 then
     limit_to_biomes = limitToBiomesStr:lower()
   end
-  local limit_to_biomes_altitude = tonumber(minetest.settings:get(MODNAME .. "_limit_biome_altitude"))
+  limit_to_biomes_altitude = tonumber(minetest.settings:get(MODNAME .. "_limit_biome_altitude"))
 
   region_restrictions = 
     region_min_x > -32000 or region_min_z > -32000 
