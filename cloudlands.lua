@@ -155,7 +155,12 @@ local surfaceData   = {} -- reuse the massive VoxelManip memory buffers instead 
 local biomes        = {}
 
 -- optional region specified in settings to restrict islands too
+local region_restrictions = false
 local region_min_x, region_min_z, region_max_x, region_max_z = -32000, -32000, 32000, 32000
+
+-- optional biomes specified in settings to restrict islands too
+local limit_to_biomes = nil
+local limit_to_biomes_altitude = nil
 
 --[[==============================
            Math functions
@@ -269,6 +274,17 @@ local function init_mapgen()
       end
     end
   end
+
+  local limitToBiomesStr = minetest.settings:get(MODNAME .. "_limit_biome")
+  if type(limitToBiomesStr) == "string" and string.len(limitToBiomesStr) > 0 then
+    limit_to_biomes = limitToBiomesStr:lower()
+  end
+  local limit_to_biomes_altitude = tonumber(minetest.settings:get(MODNAME .. "_limit_biome_altitude"))
+
+  region_restrictions = 
+    region_min_x > -32000 or region_min_z > -32000 
+    or region_max_x < 32000 or region_max_z < 32000
+    or limit_to_biomes ~= nil
 end
 
 -- Updates coreList to include all cores of type coreType within the given bounds
@@ -289,88 +305,86 @@ local function addCores(coreList, coreType, x1, z1, x2, z2)
       for i = 1, coreType.coresPerTerritory do
         local coreX = x * coreType.territorySize + prng:next(0, coreType.territorySize - 1)
         local coreZ = z * coreType.territorySize + prng:next(0, coreType.territorySize - 1)
-        if coreX >= region_min_x and coreX <= region_max_x and coreZ >= region_min_z and coreZ <= region_max_z then
 
-          -- there's strong vertical and horizontal tendency in 2-octave noise,
-          -- so rotate it a little to avoid it lining up with the world axis.
-          local noiseX = ROTATE_COS * coreX - ROTATE_SIN * coreZ
-          local noiseZ = ROTATE_SIN * coreX + ROTATE_COS * coreZ
-          local eddyField = noise_eddyField:get2d({x = noiseX, y = noiseZ})
+        -- there's strong vertical and horizontal tendency in 2-octave noise,
+        -- so rotate it a little to avoid it lining up with the world axis.
+        local noiseX = ROTATE_COS * coreX - ROTATE_SIN * coreZ
+        local noiseZ = ROTATE_SIN * coreX + ROTATE_COS * coreZ
+        local eddyField = noise_eddyField:get2d({x = noiseX, y = noiseZ})
 
-          if (math.abs(eddyField) < coreType.frequency) then
+        if (math.abs(eddyField) < coreType.frequency) then
 
-            local nexusConditionMet = not coreType.requiresNexus
-            if not nexusConditionMet then
-              -- A 'nexus' is a made up name for a place where the eddyField is flat.
-              -- There are often many 'field lines' leading out from a nexus.
-              local eddyField_orthA = noise_eddyField:get2d({x = noiseX + 2, y = noiseZ})
-              local eddyField_orthB = noise_eddyField:get2d({x = noiseX, y = noiseZ + 2})
-              if math.abs(eddyField - eddyField_orthA) + math.abs(eddyField - eddyField_orthB) < 0.02 then
-                nexusConditionMet = true
-              end
+          local nexusConditionMet = not coreType.requiresNexus
+          if not nexusConditionMet then
+            -- A 'nexus' is a made up name for a place where the eddyField is flat.
+            -- There are often many 'field lines' leading out from a nexus.
+            local eddyField_orthA = noise_eddyField:get2d({x = noiseX + 2, y = noiseZ})
+            local eddyField_orthB = noise_eddyField:get2d({x = noiseX, y = noiseZ + 2})
+            if math.abs(eddyField - eddyField_orthA) + math.abs(eddyField - eddyField_orthB) < 0.02 then
+              nexusConditionMet = true
             end
+          end
 
-            if nexusConditionMet then
-              local radius     = (coreType.radiusMax + prng:next(0, coreType.radiusMax) * 2) / 3 -- give a 33%/66% weighting split between max-radius and random
-              local depth      = (coreType.depthMax + prng:next(0, coreType.depthMax) * 2) / 2
-              local thickness  = prng:next(0, coreType.thicknessMax)
-              
+          if nexusConditionMet then
+            local radius     = (coreType.radiusMax + prng:next(0, coreType.radiusMax) * 2) / 3 -- give a 33%/66% weighting split between max-radius and random
+            local depth      = (coreType.depthMax + prng:next(0, coreType.depthMax) * 2) / 2
+            local thickness  = prng:next(0, coreType.thicknessMax)
+            
 
-              if coreX >= x1 and coreX < x2 and coreZ >= z1 and coreZ < z2 then
+            if coreX >= x1 and coreX < x2 and coreZ >= z1 and coreZ < z2 then
 
-                local spaceConditionMet = not coreType.exclusive
-                if not spaceConditionMet then
-                  -- see if any other cores occupy this space, and if so then
-                  -- either deny the core, or raise it
-                  spaceConditionMet = true
-                  local minDistSquared = radius * radius * .7
+              local spaceConditionMet = not coreType.exclusive
+              if not spaceConditionMet then
+                -- see if any other cores occupy this space, and if so then
+                -- either deny the core, or raise it
+                spaceConditionMet = true
+                local minDistSquared = radius * radius * .7
 
-                  for _,core in ipairs(coreList) do
-                    if core.type.radiusMax == coreType.radiusMax then
-                      -- We've reached the cores of the current type. We can't exclude based on all
-                      -- cores of the same type as we can't be sure neighboring territories will have been generated.
-                      break
-                    end
+                for _,core in ipairs(coreList) do
+                  if core.type.radiusMax == coreType.radiusMax then
+                    -- We've reached the cores of the current type. We can't exclude based on all
+                    -- cores of the same type as we can't be sure neighboring territories will have been generated.
+                    break
+                  end
+                  if (core.x - coreX)*(core.x - coreX) + (core.z - coreZ)*(core.z - coreZ) <= minDistSquared + core.radius * core.radius then
+                    spaceConditionMet = false
+                    break
+                  end
+                end
+                if spaceConditionMet then
+                  for _,core in ipairs(coresInTerritory) do
+                    -- We can assume all cores of the current type are being generated in this territory,
+                    -- so we can exclude the core if it overlaps one already in this territory.
                     if (core.x - coreX)*(core.x - coreX) + (core.z - coreZ)*(core.z - coreZ) <= minDistSquared + core.radius * core.radius then
                       spaceConditionMet = false
                       break
                     end
                   end
-                  if spaceConditionMet then
-                    for _,core in ipairs(coresInTerritory) do
-                      -- We can assume all cores of the current type are being generated in this territory,
-                      -- so we can exclude the core if it overlaps one already in this territory.
-                      if (core.x - coreX)*(core.x - coreX) + (core.z - coreZ)*(core.z - coreZ) <= minDistSquared + core.radius * core.radius then
-                        spaceConditionMet = false
-                        break
-                      end
-                    end
-                  end;
-                end
-
-                if spaceConditionMet then
-                  -- all conditions met, we've located a new island core
-                  --minetest.log("Adding core "..x..","..y..","..z..","..radius);
-                  local y = math.floor(noise_heightMap:get2d({x = coreX, y = coreZ}) + 0.5)
-                  local newCore = {
-                    x         = coreX,
-                    y         = y,
-                    z         = coreZ,
-                    radius    = radius,
-                    thickness = thickness,
-                    depth     = depth,
-                    type      = coreType,
-                  }
-                  coreList[#coreList + 1] = newCore
-                  coresInTerritory[#coreList + 1] = newCore
-                end
-
-              else
-                -- We didn't teste coreX,coreZ against x1,z1,x2,z2 immediately and save all
-                -- that extra work, as that would break the determinism of the prng calls.
-                -- i.e. if the area was approached from a different direction then a
-                -- territory might end up with a different list of cores.
+                end;
               end
+
+              if spaceConditionMet then
+                -- all conditions met, we've located a new island core
+                --minetest.log("Adding core "..x..","..y..","..z..","..radius);
+                local y = math.floor(noise_heightMap:get2d({x = coreX, y = coreZ}) + 0.5)
+                local newCore = {
+                  x         = coreX,
+                  y         = y,
+                  z         = coreZ,
+                  radius    = radius,
+                  thickness = thickness,
+                  depth     = depth,
+                  type      = coreType,
+                }
+                coreList[#coreList + 1] = newCore
+                coresInTerritory[#coreList + 1] = newCore
+              end
+
+            else
+              -- We didn't teste coreX,coreZ against x1,z1,x2,z2 immediately and save all
+              -- that extra work, as that would break the determinism of the prng calls.
+              -- i.e. if the area was approached from a different direction then a
+              -- territory might end up with a different list of cores.
             end
           end
         end
@@ -379,6 +393,42 @@ local function addCores(coreList, coreType, x1, z1, x2, z2)
   end
 end
 
+
+-- removes any islands that fall outside region restrictions specified in the options
+local function removeUnwantedIslands(coreList)
+
+  local testBiome = limit_to_biomes ~= nil
+  local get_biome_name = nil
+  if testBiome then
+    -- minetest.get_biome_name() was added in March 2018, we'll ignore the 
+    -- limit_to_biomes option on versions of Minetest that predate this
+    get_biome_name = minetest.get_biome_name
+    testBiome = get_biome_name ~= nil
+    if get_biome_name == nil then 
+      minetest.log("warning", MODNAME .. " ignoring " .. MODNAME .. "_limit_biome option as Minetest API version too early to support get_biome_name()") 
+      limit_to_biomes = nil
+    end
+  end
+
+  for i = #coreList, 1, -1 do
+    local core = coreList[i]
+    local coreX = core.x
+    local coreZ = core.z
+
+    if coreX < region_min_x or coreX > region_max_x or coreZ < region_min_z or coreZ > region_max_z then
+      table.remove(coreList, i)
+
+    elseif testBiome then 
+      local biomeAltitude
+      if (limit_to_biomes_altitude == nil) then biomeAltitude = ALTITUDE + core.y else biomeAltitude = limit_to_biomes_altitude end
+
+      local biomeName = get_biome_name(minetest.get_biome_data({x = coreX, y = biomeAltitude, z = coreZ}).biome)
+      if not string.match(limit_to_biomes, biomeName:lower()) then
+        table.remove(coreList, i)
+      end
+    end
+  end
+end
 
 
 -- gets an array of all cores which may intersect the draw distance
@@ -395,6 +445,10 @@ local function getCores(minp, maxp)
       maxp.z + coreType.radiusMax
     )
   end
+
+  -- remove islands only after cores have all generated to avoid the restriction 
+  -- settings from rearranging islands.
+  if region_restrictions then removeUnwantedIslands(result) end
 
   return result;
 end
