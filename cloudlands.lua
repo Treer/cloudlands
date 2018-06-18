@@ -142,10 +142,6 @@ local nodeId_sand
 local nodeId_gravel
 local nodeId_vine
 local nodeName_vine
-local nodeId_debug1
-local nodeId_debug2
-local nodeId_debug3
-local nodeId_debug4
 
 local REQUIRED_DENSITY = 0.4
 
@@ -256,20 +252,16 @@ local function init_mapgen()
   nodeId_gravel   = interop.find_node_id(NODENAMES_GRAVEL)
   nodeId_vine     = interop.find_node_id(NODENAMES_VINES)
   nodeName_vine   = minetest.get_name_from_content_id(nodeId_vine)
-  nodeId_debug1   = minetest.get_content_id("default:clay")
-  nodeId_debug2   = minetest.get_content_id("default:coral_brown")
-  nodeId_debug3   = minetest.get_content_id("default:coral_orange")
-  nodeId_debug4   = minetest.get_content_id("default:coral_skeleton")
 
   local regionRectStr = minetest.settings:get(MODNAME .. "_limit_rect")
   if type(regionRectStr) == "string" then 
     local minXStr, minZStr, maxXStr, maxZStr = string.match(regionRectStr, '(-?[%d%.]+)[,%s]+(-?[%d%.]+)[,%s]+(-?[%d%.]+)[,%s]+(-?[%d%.]+)')
     if minXStr ~= nil then 
       local minX, minZ, maxX, maxZ = tonumber(minXStr), tonumber(minZStr), tonumber(maxXStr), tonumber(maxZStr)
-      if minX < maxX then
+      if minX ~= nil and maxX ~= nil and minX < maxX then
         region_min_x, region_max_x = minX, maxX
       end
-      if minZ < maxZ then
+      if minZ ~= nil and maxZ ~= nil and minZ < maxZ then
         region_min_z, region_max_z = minZ, maxZ
       end
     end
@@ -290,14 +282,14 @@ end
 -- Updates coreList to include all cores of type coreType within the given bounds
 local function addCores(coreList, coreType, x1, z1, x2, z2)
 
-  for z = math.floor(z1 / coreType.territorySize), math.floor(z2 / coreType.territorySize) do
-    for x = math.floor(x1 / coreType.territorySize), math.floor(x2 / coreType.territorySize) do
+  for z = math_floor(z1 / coreType.territorySize), math_floor(z2 / coreType.territorySize) do
+    for x = math_floor(x1 / coreType.territorySize), math_floor(x2 / coreType.territorySize) do
 
       -- Use a known PRNG implementation, to make life easier for Amidstest
       local prng = PcgRandom(
         x * 8973896 +
-				z * 7467838 +
-				worldSeed + 9438
+        z * 7467838 +
+        worldSeed + 9438
       )
 
       local coresInTerritory = {}
@@ -312,15 +304,16 @@ local function addCores(coreList, coreType, x1, z1, x2, z2)
         local noiseZ = ROTATE_SIN * coreX + ROTATE_COS * coreZ
         local eddyField = noise_eddyField:get2d({x = noiseX, y = noiseZ})
 
-        if (math.abs(eddyField) < coreType.frequency) then
+        if (math_abs(eddyField) < coreType.frequency) then
 
           local nexusConditionMet = not coreType.requiresNexus
           if not nexusConditionMet then
             -- A 'nexus' is a made up name for a place where the eddyField is flat.
             -- There are often many 'field lines' leading out from a nexus.
+            -- Like a saddle in the perlin noise the height "coreType.frequency"
             local eddyField_orthA = noise_eddyField:get2d({x = noiseX + 2, y = noiseZ})
             local eddyField_orthB = noise_eddyField:get2d({x = noiseX, y = noiseZ + 2})
-            if math.abs(eddyField - eddyField_orthA) + math.abs(eddyField - eddyField_orthB) < 0.02 then
+            if math_abs(eddyField - eddyField_orthA) + math_abs(eddyField - eddyField_orthB) < 0.02 then
               nexusConditionMet = true
             end
           end
@@ -366,7 +359,7 @@ local function addCores(coreList, coreType, x1, z1, x2, z2)
               if spaceConditionMet then
                 -- all conditions met, we've located a new island core
                 --minetest.log("Adding core "..x..","..y..","..z..","..radius);
-                local y = math.floor(noise_heightMap:get2d({x = coreX, y = coreZ}) + 0.5)
+                local y = round(noise_heightMap:get2d({x = coreX, y = coreZ}))
                 local newCore = {
                   x         = coreX,
                   y         = y,
@@ -381,10 +374,11 @@ local function addCores(coreList, coreType, x1, z1, x2, z2)
               end
 
             else
-              -- We didn't teste coreX,coreZ against x1,z1,x2,z2 immediately and save all
+              -- We didn't test coreX,coreZ against x1,z1,x2,z2 immediately and save all
               -- that extra work, as that would break the determinism of the prng calls.
               -- i.e. if the area was approached from a different direction then a
               -- territory might end up with a different list of cores.
+              -- TODO: filter earlier but advance prng?
             end
           end
         end
@@ -499,7 +493,7 @@ local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
           return y + yOffset - 1
         end
 
-        local radius = math.floor(core.radius + 0.5)
+        local radius = round(core.radius)
         local xCropped = math_min(maxp.x, math_max(minp.x, core.x))      
         local zStart = math_max(minp.z, core.z - radius)
         local vi = area:index(xCropped, y, zStart)
@@ -809,7 +803,7 @@ local function renderCores(cores, minp, maxp, blockseed)
             -- dominated by the density noise, so reduce the density noise when the island is large.
             -- (the numbers here are arbitrary)            
             if radius + core.depth > 120 then 
-              if radius + core.depth > 160 then noise_weighting = 0.25 else noise_weighting = 0.35 end
+              noise_weighting = 0.35
             else
               noise_weighting = math_min(0.6, noise_weighting)
             end

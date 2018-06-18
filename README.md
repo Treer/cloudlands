@@ -12,7 +12,7 @@ It's a single file with no hard dependencies for easy integration into modpacks 
 
 **Mod dependencies:** None. 
 
-**Minetest version:** 0.5.x
+**Minetest version:** 5.x
 
 **Recommended mods:**
 * Vines, or something that contains vines, such as plantlife_modpack or MineClone2. These will grow off the sides of the islands, climate permitting, allowing you to climb, and looking picturesque!
