@@ -724,8 +724,8 @@ local function renderCores(cores, minp, maxp, blockseed)
   local nodeId_top
   local nodeId_filler
   local nodeId_stoneBase
-  local depth_node_top
-  local depth_node_filler
+  local depth_top
+  local depth_filler
   local fillerFallsWithGravity
   
   for z = minp.z, maxp.z do
@@ -754,8 +754,8 @@ local function renderCores(cores, minp, maxp, blockseed)
             if core.biome.node_stone  == nil then nodeId_stoneBase = nodeId_stone  else nodeId_stoneBase = minetest.get_content_id(core.biome.node_stone)  end
             if core.biome.node_dust   == nil then nodeId_dust      = nodeId_ignore else nodeId_dust      = minetest.get_content_id(core.biome.node_dust)   end
 
-            if core.biome.depth_node_top    == nil then depth_node_top    = 1 else depth_node_top    = core.biome.depth_node_top    end
-            if core.biome.depth_node_filler == nil then depth_node_filler = 3 else depth_node_filler = core.biome.depth_node_filler end
+            if core.biome.depth_top    == nil then depth_top    = 1 else depth_top    = core.biome.depth_top    end
+            if core.biome.depth_filler == nil then depth_filler = 3 else depth_filler = core.biome.depth_filler end
             fillerFallsWithGravity = core.biome.node_filler ~= nil and minetest.registered_items[core.biome.node_filler].groups.falling_node == 1
 
             --[[Commented out as unnecessary, as a supporting node will be added, but uncommenting 
@@ -763,7 +763,7 @@ local function renderCores(cores, minp, maxp, blockseed)
             if fillerFallsWithGravity then
               -- the filler node is affected by gravity and can fall if unsupported, so keep that layer thinner than
               -- core.thickness when possible.
-              --depth_node_filler = math_min(depth_node_filler, math_max(1, core.thickness - 1))
+              --depth_filler = math_min(depth_filler, math_max(1, core.thickness - 1))
             end--]]
 
             currentBiomeId = core.biomeId
@@ -813,7 +813,7 @@ local function renderCores(cores, minp, maxp, blockseed)
           if DEBUG_GEOMETRIC then surfaceNoise = SURFACEMAP_OFFSET end
           local surface = round(surfaceNoise * 3 * (core.thickness + 1) * horz_easing)
           local coreBottom = math_floor(coreTop - (core.thickness + core.depth))
-          local noisyDepthOfFiller = depth_node_filler;
+          local noisyDepthOfFiller = depth_filler;
           if noisyDepthOfFiller >= 3 then noisyDepthOfFiller = noisyDepthOfFiller + math_floor(randomNumbers[(x + z) % 256] * 3) - 1 end
 
           local yBottom       = math_max(minp.y, coreBottom - 4) -- the -4 is for rare instances when density noise pushes the bottom of the island deeper
@@ -835,10 +835,10 @@ local function renderCores(cores, minp, maxp, blockseed)
               if vi > topBlockIndex then topBlockIndex = vi end
               if bottomBlockIndex < 0 and y > minp.y then bottomBlockIndex = vi end -- if y==minp.y then we don't know for sure this is the lowest block
 
-              if y > coreTop + surface - depth_node_top and data[vi] == nodeId_air then
+              if y > coreTop + surface - depth_top and data[vi] == nodeId_air then
                 surfaceData[vi] = nodeId_top
                 data[vi] = nodeId_top -- will be overwritten by surfaceData[] later, but means we can decorate based on data[]
-              elseif y >= coreTop + surface - (depth_node_top + noisyDepthOfFiller) then
+              elseif y >= coreTop + surface - (depth_top + noisyDepthOfFiller) then
                 data[vi] = nodeId_filler
                 surfaceData[vi] = nodeId_air -- incase we have intersected another island
               else
