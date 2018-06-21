@@ -826,6 +826,7 @@ local function renderCores(cores, minp, maxp, blockseed)
           for y = yBottom, math_min(maxp.y, coreTop + surface) do
             local vert_easing = math_min(1, (y - coreBottom) / core.depth)
 
+            -- If you change the densityNoise calculation, remember to similarly update the copy of this calculation in the pond code
             densityNoise = noise_density:get3d({x = x, y = y - coreTop, z = z}) -- TODO: Optimize this!!
             densityNoise = noise_weighting * densityNoise + (1 - noise_weighting) * DENSITY_OFFSET
 
@@ -876,9 +877,10 @@ local function renderCores(cores, minp, maxp, blockseed)
             end
           end
 
-          -- add ponds of water
-          -- (trying to make sure they're not on an edge)
-          if surfaceNoise < 0 and densityNoise ~= nil and nodeId_water ~= nodeId_ignore then
+          -- add ponds of water, trying to make sure they're not on an edge.
+          -- (the only time a pond needs to be rendered when densityNoise is nil (i.e. when there was no land at this x, z),
+          -- is when the pond is at minp.y - i.e. the reason no land was rendered is it was below minp.y)
+          if surfaceNoise < 0 and (densityNoise ~= nil or (coreTop + surface < minp.y and coreTop >= minp.y)) and nodeId_water ~= nodeId_ignore then            
             local pondWallBuffer = core.type.pondWallBuffer
             local pondBottom = nodeId_filler
             local pondWater  = nodeId_water
@@ -887,6 +889,14 @@ local function renderCores(cores, minp, maxp, blockseed)
               pondBottom = nodeId_silt 
             end
             if core.temperature <= ICE_REQUIRED_TEMPERATURE and nodeId_ice ~= nodeId_ignore then pondWater = nodeId_ice end
+
+            if densityNoise == nil then
+              -- Rare edge case. If the pond is at minp.y, then no land has been rendered, so 
+              -- densityNoise hasn't been calculated. Calculate it now.
+              densityNoise = noise_density:get3d({x = x, y = minp.y, z = z})
+              densityNoise = noise_weighting * densityNoise + (1 - noise_weighting) * DENSITY_OFFSET
+              if DEBUG_GEOMETRIC then densityNoise = DENSITY_OFFSET end
+            end
 
             local surfaceDensity = densityNoise * ((horz_easing + 1) / 2)
             local onTheEdge = math_sqrt(distanceSquared) + 1 >= radius
