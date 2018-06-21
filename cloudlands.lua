@@ -11,8 +11,8 @@ local REEF_RARITY          = 0.015 -- Chance of a viable island having a reef or
 local NODENAMES_STONE  = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
 local NODENAMES_WATER  = {"mapgen_water_source", "mcl_core:water_source", "default:water_source"}
 local NODENAMES_ICE    = {"mapgen_ice",          "mcl_core:ice",          "default:ice", "pedology:ice_white"}
-local NODENAMES_SAND   = {"mapgen_sand",         "mcl_core:sand",         "default:sand"}
 local NODENAMES_GRAVEL = {"mapgen_gravel",       "mcl_core:gravel",       "default:gravel"}
+local NODENAMES_SILT   = {"mapgen_silt", "default:silt", "mapgen_sand", "mcl_core:sand", "default:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
 local NODENAMES_VINES  = {"mcl_core:vine", "vines:side_end"}
 local MODNAME          = minetest.get_current_modname()
 local VINES_REQUIRED_HUMIDITY    = 45
@@ -138,7 +138,7 @@ local nodeId_air
 local nodeId_stone
 local nodeId_water
 local nodeId_ice
-local nodeId_sand
+local nodeId_silt
 local nodeId_gravel
 local nodeId_vine
 local nodeName_vine
@@ -248,7 +248,7 @@ local function init_mapgen()
   nodeId_stone    = interop.find_node_id(NODENAMES_STONE)
   nodeId_water    = interop.find_node_id(NODENAMES_WATER)
   nodeId_ice      = interop.find_node_id(NODENAMES_ICE)
-  nodeId_sand     = interop.find_node_id(NODENAMES_SAND)
+  nodeId_silt     = interop.find_node_id(NODENAMES_SILT)
   nodeId_gravel   = interop.find_node_id(NODENAMES_GRAVEL)
   nodeId_vine     = interop.find_node_id(NODENAMES_VINES)
   nodeName_vine   = minetest.get_name_from_content_id(nodeId_vine)
@@ -480,7 +480,7 @@ local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
         local function isIsland(nodeId) 
           return (nodeId == nodeId_filler    or nodeId == nodeId_top 
                or nodeId == nodeId_stoneBase or nodeId == nodeId_dust
-               or nodeId == nodeId_sand)
+               or nodeId == nodeId_silt)
         end
 
         local function findHighestNodeFace(y, solidIndex, emptyIndex)
@@ -882,9 +882,9 @@ local function renderCores(cores, minp, maxp, blockseed)
             local pondWallBuffer = core.type.pondWallBuffer
             local pondBottom = nodeId_filler
             local pondWater  = nodeId_water
-            if radius > 18 and core.depth > 15 and nodeId_sand ~= nodeId_ignore then 
+            if radius > 18 and core.depth > 15 and nodeId_silt ~= nodeId_ignore then 
               -- only give ponds a sandbed when islands are large enough for it not to stick out the side or bottom
-              pondBottom = nodeId_sand 
+              pondBottom = nodeId_silt 
             end
             if core.temperature <= ICE_REQUIRED_TEMPERATURE and nodeId_ice ~= nodeId_ignore then pondWater = nodeId_ice end
 
