@@ -6,6 +6,7 @@ local EDDYFIELD_SIZE       = 1     -- size of the "eddy field-lines" that smalle
 local GENERATE_ORES        = false -- set to true for island core stone to contain patches of dirt and sand etc.
 local VINE_COVERAGE        = 0.3   -- set to 0 to turn off vines
 local REEF_RARITY          = 0.015 -- Chance of a viable island having a reef or atoll
+local ISLANDS_SEED         = 1000  -- You only need to change this if you want to try different island layouts without changing the map seed
 
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
 local NODENAMES_STONE  = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
@@ -74,20 +75,19 @@ VINE_COVERAGE        = fromSettings(MODNAME .. "_vine_coverage",      VINE_COVER
 
 
 local noiseparams_eddyField = {
-	offset      =   -1,
-	scale       =    2,
+	offset      = -1,
+	scale       = 2,
 	spread      = {x = 350 * EDDYFIELD_SIZE, y = 350 * EDDYFIELD_SIZE, z= 350 * EDDYFIELD_SIZE},
-	seed        = 1000, --WARNING! minetest.get_perlin() will add the server map's seed to this value
-	octaves     =    2,
-	persistence =  0.7,
-	lacunarity  =  2.0,
-	--flags        = "eased"
+	seed        = ISLANDS_SEED, --WARNING! minetest.get_perlin() will add the server map's seed to this value
+	octaves     = 2,
+	persistence = 0.7,
+	lacunarity  = 2.0,
 }
 local noiseparams_heightMap = {
 	offset      = 0,
 	scale       = ALTITUDE_AMPLITUDE,
 	spread      = {x = 160, y = 160, z= 160},
-	seed        = 1000, --WARNING! minetest.get_perlin() will add the server map's seed to this value
+	seed        = ISLANDS_SEED, --WARNING! minetest.get_perlin() will add the server map's seed to this value
 	octaves     = 3,
 	persistence = 0.5,
 	lacunarity  = 2.0,
@@ -107,7 +107,7 @@ local noiseparams_surfaceMap = {
 	offset      = SURFACEMAP_OFFSET,
 	scale       = .5,
 	spread      = {x = 40, y = 40, z= 40},
-	seed        = 1000, --WARNING! minetest.get_perlin() will add the server map's seed to this value
+	seed        = ISLANDS_SEED, --WARNING! minetest.get_perlin() will add the server map's seed to this value
 	octaves     = 4,
 	persistence = 0.5,
 	lacunarity  = 2.0,
@@ -235,14 +235,14 @@ local function init_mapgen()
   noise_surfaceMap = minetest.get_perlin(noiseparams_surfaceMap)
   noise_skyReef    = minetest.get_perlin(noiseparams_skyReef)
 
-  local prng = PcgRandom(123456)
+  local prng = PcgRandom(122456 + ISLANDS_SEED)
   for i = 0,255 do randomNumbers[i] = prng:next(0, 0x10000) / 0x10000 end
 
   for k,v in pairs(minetest.registered_biomes) do
     biomes[minetest.get_biome_id(k)] = v;
   end
   if DEBUG then minetest.log("info", "registered biomes: " .. dump(biomes)) end
-    
+
   nodeId_air      = minetest.get_content_id("air")
 
   nodeId_stone    = interop.find_node_id(NODENAMES_STONE)
@@ -289,7 +289,7 @@ local function addCores(coreList, coreType, x1, z1, x2, z2)
       local prng = PcgRandom(
         x * 8973896 +
         z * 7467838 +
-        worldSeed + 9438
+        worldSeed + 8438 + ISLANDS_SEED
       )
 
       local coresInTerritory = {}
@@ -592,6 +592,7 @@ local function addDetail_skyReef(decoration_list, core, data, area, minp, maxp)
   fastHash = (37 * fastHash) + core.z
   fastHash = (37 * fastHash) + math_floor(core.radius)
   fastHash = (37 * fastHash) + math_floor(core.depth)
+  if ISLANDS_SEED ~= 1000 then fastHash = (37 * fastHash) + ISLANDS_SEED end
   local rarityAdj = 1
   if core.type.requiresNexus and isAtoll then rarityAdj = 4 end -- humongous islands are very rare, and look good as a atoll
   if (REEF_RARITY * rarityAdj * 1000) < math_floor((math_abs(fastHash)) % 1000) then return false end
