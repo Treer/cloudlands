@@ -2,7 +2,7 @@
     "name": "cloudlands",
     "description": "Hallelujah Mountains for Minetest (runs with or without a normal terrain mapgen)",
     "keywords": [
-        "cloudlands", "Hallelujah Mountains", "floatlands", "skylands", "islands"
+        "cloudlands", "Hallelujah Mountains", "floatlands", "skylands", "islands", "mapgen", "fantasy"
     ],
     "homepage": "https://github.com/Treer/cloudlands",
     "forum": "https://forum.minetest.net/viewtopic.php?t=20257",
