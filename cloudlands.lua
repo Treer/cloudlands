@@ -728,6 +728,7 @@ local function renderCores(cores, minp, maxp, blockseed)
   local depth_top
   local depth_filler
   local fillerFallsWithGravity
+  local floodableDepth
   
   for z = minp.z, maxp.z do
 
@@ -767,6 +768,12 @@ local function renderCores(cores, minp, maxp, blockseed)
               --depth_filler = math_min(depth_filler, math_max(1, core.thickness - 1))
             end--]]
 
+            floodableDepth = 0
+            if nodeId_top ~= nodeId_stone and minetest.registered_items[core.biome.node_top].floodable then 
+              -- nodeId_top is a node that water floods through, so we can't have ponds appearing at this depth
+              floodableDepth = depth_top
+            end
+						
             currentBiomeId = core.biomeId
           end
 
@@ -901,7 +908,7 @@ local function renderCores(cores, minp, maxp, blockseed)
 
             local surfaceDensity = densityNoise * ((horz_easing + 1) / 2)
             local onTheEdge = math_sqrt(distanceSquared) + 1 >= radius
-            for y = math_max(minp.y, coreTop + surface), math_min(maxp.y, coreTop) do
+            for y = math_max(minp.y, coreTop + surface), math_min(maxp.y, coreTop - floodableDepth) do
               if surfaceDensity > REQUIRED_DENSITY then
                 local vi  = dataBufferIndex + area.ystride * (y - minp.y) -- this is the same as vi = area:index(x, y, z)
 
