@@ -1,3 +1,11 @@
+# If true then islands will use biomes from altitude 10 - higher than beaches
+# and lower than mountains. This avoids a problem with some mods which have
+# alpine biomes, causing all islands to be alpine/snowy due to their altitude,
+# however plant-life may still reflect the actual altitude of the islands.
+#
+# Turn this off to use have each island's altitude affect its biome.
+cloudlands_use_lowland_biomes        (Use lowland biomes) bool false
+
 # The average altitude islands are found at
 cloudlands_altitude             (Altitude of islands) int 200
 

@@ -1,12 +1,14 @@
-local DEBUG                = false -- dev logging
-local DEBUG_GEOMETRIC      = false -- turn off noise from island shapes
-local ALTITUDE             = 200   -- average altitude of islands
-local ALTITUDE_AMPLITUDE   = 30    -- rough island altitude variance (plus or minus)
-local EDDYFIELD_SIZE       = 1     -- size of the "eddy field-lines" that smaller islands follow
-local GENERATE_ORES        = false -- set to true for island core stone to contain patches of dirt and sand etc.
-local VINE_COVERAGE        = 0.3   -- set to 0 to turn off vines
-local REEF_RARITY          = 0.015 -- Chance of a viable island having a reef or atoll
-local ISLANDS_SEED         = 1000  -- You only need to change this if you want to try different island layouts without changing the map seed
+local DEBUG                  = false -- dev logging
+local DEBUG_GEOMETRIC        = false -- turn off noise from island shapes
+local LOWLAND_BIOMES         = false -- If true then determine an island's biome using the biome at altitude "LOWLAND_BIOME_ALTITUDE"
+local LOWLAND_BIOME_ALTITUDE = 10    -- Higher than beaches, lower than mountains (See LOWLAND_BIOMES)
+local ALTITUDE               = 200   -- average altitude of islands
+local ALTITUDE_AMPLITUDE     = 30    -- rough island altitude variance (plus or minus)
+local EDDYFIELD_SIZE         = 1     -- size of the "eddy field-lines" that smaller islands follow
+local GENERATE_ORES          = false -- set to true for island core stone to contain patches of dirt and sand etc.
+local VINE_COVERAGE          = 0.3   -- set to 0 to turn off vines
+local REEF_RARITY            = 0.015 -- Chance of a viable island having a reef or atoll
+local ISLANDS_SEED           = 1000  -- You only need to change this if you want to try different island layouts without changing the map seed
 
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
 local NODENAMES_STONE  = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
@@ -72,7 +74,7 @@ ALTITUDE             = fromSettings(MODNAME .. "_altitude",           ALTITUDE)
 ALTITUDE_AMPLITUDE   = fromSettings(MODNAME .. "_altitude_amplitude", ALTITUDE_AMPLITUDE)
 GENERATE_ORES        = fromSettings(MODNAME .. "_generate_ores",      GENERATE_ORES)
 VINE_COVERAGE        = fromSettings(MODNAME .. "_vine_coverage",      VINE_COVERAGE * 100) / 100
-
+LOWLAND_BIOMES       = fromSettings(MODNAME .. "_use_lowland_biomes", LOWLAND_BIOMES)
 
 local noiseparams_eddyField = {
 	offset      = -1,
@@ -449,6 +451,7 @@ end
 
 local function setCoreBiomeData(core)
   local pos = {x = core.x, y = ALTITUDE + core.y, z = core.z}
+  if LOWLAND_BIOMES then pos.y = LOWLAND_BIOME_ALTITUDE end
   core.biomeId     = minetest.get_biome_data(pos).biome
   core.biome       = biomes[core.biomeId]
   core.temperature = minetest.get_heat(pos)
