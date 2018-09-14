@@ -3,14 +3,14 @@
 # alpine biomes, causing all islands to be alpine/snowy due to their altitude,
 # however plant-life may still reflect the actual altitude of the islands.
 #
-# Turn this off to use have each island's altitude affect its biome.
+# Turn this off to have each island's altitude affect its biome.
 cloudlands_use_lowland_biomes        (Use lowland biomes) bool false
 
 # The average altitude islands are found at
 cloudlands_altitude             (Altitude of islands) int 200
 
 # The rough variance of altitude in islands (plus or minus this value)
-cloudlands_altitude_amplitude   (Altitude variance) int 30
+cloudlands_altitude_amplitude   (Altitude variance) int 40
 
 # Generates patches of sand and dirt inside island stone cores.
 cloudlands_generate_ores        (Generate ores inside islands - patches of dirt, sand etc.) bool false
