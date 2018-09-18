@@ -1,4 +1,4 @@
-<img src="https://avatars1.githubusercontent.com/u/16545761?s=150&v=4" align="right" />
+<img src="https://raw.githubusercontent.com/wiki/treer/amidstest/screenshots/150px-Minetest-logo.png" align="right" />
 
 # Hallelujah Mountains for Minetest
 
