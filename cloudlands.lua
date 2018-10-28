@@ -13,7 +13,7 @@ local ISLANDS_SEED           = 1000  -- You only need to change this if you want
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
 local NODENAMES_STONE  = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
 local NODENAMES_WATER  = {"mapgen_water_source", "mcl_core:water_source", "default:water_source"}
-local NODENAMES_ICE    = {"mapgen_ice",          "mcl_core:ice",          "default:ice", "pedology:ice_white"}
+local NODENAMES_ICE    = {"mapgen_ice",          "mcl_core:ice",          "pedology:ice_white", "default:ice"}
 local NODENAMES_GRAVEL = {"mapgen_gravel",       "mcl_core:gravel",       "default:gravel"}
 local NODENAMES_SILT   = {"mapgen_silt", "default:silt", "aotearoa:silt", "darkage:silt", "mapgen_sand", "mcl_core:sand", "default:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
 local NODENAMES_VINES  = {"mcl_core:vine", "vines:side_end"}
@@ -30,7 +30,7 @@ local coreTypes = {
     depthMax          = 50,
     thicknessMax      = 8,
     frequency         = 0.1,
-    pondWallBuffer    = 0.03, 
+    pondWallBuffer    = 0.03,
     requiresNexus     = true,
     exclusive         = false
   },
@@ -195,7 +195,7 @@ interop.find_node_id = function (node_aliases)
 
     if result == nodeId_ignore then
       -- registered_aliases isn't documented - not sure I'm using it right
-      local altAlias = minetest.registered_aliases[alias]     
+      local altAlias = minetest.registered_aliases[alias]
       if altAlias ~= nil then result = minetest.get_content_id(altAlias) end
     end
     if result ~= nodeId_ignore then return result end
@@ -206,7 +206,7 @@ end
 interop.register_clone = function(node_name)
   local node = minetest.registered_nodes[node_name]
   if node == nil then
-    minetest.log("error", "cannot clone " .. node_name)    
+    minetest.log("error", "cannot clone " .. node_name)
     return nil
   else 
     local cloneName = MODNAME .. ":" .. string.gsub(node.name, ":", "_")
@@ -275,7 +275,7 @@ local function init_mapgen()
   end
   limit_to_biomes_altitude = tonumber(minetest.settings:get(MODNAME .. "_limit_biome_altitude"))
 
-  region_restrictions = 
+  region_restrictions =
     region_min_x > -32000 or region_min_z > -32000 
     or region_max_x < 32000 or region_max_z < 32000
     or limit_to_biomes ~= nil
@@ -324,7 +324,7 @@ local function addCores(coreList, coreType, x1, z1, x2, z2)
             local radius     = (coreType.radiusMax + prng:next(0, coreType.radiusMax) * 2) / 3 -- give a 33%/66% weighting split between max-radius and random
             local depth      = (coreType.depthMax + prng:next(0, coreType.depthMax) * 2) / 2
             local thickness  = prng:next(0, coreType.thicknessMax)
-            
+
 
             if coreX >= x1 and coreX < x2 and coreZ >= z1 and coreZ < z2 then
 
@@ -400,7 +400,7 @@ local function removeUnwantedIslands(coreList)
     -- limit_to_biomes option on versions of Minetest that predate this
     get_biome_name = minetest.get_biome_name
     testBiome = get_biome_name ~= nil
-    if get_biome_name == nil then 
+    if get_biome_name == nil then
       minetest.log("warning", MODNAME .. " ignoring " .. MODNAME .. "_limit_biome option as Minetest API version too early to support get_biome_name()") 
       limit_to_biomes = nil
     end
@@ -414,7 +414,7 @@ local function removeUnwantedIslands(coreList)
     if coreX < region_min_x or coreX > region_max_x or coreZ < region_min_z or coreZ > region_max_z then
       table.remove(coreList, i)
 
-    elseif testBiome then 
+    elseif testBiome then
       local biomeAltitude
       if (limit_to_biomes_altitude == nil) then biomeAltitude = ALTITUDE + core.y else biomeAltitude = limit_to_biomes_altitude end
 
@@ -466,7 +466,7 @@ local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
   if VINE_COVERAGE > 0 and nodeId_vine ~= nodeId_ignore then
 
     local y = ALTITUDE + core.y
-    if y >= minp.y and y <= maxp.y then      
+    if y >= minp.y and y <= maxp.y then
       -- if core.biome is nil then renderCores() never rendered it, which means it
       -- doesn't instersect this draw region.
       if core.biome ~= nil and core.humidity >= VINES_REQUIRED_HUMIDITY and core.temperature >= VINES_REQUIRED_TEMPERATURE then
@@ -480,7 +480,7 @@ local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
         if core.biome.node_stone  == nil then nodeId_stoneBase = nodeId_stone  else nodeId_stoneBase = minetest.get_content_id(core.biome.node_stone)  end
         if core.biome.node_dust   == nil then nodeId_dust      = nodeId_stone  else nodeId_dust      = minetest.get_content_id(core.biome.node_dust)   end
 
-        local function isIsland(nodeId) 
+        local function isIsland(nodeId)
           return (nodeId == nodeId_filler    or nodeId == nodeId_top 
                or nodeId == nodeId_stoneBase or nodeId == nodeId_dust
                or nodeId == nodeId_silt)
@@ -497,7 +497,7 @@ local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
         end
 
         local radius = round(core.radius)
-        local xCropped = math_min(maxp.x, math_max(minp.x, core.x))      
+        local xCropped = math_min(maxp.x, math_max(minp.x, core.x))
         local zStart = math_max(minp.z, core.z - radius)
         local vi = area:index(xCropped, y, zStart)
 
@@ -531,7 +531,7 @@ local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
           end
         end
 
-        local zCropped = math_min(maxp.z, math_max(minp.z, core.z))      
+        local zCropped = math_min(maxp.z, math_max(minp.z, core.z))
         local xStart = math_max(minp.x, core.x - radius)
         local vi = area:index(xStart, y, zCropped)
         local zstride = area.zstride
@@ -678,7 +678,7 @@ local function addDetail_skyReef(decoration_list, core, data, area, minp, maxp)
           local ease = 1 - math_abs(distance - reefMiddleRadius) / reefHalfWidth
           local yStart = math_max(math_floor(reefAltitude - ease * fineNoise * reefUnderhang), minp.y)
           local yStop  = math_min(math_floor(reefAltitude + ease * reefNoise * reefMaxHeight), maxp.y)
-            
+
           for y = yStart, yStop do
             vi = dataBufferIndex + (y - yCenter) * area.ystride
             if data[vi] == nodeId_air then 
@@ -691,10 +691,10 @@ local function addDetail_skyReef(decoration_list, core, data, area, minp, maxp)
               end
             end
             surfaceData[vi] = nodeId_air --prevent plants growing inside atolls
-          end                
+          end
         end
       end
-      dataBufferIndex = dataBufferIndex + 1      
+      dataBufferIndex = dataBufferIndex + 1
     end
     dataBufferIndex = dataBufferIndex + area.zstride - (xStop - xStart + 1)
   end
@@ -705,7 +705,7 @@ end
 -- minified with https://mothereff.in/lua-minifier
 local function a(b)if type(b)=="table"then for c,d in ipairs(b)do b[c]=a(d)end;return b else return b:gsub("%a",function(e)e=e:byte()return string.char(e+(e%32<8 and 19 or-7))end)end end;if minetest.get_modpath("default")then local f=MODNAME..a(":jvidli")minetest.register_node(f,{tiles={"crack_anylength.png^[verticalframe:5:4^[brighten"},description=a("Jvidli"),groups={snappy=3,liquid=3,flammable=3,not_in_creative_inventory=1},drawtype="plantlike",walkable=false,liquid_viscosity=8,liquidtype="source",liquid_alternative_flowing=f,liquid_alternative_source=f,liquid_renewable=false,liquid_range=0,sunlight_propagates=true,paramtype="light"})end;local g=a("zljyla:mvzzpspglk_lnn")local h=a("klmhbsa_qbunslslhclz.wun")if minetest.get_modpath("ethereal")~=nil then h=a("laolylhs_myvza_slhclz.wun")end;minetest.register_node(":"..g,{tiles={h.."^[colorize:#280040E0^[noalpha"},description=a("Mvzzpspglk Lnn"),groups={oddly_breakable_by_hand=3,not_in_creative_inventory=1},drawtype="nodebox",paramtype="light",node_box={type="fixed",fixed={{-0.066666,-0.5,-0.066666,0.066666,0.5,0.066666},{-0.133333,-0.476667,-0.133333,0.133333,0.42,0.133333},{-0.2,-0.435,-0.2,0.2,0.31,0.2},{-0.2,-0.36,-0.28,0.2,0.16667,0.28},{-0.28,-0.36,-0.2,0.28,0.16667,0.2}}}})local i=minetest.get_content_id(g)local j=minetest.get_content_id(interop.register_clone("air"))local k;local l;local m;local n;local o;local p;local q;local r;local s;local t;local u;
 
-local function addDetail_secrets__shhh_dont_tell_people(w,x,y,z,A,B)if x.biome~=nil and x.radius>18 and x.depth>20 and x.radius+x.depth>60 then local C=math_floor(x.x/x.type.territorySize)local D=math_floor(x.z/x.type.territorySize)local E=x.temperature<=5 and x.x%3==0 and noise_surfaceMap:get2d({x=x.x,y=x.z-8})>=0;local F=x.humidity>=60 and x.temperature>=50;if(C+D)%2==0 and(E or F)then local G=7;local H=5;local I=12;local J=ALTITUDE+x.y-I;local K=G*G;local function L(M,N,O,P,Q,R)local S=vector.direction(M,N)local T={}if S.x>0 then T.x=-1 else T.x=1 end;if S.z>0 then T.z=-1 else T.z=1 end;local U={}local function V(W,X,Y)if y[W]==nodeId_air then local Z={}local _;local function a0(a1)return a1~=nodeId_air and a1~=j and(a1==Y or Y==nil)end;if a0(y[W+T.x])and X.x+T.x>=A.x and X.x+T.x<=B.x then if T.x>0 then _=2 else _=3 end;Z[#Z+1]={solid_vi=W+T.x,facing=_}end;if a0(y[W+T.z*z.zstride])and X.z+T.z>=A.z and X.z+T.z<=B.z then if T.z>0 then _=4 else _=5 end;Z[#Z+1]={solid_vi=W+T.z*z.zstride,facing=_}end;local a2=nil;if#Z==1 then a2=Z[1]elseif#Z==2 then local a3=math.abs(S.x)/(math.abs(S.x)+math.abs(S.z))if randomNumbers[(X.x+X.y+X.z)%256]<=a3 then a2=Z[1]else a2=Z[2]end end;if a2~=nil and(Y==nil or Y==y[a2.solid_vi])and y[a2.solid_vi]~=j then local a4=a2.solid_vi;local a5=1;while X.y+a5<=B.y+1 and y[a4+a5*z.ystride]~=nodeId_air and y[W+a5*z.ystride]==nodeId_air and(Y==nil or Y==y[a4+a5*z.ystride])do a5=a5+1 end;U[#U+1]=function(w)local a6=y[a4+(a5-1)*z.ystride]if a6~=j and a6~=nodeId_air and y[W]==nodeId_air then w[#w+1]={pos={x=X.x,y=X.y+a5-1,z=X.z},node={name=nodeName_vine,param2=a2.facing}}end end end end end;local a7={}local function a8(X,O,P,a1,a9)local aa={}local ab=-1;for ac=X.y,X.y+P-1 do if ac>=A.y and ac<=B.y then if ab==-1 then ab=z:index(X.x,ac,X.z)else ab=ab+z.ystride end;for ad,ae in ipairs(O)do local af=X.x+ae.x;local ag=X.z+ae.z;if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z then local W=ab+ae.x+ae.z*z.zstride;if y[W]==nodeId_air then if a9~=nil then aa[#aa+1]=function()a9(X,W,af,ac,ag)end end else y[W]=a1;a7[#a7+1]=W end end end end end;for ad,ah in ipairs(aa)do ah()end end;local function ai(X,aj,ak,al)local function am(an,ao,ap,aq,ar)if aq>an.y and aq+1<=B.y then V(ao+z.ystride,{x=ap,y=aq+1,z=ar})else V(ao,{x=ap,y=aq,z=ar},Q)end end;local as=am;local at=j;if not ak then as=nil end;if al and s~=nodeId_ignore then at=s end;a8(X,O,P,at,as)if aj and Q~=nil then a8({x=X.x,y=X.y-1,z=X.z},O,1,Q,as)end end;local au=x.humidity>=VINES_REQUIRED_HUMIDITY and x.temperature>=VINES_REQUIRED_TEMPERATURE;if R==nil then R=0 end;local av=round(vector.distance(M,N))local aw=vector.divide(vector.subtract(N,M),av)local X=vector.new(M)local ax=vector.new(M)ai(M,0>=R,false)for ay=1,av do ax.x=ax.x+aw.x;if round(ax.x)~=X.x then X.x=round(ax.x)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.y=ax.y+aw.y;if round(ax.y)~=X.y then X.y=round(ax.y)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.z=ax.z+aw.z;if round(ax.z)~=X.z then X.z=round(ax.z)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end end;for ad,az in ipairs(U)do az(w)end;for ad,aA in ipairs(a7)do if y[aA]==j then y[aA]=nodeId_air;surfaceData[aA]=nodeId_air end end end;local function aB(af,ac,ag,a1)if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z and ac>=A.y and ac<=B.y then y[z:index(af,ac,ag)]=a1 end end;local function aC(X)return X.x>=A.x and X.x<=B.x and X.z>=A.z and X.z<=B.z and X.y>=A.y and X.y<=B.y end;local aD=math_max(x.z-G,A.z)local aE=math_max(x.x-G,A.x)local aF=math_min(x.x+G,B.x)local aG=math_max(J,A.y)local aH=z:index(aE,aG,aD)for ag=aD,math_min(x.z+G,B.z)do for af=aE,aF do local aI=(af-x.x)*(af-x.x)+(ag-x.z)*(ag-x.z)if aI<K then local aJ=1-aI/K;for ac=math_max(A.y,J+math_floor(1.4-aJ)),math_min(B.y,J+1+math_min(H-1,math_floor(0.8+H*aJ)))do y[aH+(ac-aG)*z.ystride]=nodeId_air end end;aH=aH+1 end;aH=aH+z.zstride-(aF-aE+1)end;local Q;if x.biome.node_top==nil then Q=nil else Q=minetest.get_content_id(x.biome.node_top)end;if F then local aK=vector.new(x.type.territorySize*math.floor(x.x/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2),J,x.type.territorySize*math.floor(x.z/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2))local aL=vector.new(x.x,J,x.z)local S=vector.direction(aL,aK)local aM=4;if S.z<0 then aM=-aM end;aL.z=aL.z+aM;aL.x=aL.x+2;S=vector.direction(aL,aK)if vector.length(S)==0 then S=vector.direction({x=0,y=0,z=0},{x=2,y=0,z=1})end;local aN=vector.add(vector.multiply(S,x.radius),{x=0,y=-4,z=0})local aO=4+math.floor(0.5+x.radius*0.3)local O={{x=0,z=0},{x=-1,z=0},{x=1,z=0},{x=0,z=-1},{x=0,z=1}}L(aL,vector.add(aL,aN),O,2,Q,aO)local aP=x.x;local aQ=x.z-aM*0.75;aB(aP,J,aQ,i)if nodeId_gravel~=nodeId_ignore then aB(aP,J-1,aQ,nodeId_gravel)end;if s~=nodeId_ignore then aB(x.x-6,J+3,x.z-1,s)aB(x.x+4,J+4,x.z+3,s)aB(x.x+6,J+1,x.z-3,s)end else if(o~=nodeId_ignore or n~=nodeId_ignore)and k~=nodeId_ignore and l~=nodeId_ignore then local aR=vector.new(x.x-3,J,x.z-7)local aS=vector.add(aR,{x=0,y=0,z=1})local aT=vector.add(aR,{x=8,y=8,z=0})local aU=vector.add(aT,{x=0,y=0,z=-1})local aV=vector.add(aU,{x=-16,y=16,z=0})L(aV,aU,{{x=0,z=0}},3,Q,0)L(aT,aR,{{x=0,z=0}},2,Q,0)local O={{x=0,z=0},{x=1,z=0},{x=0,z=2},{x=0,z=1},{x=1,z=1}}L(aS,aS,O,2,Q,0)aB(x.x+2,J,x.z+5,k)aB(x.x+2,J,x.z+4,l)aB(x.x+2,J,x.z+2,k)aB(x.x+2,J,x.z+1,l)aB(x.x+4,J,x.z+2,k)aB(x.x+4,J,x.z+1,l)if m~=nodeId_ignore then w[#w+1]={pos={x=x.x,y=J+2,z=x.z+6},node={name=minetest.get_name_from_content_id(m),param2=4}}end;if p~=nodeId_ignore then aB(x.x-4,J+1,x.z+5,p)end;if q~=nodeId_ignore then aB(x.x-6,J+1,x.z,q)end;if r~=nodeId_ignore then aB(x.x-5,J,x.z+2,r)end;if s~=nodeId_ignore then aB(x.x+4,J+4,x.z-3,s)end;local aW;local aX=nil;local aY=nil;if n~=nodeId_ignore then local X={x=x.x-3,y=J+1,z=x.z+6}local aZ=minetest.get_name_from_content_id(n)local a_=minetest.get_node(X).name;if a_~=aZ and not a_:find("chest")then minetest.set_node(X,{name=aZ})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=n;aY=minetest.get_inventory({type="node",pos=X})end end;if o~=nodeId_ignore then local X={x=x.x-2,y=J+1,z=x.z+6}aW=X;if minetest.get_node(X).name~=t then minetest.set_node(X,{name=t})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=o;if not u then aX=minetest.get_inventory({type="node",pos=X})end end end;if aX~=nil or aY~=nil then local b0="yvjr"if x.biome.node_filler~=nil then local b1=string.lower(x.biome.node_filler)..string.lower(x.biome.node_top)if string.match(b1,"ice")or string.match(b1,"snow")or string.match(b1,"frozen")then b0="pjl"end end;local b2=a("klmhbsa:ivvr_dypaalu")if u then b2=a("tjs_ivvrz:dypaalu_ivvr")end;local b3=ItemStack(b2)local b4={}b4.title=a("Dlkklss Vbawvza")b4.text=a("Aol hlyvzaha pz svza.\n\n".."Vby zhschnl haaltwaz aoyvbnovba aol upnoa zhclk tvza vm aol\n".."wyvcpzpvuz.\n".."                                    ---====---\n\n".."Aopz pzshuk pz opnosf lewvzlk huk aol dlhaoly kpk uva aylha\n".."aol aluaz dlss. Dl ohcl lushynlk h zolsalylk jyhn pu aol "..b0 ..",\n".."iba pa pz shivyvbz dvyr huk aol jvukpapvu vm zvtl vm aol whyaf\n".."pz iljvtpun jhbzl mvy jvujlyu.\n\n".."Xbpal h qvbyulf pz ylxbpylk. Uvivkf dpss svvr mvy bz olyl.\n\n".."TjUpzo pz haaltwapun av zaylunaolu aol nspklyz.\n\n".."                                    ---====---")local b5="Zvtl vm aol mbu vm Tpuljyhma dhz wpjrpun hwhya ovd pa ".."dvyrlk huk alhzpun vba hss paz zljylaz. P ovwl fvb luqvflk :)".."\n\n".."'uvivkf mvbuk pa! P dhz zv ohwwf hivba aoha, P mpuhssf ruld ".."zvtlaopun hivba aol nhtl aol wshflyz kpku'a ruvd.' -- Uvajo 2012 ".."(ylkkpa.jvt/y/Tpuljyhma/jvttluaz/xxlux/tpujlyhma_h_wvza_tvyalt/)".."\n\n".."Mlls myll av pucvscl aol lnn, vy Ilya, pu vaoly tvkz."if u then b4.text=b4.title.."\n\n"..b4.text end;b4.owner=a("Ilya Zohjrslavu")b4.author=b4.owner;b4.description=a("Kphyf vm Ilya Zohrslavu")b4.page=1;b4.page_max=1;b4.generation=0;b3:get_meta():from_table({fields=b4})if aX==nil then if aY~=nil then aY:add_item("main",b3)end else aX:add_item("books",b3)local dummyPlayer={}dummyPlayer.get_player_name=function()return"server"end;minetest.registered_nodes[t].on_metadata_inventory_put(aW,"books",1,b3,dummyPlayer)end end;if aY~=nil then local b6;local function addIfFound(b7,b8)for ad,b9 in ipairs(b7)do if minetest.registered_items[b9]~=nil then b6=ItemStack(b9 .." "..b8)aY:add_item("main",b6)break end end end;addIfFound({"mcl_tools:pick_iron","default:pick_steel"},1)addIfFound({"binoculars:binoculars"},1)addIfFound({"mcl_core:wood","default:wood"},10)addIfFound({"mcl_torches:torch","default:torch"},3)end end end end end end;
+local function addDetail_secrets__shhh_dont_tell_people(w,x,y,z,A,B)if x.biome~=nil and x.radius>18 and x.depth>20 and x.radius+x.depth>60 then local C=math_floor(x.x/x.type.territorySize)local D=math_floor(x.z/x.type.territorySize)local E=x.temperature<=5 and x.x%3==0 and noise_surfaceMap:get2d({x=x.x,y=x.z-8})>=0;local F=x.humidity>=60 and x.temperature>=50;if(C+D)%2==0 and(E or F)then local G=7;local H=5;local I=12;local J=ALTITUDE+x.y-I;local K=G*G;local function L(M,N,O,P,Q,R)local S=vector.direction(M,N)local T={}if S.x>0 then T.x=-1 else T.x=1 end;if S.z>0 then T.z=-1 else T.z=1 end;local U={}local function V(W,X,Y)if y[W]==nodeId_air then local Z={}local _;local function a0(a1)return a1~=nodeId_air and a1~=j and(a1==Y or Y==nil)end;if a0(y[W+T.x])and X.x+T.x>=A.x and X.x+T.x<=B.x then if T.x>0 then _=2 else _=3 end;Z[#Z+1]={solid_vi=W+T.x,facing=_}end;if a0(y[W+T.z*z.zstride])and X.z+T.z>=A.z and X.z+T.z<=B.z then if T.z>0 then _=4 else _=5 end;Z[#Z+1]={solid_vi=W+T.z*z.zstride,facing=_}end;local a2=nil;if#Z==1 then a2=Z[1]elseif#Z==2 then local a3=math.abs(S.x)/(math.abs(S.x)+math.abs(S.z))if randomNumbers[(X.x+X.y+X.z)%256]<=a3 then a2=Z[1]else a2=Z[2]end end;if a2~=nil and(Y==nil or Y==y[a2.solid_vi])and y[a2.solid_vi]~=j then local a4=a2.solid_vi;local a5=1;while X.y+a5<=B.y+1 and y[a4+a5*z.ystride]~=nodeId_air and y[W+a5*z.ystride]==nodeId_air and(Y==nil or Y==y[a4+a5*z.ystride])do a5=a5+1 end;U[#U+1]=function(w)local a6=y[a4+(a5-1)*z.ystride]if a6~=j and a6~=nodeId_air and y[W]==nodeId_air then w[#w+1]={pos={x=X.x,y=X.y+a5-1,z=X.z},node={name=nodeName_vine,param2=a2.facing}}end end end end end;local a7={}local function a8(X,O,P,a1,a9)local aa={}local ab=-1;for ac=X.y,X.y+P-1 do if ac>=A.y and ac<=B.y then if ab==-1 then ab=z:index(X.x,ac,X.z)else ab=ab+z.ystride end;for ad,ae in ipairs(O)do local af=X.x+ae.x;local ag=X.z+ae.z;if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z then local W=ab+ae.x+ae.z*z.zstride;if y[W]==nodeId_air then if a9~=nil then aa[#aa+1]=function()a9(X,W,af,ac,ag)end end else y[W]=a1;a7[#a7+1]=W end end end end end;for ad,ah in ipairs(aa)do ah()end end;local function ai(X,aj,ak,al)local function am(an,ao,ap,aq,ar)if aq>an.y and aq+1<=B.y then V(ao+z.ystride,{x=ap,y=aq+1,z=ar})else V(ao,{x=ap,y=aq,z=ar},Q)end end;local as=am;local at=j;if not ak or nodeId_vine == nodeId_ignore then as=nil end;if al and s~=nodeId_ignore then at=s end;a8(X,O,P,at,as)if aj and Q~=nil then a8({x=X.x,y=X.y-1,z=X.z},O,1,Q,as)end end;local au=x.humidity>=VINES_REQUIRED_HUMIDITY and x.temperature>=VINES_REQUIRED_TEMPERATURE;if R==nil then R=0 end;local av=round(vector.distance(M,N))local aw=vector.divide(vector.subtract(N,M),av)local X=vector.new(M)local ax=vector.new(M)ai(M,0>=R,false)for ay=1,av do ax.x=ax.x+aw.x;if round(ax.x)~=X.x then X.x=round(ax.x)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.y=ax.y+aw.y;if round(ax.y)~=X.y then X.y=round(ax.y)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.z=ax.z+aw.z;if round(ax.z)~=X.z then X.z=round(ax.z)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end end;for ad,az in ipairs(U)do az(w)end;for ad,aA in ipairs(a7)do if y[aA]==j then y[aA]=nodeId_air;surfaceData[aA]=nodeId_air end end end;local function aB(af,ac,ag,a1)if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z and ac>=A.y and ac<=B.y then y[z:index(af,ac,ag)]=a1 end end;local function aC(X)return X.x>=A.x and X.x<=B.x and X.z>=A.z and X.z<=B.z and X.y>=A.y and X.y<=B.y end;local aD=math_max(x.z-G,A.z)local aE=math_max(x.x-G,A.x)local aF=math_min(x.x+G,B.x)local aG=math_max(J,A.y)local aH=z:index(aE,aG,aD)for ag=aD,math_min(x.z+G,B.z)do for af=aE,aF do local aI=(af-x.x)*(af-x.x)+(ag-x.z)*(ag-x.z)if aI<K then local aJ=1-aI/K;for ac=math_max(A.y,J+math_floor(1.4-aJ)),math_min(B.y,J+1+math_min(H-1,math_floor(0.8+H*aJ)))do y[aH+(ac-aG)*z.ystride]=nodeId_air end end;aH=aH+1 end;aH=aH+z.zstride-(aF-aE+1)end;local Q;if x.biome.node_top==nil then Q=nil else Q=minetest.get_content_id(x.biome.node_top)end;if F then local aK=vector.new(x.type.territorySize*math.floor(x.x/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2),J,x.type.territorySize*math.floor(x.z/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2))local aL=vector.new(x.x,J,x.z)local S=vector.direction(aL,aK)local aM=4;if S.z<0 then aM=-aM end;aL.z=aL.z+aM;aL.x=aL.x+2;S=vector.direction(aL,aK)if vector.length(S)==0 then S=vector.direction({x=0,y=0,z=0},{x=2,y=0,z=1})end;local aN=vector.add(vector.multiply(S,x.radius),{x=0,y=-4,z=0})local aO=4+math.floor(0.5+x.radius*0.3)local O={{x=0,z=0},{x=-1,z=0},{x=1,z=0},{x=0,z=-1},{x=0,z=1}}L(aL,vector.add(aL,aN),O,2,Q,aO)local aP=x.x;local aQ=x.z-aM*0.75;aB(aP,J,aQ,i)if nodeId_gravel~=nodeId_ignore then aB(aP,J-1,aQ,nodeId_gravel)end;if s~=nodeId_ignore then aB(x.x-6,J+3,x.z-1,s)aB(x.x+4,J+4,x.z+3,s)aB(x.x+6,J+1,x.z-3,s)end else if(o~=nodeId_ignore or n~=nodeId_ignore)and k~=nodeId_ignore and l~=nodeId_ignore then local aR=vector.new(x.x-3,J,x.z-7)local aS=vector.add(aR,{x=0,y=0,z=1})local aT=vector.add(aR,{x=8,y=8,z=0})local aU=vector.add(aT,{x=0,y=0,z=-1})local aV=vector.add(aU,{x=-16,y=16,z=0})L(aV,aU,{{x=0,z=0}},3,Q,0)L(aT,aR,{{x=0,z=0}},2,Q,0)local O={{x=0,z=0},{x=1,z=0},{x=0,z=2},{x=0,z=1},{x=1,z=1}}L(aS,aS,O,2,Q,0)aB(x.x+2,J,x.z+5,k)aB(x.x+2,J,x.z+4,l)aB(x.x+2,J,x.z+2,k)aB(x.x+2,J,x.z+1,l)aB(x.x+4,J,x.z+2,k)aB(x.x+4,J,x.z+1,l)if m~=nodeId_ignore then w[#w+1]={pos={x=x.x,y=J+2,z=x.z+6},node={name=minetest.get_name_from_content_id(m),param2=4}}end;if p~=nodeId_ignore then aB(x.x-4,J+1,x.z+5,p)end;if q~=nodeId_ignore then aB(x.x-6,J+1,x.z,q)end;if r~=nodeId_ignore then aB(x.x-5,J,x.z+2,r)end;if s~=nodeId_ignore then aB(x.x+4,J+4,x.z-3,s)end;local aW;local aX=nil;local aY=nil;if n~=nodeId_ignore then local X={x=x.x-3,y=J+1,z=x.z+6}local aZ=minetest.get_name_from_content_id(n)local a_=minetest.get_node(X).name;if a_~=aZ and not a_:find("chest")then minetest.set_node(X,{name=aZ})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=n;aY=minetest.get_inventory({type="node",pos=X})end end;if o~=nodeId_ignore then local X={x=x.x-2,y=J+1,z=x.z+6}aW=X;if minetest.get_node(X).name~=t then minetest.set_node(X,{name=t})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=o;if not u then aX=minetest.get_inventory({type="node",pos=X})end end end;if aX~=nil or aY~=nil then local b0="yvjr"if x.biome.node_filler~=nil then local b1=string.lower(x.biome.node_filler)..string.lower(x.biome.node_top)if string.match(b1,"ice")or string.match(b1,"snow")or string.match(b1,"frozen")then b0="pjl"end end;local b2=a("klmhbsa:ivvr_dypaalu")if u then b2=a("tjs_ivvrz:dypaalu_ivvr")end;local b3=ItemStack(b2)local b4={}b4.title=a("Dlkklss Vbawvza")b4.text=a("Aol hlyvzaha pz svza.\n\n".."Vby zhschnl haaltwaz aoyvbnovba aol upnoa zhclk tvza vm aol\n".."wyvcpzpvuz.\n".."                                    ---====---\n\n".."Aopz pzshuk pz opnosf lewvzlk huk aol dlhaoly kpk uva aylha\n".."aol aluaz dlss. Dl ohcl lushynlk h zolsalylk jyhn pu aol "..b0 ..",\n".."iba pa pz shivyvbz dvyr huk aol jvukpapvu vm zvtl vm aol whyaf\n".."pz iljvtpun jhbzl mvy jvujlyu.\n\n".."Xbpal h qvbyulf pz ylxbpylk. Uvivkf dpss svvr mvy bz olyl.\n\n".."TjUpzo pz haaltwapun av zaylunaolu aol nspklyz.\n\n".."                                    ---====---")local b5="Zvtl vm aol mbu vm Tpuljyhma dhz wpjrpun hwhya ovd pa ".."dvyrlk huk alhzpun vba hss paz zljylaz. P ovwl fvb luqvflk :)".."\n\n".."'uvivkf mvbuk pa! P dhz zv ohwwf hivba aoha, P mpuhssf ruld ".."zvtlaopun hivba aol nhtl aol wshflyz kpku'a ruvd.' -- Uvajo 2012 ".."(ylkkpa.jvt/y/Tpuljyhma/jvttluaz/xxlux/tpujlyhma_h_wvza_tvyalt/)".."\n\n".."Mlls myll av pucvscl aol lnn, vy Ilya, pu vaoly tvkz."if u then b4.text=b4.title.."\n\n"..b4.text end;b4.owner=a("Ilya Zohjrslavu")b4.author=b4.owner;b4.description=a("Kphyf vm Ilya Zohrslavu")b4.page=1;b4.page_max=1;b4.generation=0;b3:get_meta():from_table({fields=b4})if aX==nil then if aY~=nil then aY:add_item("main",b3)end else aX:add_item("books",b3)local dummyPlayer={}dummyPlayer.get_player_name=function()return"server"end;minetest.registered_nodes[t].on_metadata_inventory_put(aW,"books",1,b3,dummyPlayer)end end;if aY~=nil then local b6;local function addIfFound(b7,b8)for ad,b9 in ipairs(b7)do if minetest.registered_items[b9]~=nil then b6=ItemStack(b9 .." "..b8)aY:add_item("main",b6)break end end end;addIfFound({"mcl_tools:pick_iron","default:pick_steel"},1)addIfFound({"binoculars:binoculars"},1)addIfFound({"mcl_core:wood","default:wood"},10)addIfFound({"mcl_torches:torch","default:torch"},3)end end end end end end;
 
 local function init_secrets__shhh_dont_tell_people()k=interop.find_node_id(a({"ilkz:ilk_avw"}))l=interop.find_node_id(a({"ilkz:ilk_ivaavt"}))m=interop.find_node_id(a({"tjs_avyjolz:avyjo_dhss","klmhbsa:avyjo_dhss"}))n=interop.find_node_id(a({"jolza","tjs_jolzaz:jolza","klmhbsa:jolza"}))p=interop.find_node_id(a({"ekljvy:ihyyls","jvaahnlz:ihyyls","ovtlkljvy:jvwwly_whuz","clzzlsz:zalls_ivaasl","tjs_msvdlywvaz:msvdly_wva"}))q=interop.find_node_id(a({"jhzasl:hucps","jvaahnlz:hucps","tjs_hucpsz:hucps","klmhbsa:hucps"}))r=interop.find_node_id(a({"ovtlkljvy:ahisl","ekljvy:dvyrilujo","tjs_jyhmapun_ahisl:jyhmapun_ahisl","klmhbsa:ahisl","yhukvt_ibpskpunz:ilujo"}))s=interop.find_node_id(a({"tjs_jvyl:jvidli","ekljvy:jvidli","ovtlkljvy:jvidli_wshuasprl","klmhbsa:jvidli"}))local bb=a("tjs_ivvrz:ivvrzolsm")o=interop.find_node_id({bb,a("klmhbsa:ivvrzolsm")})t=minetest.get_name_from_content_id(o)u=t==bb;local f=MODNAME..a(":jvidli")if s~=nodeId_ignore then minetest.register_alias(f,minetest.get_name_from_content_id(s))else s=minetest.get_content_id(f)end end
 
