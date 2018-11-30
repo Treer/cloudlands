@@ -7,6 +7,10 @@
 cloudlands_use_lowland_biomes        (Use lowland biomes) bool false
 
 # The average altitude islands are found at
+#
+# In Minetest game, ores like iron and diamond will be generated if the 
+# altitude of islands is set above 1200 and "Generate ores inside islands"
+# is Enabled.
 cloudlands_altitude             (Altitude of islands) int 200
 
 # The rough variance of altitude in islands (plus or minus this value)
