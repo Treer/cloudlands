@@ -702,12 +702,541 @@ local function addDetail_skyReef(decoration_list, core, data, area, minp, maxp)
   return vi >= 0
 end
 
--- minified with https://mothereff.in/lua-minifier
-local function a(b)if type(b)=="table"then for c,d in ipairs(b)do b[c]=a(d)end;return b else return b:gsub("%a",function(e)e=e:byte()return string.char(e+(e%32<8 and 19 or-7))end)end end;if minetest.get_modpath("default")then local f=MODNAME..a(":jvidli")minetest.register_node(f,{tiles={"crack_anylength.png^[verticalframe:5:4^[brighten"},description=a("Jvidli"),groups={snappy=3,liquid=3,flammable=3,not_in_creative_inventory=1},drawtype="plantlike",walkable=false,liquid_viscosity=8,liquidtype="source",liquid_alternative_flowing=f,liquid_alternative_source=f,liquid_renewable=false,liquid_range=0,sunlight_propagates=true,paramtype="light"})end;local g=a("zljyla:mvzzpspglk_lnn")local h=a("klmhbsa_qbunslslhclz.wun")if minetest.get_modpath("ethereal")~=nil then h=a("laolylhs_myvza_slhclz.wun")end;minetest.register_node(":"..g,{tiles={h.."^[colorize:#280040E0^[noalpha"},description=a("Mvzzpspglk Lnn"),groups={oddly_breakable_by_hand=3,not_in_creative_inventory=1},drawtype="nodebox",paramtype="light",node_box={type="fixed",fixed={{-0.066666,-0.5,-0.066666,0.066666,0.5,0.066666},{-0.133333,-0.476667,-0.133333,0.133333,0.42,0.133333},{-0.2,-0.435,-0.2,0.2,0.31,0.2},{-0.2,-0.36,-0.28,0.2,0.16667,0.28},{-0.28,-0.36,-0.2,0.28,0.16667,0.2}}}})local i=minetest.get_content_id(g)local j=minetest.get_content_id(interop.register_clone("air"))local k;local l;local m;local n;local o;local p;local q;local r;local s;local t;local u;
 
-local function addDetail_secrets__shhh_dont_tell_people(w,x,y,z,A,B)if x.biome~=nil and x.radius>18 and x.depth>20 and x.radius+x.depth>60 then local C=math_floor(x.x/x.type.territorySize)local D=math_floor(x.z/x.type.territorySize)local E=x.temperature<=5 and x.x%3==0 and noise_surfaceMap:get2d({x=x.x,y=x.z-8})>=0;local F=x.humidity>=60 and x.temperature>=50;if(C+D)%2==0 and(E or F)then local G=7;local H=5;local I=12;local J=ALTITUDE+x.y-I;local K=G*G;local function L(M,N,O,P,Q,R)local S=vector.direction(M,N)local T={}if S.x>0 then T.x=-1 else T.x=1 end;if S.z>0 then T.z=-1 else T.z=1 end;local U={}local function V(W,X,Y)if y[W]==nodeId_air then local Z={}local _;local function a0(a1)return a1~=nodeId_air and a1~=j and(a1==Y or Y==nil)end;if a0(y[W+T.x])and X.x+T.x>=A.x and X.x+T.x<=B.x then if T.x>0 then _=2 else _=3 end;Z[#Z+1]={solid_vi=W+T.x,facing=_}end;if a0(y[W+T.z*z.zstride])and X.z+T.z>=A.z and X.z+T.z<=B.z then if T.z>0 then _=4 else _=5 end;Z[#Z+1]={solid_vi=W+T.z*z.zstride,facing=_}end;local a2=nil;if#Z==1 then a2=Z[1]elseif#Z==2 then local a3=math.abs(S.x)/(math.abs(S.x)+math.abs(S.z))if randomNumbers[(X.x+X.y+X.z)%256]<=a3 then a2=Z[1]else a2=Z[2]end end;if a2~=nil and(Y==nil or Y==y[a2.solid_vi])and y[a2.solid_vi]~=j then local a4=a2.solid_vi;local a5=1;while X.y+a5<=B.y+1 and y[a4+a5*z.ystride]~=nodeId_air and y[W+a5*z.ystride]==nodeId_air and(Y==nil or Y==y[a4+a5*z.ystride])do a5=a5+1 end;U[#U+1]=function(w)local a6=y[a4+(a5-1)*z.ystride]if a6~=j and a6~=nodeId_air and y[W]==nodeId_air then w[#w+1]={pos={x=X.x,y=X.y+a5-1,z=X.z},node={name=nodeName_vine,param2=a2.facing}}end end end end end;local a7={}local function a8(X,O,P,a1,a9)local aa={}local ab=-1;for ac=X.y,X.y+P-1 do if ac>=A.y and ac<=B.y then if ab==-1 then ab=z:index(X.x,ac,X.z)else ab=ab+z.ystride end;for ad,ae in ipairs(O)do local af=X.x+ae.x;local ag=X.z+ae.z;if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z then local W=ab+ae.x+ae.z*z.zstride;if y[W]==nodeId_air then if a9~=nil then aa[#aa+1]=function()a9(X,W,af,ac,ag)end end else y[W]=a1;a7[#a7+1]=W end end end end end;for ad,ah in ipairs(aa)do ah()end end;local function ai(X,aj,ak,al)local function am(an,ao,ap,aq,ar)if aq>an.y and aq+1<=B.y then V(ao+z.ystride,{x=ap,y=aq+1,z=ar})else V(ao,{x=ap,y=aq,z=ar},Q)end end;local as=am;local at=j;if not ak or nodeId_vine == nodeId_ignore then as=nil end;if al and s~=nodeId_ignore then at=s end;a8(X,O,P,at,as)if aj and Q~=nil then a8({x=X.x,y=X.y-1,z=X.z},O,1,Q,as)end end;local au=x.humidity>=VINES_REQUIRED_HUMIDITY and x.temperature>=VINES_REQUIRED_TEMPERATURE;if R==nil then R=0 end;local av=round(vector.distance(M,N))local aw=vector.divide(vector.subtract(N,M),av)local X=vector.new(M)local ax=vector.new(M)ai(M,0>=R,false)for ay=1,av do ax.x=ax.x+aw.x;if round(ax.x)~=X.x then X.x=round(ax.x)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.y=ax.y+aw.y;if round(ax.y)~=X.y then X.y=round(ax.y)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.z=ax.z+aw.z;if round(ax.z)~=X.z then X.z=round(ax.z)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end end;for ad,az in ipairs(U)do az(w)end;for ad,aA in ipairs(a7)do if y[aA]==j then y[aA]=nodeId_air;surfaceData[aA]=nodeId_air end end end;local function aB(af,ac,ag,a1)if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z and ac>=A.y and ac<=B.y then y[z:index(af,ac,ag)]=a1 end end;local function aC(X)return X.x>=A.x and X.x<=B.x and X.z>=A.z and X.z<=B.z and X.y>=A.y and X.y<=B.y end;local aD=math_max(x.z-G,A.z)local aE=math_max(x.x-G,A.x)local aF=math_min(x.x+G,B.x)local aG=math_max(J,A.y)local aH=z:index(aE,aG,aD)for ag=aD,math_min(x.z+G,B.z)do for af=aE,aF do local aI=(af-x.x)*(af-x.x)+(ag-x.z)*(ag-x.z)if aI<K then local aJ=1-aI/K;for ac=math_max(A.y,J+math_floor(1.4-aJ)),math_min(B.y,J+1+math_min(H-1,math_floor(0.8+H*aJ)))do y[aH+(ac-aG)*z.ystride]=nodeId_air end end;aH=aH+1 end;aH=aH+z.zstride-(aF-aE+1)end;local Q;if x.biome.node_top==nil then Q=nil else Q=minetest.get_content_id(x.biome.node_top)end;if F then local aK=vector.new(x.type.territorySize*math.floor(x.x/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2),J,x.type.territorySize*math.floor(x.z/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2))local aL=vector.new(x.x,J,x.z)local S=vector.direction(aL,aK)local aM=4;if S.z<0 then aM=-aM end;aL.z=aL.z+aM;aL.x=aL.x+2;S=vector.direction(aL,aK)if vector.length(S)==0 then S=vector.direction({x=0,y=0,z=0},{x=2,y=0,z=1})end;local aN=vector.add(vector.multiply(S,x.radius),{x=0,y=-4,z=0})local aO=4+math.floor(0.5+x.radius*0.3)local O={{x=0,z=0},{x=-1,z=0},{x=1,z=0},{x=0,z=-1},{x=0,z=1}}L(aL,vector.add(aL,aN),O,2,Q,aO)local aP=x.x;local aQ=x.z-aM*0.75;aB(aP,J,aQ,i)if nodeId_gravel~=nodeId_ignore then aB(aP,J-1,aQ,nodeId_gravel)end;if s~=nodeId_ignore then aB(x.x-6,J+3,x.z-1,s)aB(x.x+4,J+4,x.z+3,s)aB(x.x+6,J+1,x.z-3,s)end else if(o~=nodeId_ignore or n~=nodeId_ignore)and k~=nodeId_ignore and l~=nodeId_ignore then local aR=vector.new(x.x-3,J,x.z-7)local aS=vector.add(aR,{x=0,y=0,z=1})local aT=vector.add(aR,{x=8,y=8,z=0})local aU=vector.add(aT,{x=0,y=0,z=-1})local aV=vector.add(aU,{x=-16,y=16,z=0})L(aV,aU,{{x=0,z=0}},3,Q,0)L(aT,aR,{{x=0,z=0}},2,Q,0)local O={{x=0,z=0},{x=1,z=0},{x=0,z=2},{x=0,z=1},{x=1,z=1}}L(aS,aS,O,2,Q,0)aB(x.x+2,J,x.z+5,k)aB(x.x+2,J,x.z+4,l)aB(x.x+2,J,x.z+2,k)aB(x.x+2,J,x.z+1,l)aB(x.x+4,J,x.z+2,k)aB(x.x+4,J,x.z+1,l)if m~=nodeId_ignore then w[#w+1]={pos={x=x.x,y=J+2,z=x.z+6},node={name=minetest.get_name_from_content_id(m),param2=4}}end;if p~=nodeId_ignore then aB(x.x-4,J+1,x.z+5,p)end;if q~=nodeId_ignore then aB(x.x-6,J+1,x.z,q)end;if r~=nodeId_ignore then aB(x.x-5,J,x.z+2,r)end;if s~=nodeId_ignore then aB(x.x+4,J+4,x.z-3,s)end;local aW;local aX=nil;local aY=nil;if n~=nodeId_ignore then local X={x=x.x-3,y=J+1,z=x.z+6}local aZ=minetest.get_name_from_content_id(n)local a_=minetest.get_node(X).name;if a_~=aZ and not a_:find("chest")then minetest.set_node(X,{name=aZ})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=n;aY=minetest.get_inventory({type="node",pos=X})end end;if o~=nodeId_ignore then local X={x=x.x-2,y=J+1,z=x.z+6}aW=X;if minetest.get_node(X).name~=t then minetest.set_node(X,{name=t})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=o;if not u then aX=minetest.get_inventory({type="node",pos=X})end end end;if aX~=nil or aY~=nil then local b0="yvjr"if x.biome.node_filler~=nil then local b1=string.lower(x.biome.node_filler)..string.lower(x.biome.node_top)if string.match(b1,"ice")or string.match(b1,"snow")or string.match(b1,"frozen")then b0="pjl"end end;local b2=a("klmhbsa:ivvr_dypaalu")if u then b2=a("tjs_ivvrz:dypaalu_ivvr")end;local b3=ItemStack(b2)local b4={}b4.title=a("Dlkklss Vbawvza")b4.text=a("Aol hlyvzaha pz svza.\n\n".."Vby zhschnl haaltwaz aoyvbnovba aol upnoa zhclk tvza vm aol\n".."wyvcpzpvuz.\n".."                                    ---====---\n\n".."Aopz pzshuk pz opnosf lewvzlk huk aol dlhaoly kpk uva aylha\n".."aol aluaz dlss. Dl ohcl lushynlk h zolsalylk jyhn pu aol "..b0 ..",\n".."iba pa pz shivyvbz dvyr huk aol jvukpapvu vm zvtl vm aol whyaf\n".."pz iljvtpun jhbzl mvy jvujlyu.\n\n".."Xbpal h qvbyulf pz ylxbpylk. Uvivkf dpss svvr mvy bz olyl.\n\n".."TjUpzo pz haaltwapun av zaylunaolu aol nspklyz.\n\n".."                                    ---====---")local b5="Zvtl vm aol mbu vm Tpuljyhma dhz wpjrpun hwhya ovd pa ".."dvyrlk huk alhzpun vba hss paz zljylaz. P ovwl fvb luqvflk :)".."\n\n".."'uvivkf mvbuk pa! P dhz zv ohwwf hivba aoha, P mpuhssf ruld ".."zvtlaopun hivba aol nhtl aol wshflyz kpku'a ruvd.' -- Uvajo 2012 ".."(ylkkpa.jvt/y/Tpuljyhma/jvttluaz/xxlux/tpujlyhma_h_wvza_tvyalt/)".."\n\n".."Mlls myll av pucvscl aol lnn, vy Ilya, pu vaoly tvkz."if u then b4.text=b4.title.."\n\n"..b4.text end;b4.owner=a("Ilya Zohjrslavu")b4.author=b4.owner;b4.description=a("Kphyf vm Ilya Zohrslavu")b4.page=1;b4.page_max=1;b4.generation=0;b3:get_meta():from_table({fields=b4})if aX==nil then if aY~=nil then aY:add_item("main",b3)end else aX:add_item("books",b3)local dummyPlayer={}dummyPlayer.get_player_name=function()return"server"end;minetest.registered_nodes[t].on_metadata_inventory_put(aW,"books",1,b3,dummyPlayer)end end;if aY~=nil then local b6;local function addIfFound(b7,b8)for ad,b9 in ipairs(b7)do if minetest.registered_items[b9]~=nil then b6=ItemStack(b9 .." "..b8)aY:add_item("main",b6)break end end end;addIfFound({"mcl_tools:pick_iron","default:pick_steel"},1)addIfFound({"binoculars:binoculars"},1)addIfFound({"mcl_core:wood","default:wood"},10)addIfFound({"mcl_torches:torch","default:torch"},3)end end end end end end;
+------------------------------------------------------------------------------
+--  Functions needed for secrets (hiding in the middle of mapgen code)
+------------------------------------------------------------------------------
 
-local function init_secrets__shhh_dont_tell_people()k=interop.find_node_id(a({"ilkz:ilk_avw"}))l=interop.find_node_id(a({"ilkz:ilk_ivaavt"}))m=interop.find_node_id(a({"tjs_avyjolz:avyjo_dhss","klmhbsa:avyjo_dhss"}))n=interop.find_node_id(a({"jolza","tjs_jolzaz:jolza","klmhbsa:jolza"}))p=interop.find_node_id(a({"ekljvy:ihyyls","jvaahnlz:ihyyls","ovtlkljvy:jvwwly_whuz","clzzlsz:zalls_ivaasl","tjs_msvdlywvaz:msvdly_wva"}))q=interop.find_node_id(a({"jhzasl:hucps","jvaahnlz:hucps","tjs_hucpsz:hucps","klmhbsa:hucps"}))r=interop.find_node_id(a({"ovtlkljvy:ahisl","ekljvy:dvyrilujo","tjs_jyhmapun_ahisl:jyhmapun_ahisl","klmhbsa:ahisl","yhukvt_ibpskpunz:ilujo"}))s=interop.find_node_id(a({"tjs_jvyl:jvidli","ekljvy:jvidli","ovtlkljvy:jvidli_wshuasprl","klmhbsa:jvidli"}))local bb=a("tjs_ivvrz:ivvrzolsm")o=interop.find_node_id({bb,a("klmhbsa:ivvrzolsm")})t=minetest.get_name_from_content_id(o)u=t==bb;local f=MODNAME..a(":jvidli")if s~=nodeId_ignore then minetest.register_alias(f,minetest.get_name_from_content_id(s))else s=minetest.get_content_id(f)end end
+-- will be minified with https://mothereff.in/lua-minifier
+
+local function rot19(s)
+  -- use rot13.com set to rot 7 to encode
+
+  if type(s) == "table" then
+    for k,v in ipairs(s) do s[k] = rot19(v) end
+    return s
+  else
+    --return (s:gsub("%a", function(c) c=c:byte() return string.char(c+(c%32<14 and 13 or -13)) end))
+    return (s:gsub("%a", function(c) c=c:byte() return string.char(c + (c % 32 < 8 and 19 or -7)) end))
+  end
+end
+
+if minetest.get_modpath("default") then
+  -- the crack texture is probably available
+  local nodeName_standinCobweb = MODNAME .. rot19(":jvidli") -- ":cobweb" 
+  minetest.register_node(
+    nodeName_standinCobweb, 
+    {
+      tiles = {
+        -- [Ab]Use the crack texture to avoid needing to include a cobweb texture and exposing that the mod contains secrets
+        "crack_anylength.png^[verticalframe:5:4^[brighten"
+      },
+      description=rot19("Jvidli"),
+      groups = {snappy = 3, liquid = 3, flammable = 3, not_in_creative_inventory = 1},
+      drawtype = "plantlike",
+      walkable = false,
+      liquid_viscosity = 8,
+      liquidtype = "source",
+      liquid_alternative_flowing = nodeName_standinCobweb,
+      liquid_alternative_source  = nodeName_standinCobweb,
+      liquid_renewable = false,
+      liquid_range = 0,
+      sunlight_propagates = true,
+      paramtype = "light"
+    }
+  )
+end
+local nodeName_egg = rot19("zljyla:mvzzpspglk_lnn") -- ":secret:fossilized_egg"
+local eggTextureName = rot19("klmhbsa_qbunslslhclz.wun") -- called "default_jungleleaves.png" in default/Voxelgarden/MineClone2
+if minetest.get_modpath("ethereal") ~= nil then eggTextureName = rot19("laolylhs_myvza_slhclz.wun") end -- called "ethereal_frost_leaves.png" in ethereal
+minetest.register_node(
+  ":"..nodeName_egg, 
+  {
+    tiles = {
+      -- [Ab]Use a leaf texture to avoid needing to include an egg texture and exposing that the mod contains secrets      
+      eggTextureName.."^[colorize:#280040E0^[noalpha"
+    },
+    description=rot19("Mvzzpspglk Lnn"), --"Fossilized Egg"
+    --drop = "secret:fossilized_egg",
+    groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
+    drawtype = "nodebox",
+    paramtype = "light",
+    node_box = {
+      type = "fixed",
+      fixed = {
+        {-0.066666, -0.5,      -0.066666, 0.066666, 0.5,     0.066666}, -- column1
+        {-0.133333, -0.476667, -0.133333, 0.133333, 0.42,    0.133333}, -- column2
+        {-0.2,      -0.435,    -0.2,      0.2,      0.31,    0.2     }, -- column3
+        {-0.2,      -0.36,     -0.28,     0.2,      0.16667, 0.28    }, -- side1
+        {-0.28,     -0.36,     -0.2,      0.28,     0.16667, 0.2     }  -- side2          
+      }
+    }
+  }
+)
+local nodeId_egg        = minetest.get_content_id(nodeName_egg)
+local nodeId_airStandIn = minetest.get_content_id(interop.register_clone("air"))
+
+-- defer assigning the following until all mods are loaded
+local nodeId_bed_top
+local nodeId_bed_bottom
+local nodeId_torch
+local nodeId_chest
+local nodeId_bookshelf
+local nodeId_junk
+local nodeId_anvil
+local nodeId_workbench
+local nodeId_cobweb
+local nodeName_bookshelf
+local isMineCloneBookshelf
+
+local function addDetail_secrets__shhh_dont_tell_people(decoration_list, core, data, area, minp, maxp)
+
+  -- if core.biome is nil then renderCores() never rendered it, which means it
+  -- doesn't instersect this draw region.
+  if core.biome ~= nil and core.radius > 18 and core.depth > 20  and core.radius + core.depth > 60 then 
+
+    local territoryX = math_floor(core.x / core.type.territorySize)
+    local territoryZ = math_floor(core.z / core.type.territorySize)
+    local isPolarOutpost = (core.temperature <= 5) and (core.x % 3 == 0) and noise_surfaceMap:get2d({x = core.x, y = core.z - 8}) >= 0 --make sure steps aren't under a pond
+    local isAncientBurrow = core.humidity >= 60 and core.temperature >= 50
+
+    -- only allow a checkerboard pattern of territories to help keep the secrets
+    -- spread out, rather than bunching up too much with climate
+    if ((territoryX + territoryZ) % 2 == 0) and (isPolarOutpost or isAncientBurrow) then 
+
+      local burrowRadius = 7
+      local burrowHeight = 5
+      local burrowDepth = 12
+      local burrowFloor = ALTITUDE + core.y - burrowDepth
+      local radiusSquared = burrowRadius * burrowRadius
+
+      local function carve(originp, destp, pattern, height, floorId, floorDistance)      
+
+        local direction = vector.direction(originp, destp)
+        local vineSearchDirection = {}
+        if direction.x > 0 then vineSearchDirection.x = -1 else vineSearchDirection.x = 1 end
+        if direction.z > 0 then vineSearchDirection.z = -1 else vineSearchDirection.z = 1 end
+
+        local vinePlacements = {}      
+        local function placeVine(vi, pos, only_place_on_nodeId)
+          if data[vi] == nodeId_air then
+            local faces = {}
+            local facing
+
+            local function vineCanGrowOnIt(node_id) 
+              return node_id ~= nodeId_air and node_id ~= nodeId_airStandIn and (node_id == only_place_on_nodeId or only_place_on_nodeId == nil)
+            end
+            if vineCanGrowOnIt(data[vi + vineSearchDirection.x]) and pos.x + vineSearchDirection.x >= minp.x and pos.x + vineSearchDirection.x <= maxp.x then
+              if vineSearchDirection.x > 0 then facing = 2 else facing = 3 end
+              faces[#faces + 1] = {solid_vi = vi + vineSearchDirection.x, facing = facing}
+            end
+            if vineCanGrowOnIt(data[vi + vineSearchDirection.z * area.zstride]) and pos.z + vineSearchDirection.z >= minp.z and pos.z + vineSearchDirection.z <= maxp.z then
+              if vineSearchDirection.z > 0 then facing = 4 else facing = 5 end
+              faces[#faces + 1] = {solid_vi = vi + vineSearchDirection.z * area.zstride, facing = facing}
+            end
+
+            local faceInfo = nil
+            if #faces == 1 then
+              faceInfo = faces[1]
+            elseif #faces == 2 then
+              local ratio = math.abs(direction.x) / (math.abs(direction.x) + math.abs(direction.z))
+              if randomNumbers[(pos.x + pos.y + pos.z) % 256] <= ratio then faceInfo = faces[1] else faceInfo = faces[2] end
+            end
+            if faceInfo ~= nil 
+              and (only_place_on_nodeId == nil or only_place_on_nodeId == data[faceInfo.solid_vi]) 
+              and (data[faceInfo.solid_vi] ~= nodeId_airStandIn) then
+              -- find the highest y value (or maxp.y) where solid_vi is solid
+              -- and vi is not
+              local solid_vi = faceInfo.solid_vi
+              local yOffset = 1
+              while (pos.y + yOffset <= maxp.y + 1)
+                    and (data[solid_vi + yOffset * area.ystride] ~= nodeId_air)
+                    and (data[vi + yOffset * area.ystride] == nodeId_air)
+                    and (only_place_on_nodeId == nil or only_place_on_nodeId == data[solid_vi + yOffset * area.ystride]) do
+                yOffset = yOffset + 1
+              end
+
+              -- defer final vine placement until all nodes have been carved
+              vinePlacements[#vinePlacements + 1] = function(decoration_list)
+                -- retest that the vine is still going in air and still attached to a solid node
+                local solidNode = data[solid_vi + (yOffset - 1) * area.ystride]
+                if solidNode ~= nodeId_airStandIn and solidNode ~= nodeId_air and data[vi] == nodeId_air then 
+                  decoration_list[#decoration_list + 1] = {pos={x=pos.x, y=pos.y + yOffset - 1, z=pos.z}, node={name = nodeName_vine, param2 = faceInfo.facing}}
+                end
+              end
+            end
+          end
+        end
+
+        local stampedIndexes = {}
+        local function stamp(pos, pattern, height, node_id, isAir_callback)
+          local callbackClosures = {}
+          local index = -1
+          for y = pos.y, pos.y + height - 1 do
+            if y >= minp.y and y <= maxp.y then
+              if index == -1 then index = area:index(pos.x, y, pos.z) else index = index + area.ystride end
+              for _,voxel in ipairs(pattern) do
+                local x = pos.x + voxel.x
+                local z = pos.z + voxel.z
+                if x >= minp.x and x <= maxp.x and z >= minp.z and z <= maxp.z then
+                  local vi = index + voxel.x + voxel.z * area.zstride
+                  if data[vi] == nodeId_air then
+                    if isAir_callback ~= nil then 
+                      callbackClosures[#callbackClosures + 1] = function() isAir_callback(pos, vi, x, y, z) end
+                    end
+                  else 
+                    data[vi] = node_id
+                    stampedIndexes[#stampedIndexes + 1] = vi
+                  end                
+                end
+              end            
+            end
+          end
+          for _,callback in ipairs(callbackClosures) do callback() end
+        end
+      
+        local function excavate(pos, add_floor, add_vines, add_cobwebs)
+
+          local function onAirNode(stampPos, node_vi, node_x, node_y, node_z)              
+            if node_y > stampPos.y and node_y + 1 <= maxp.y then
+              -- place vines above the entrance, for concealment
+              placeVine(node_vi + area.ystride, {x=node_x, y=node_y + 1, z=node_z})
+            else
+              -- place vines on the floor, to allow explorers to climb to the burrow
+              placeVine(node_vi, {x=node_x, y=node_y, z=node_z}, floorId)
+            end
+          end
+
+          local onAirNodeCallback = onAirNode
+          local fill = nodeId_airStandIn
+          if not add_vines or nodeId_vine == nodeId_ignore then onAirNodeCallback = nil end
+          if add_cobwebs and nodeId_cobweb ~= nodeId_ignore then fill = nodeId_cobweb end
+
+          stamp(pos, pattern, height, fill, onAirNodeCallback)
+          if add_floor and floorId ~= nil then
+            stamp({x=pos.x, y=pos.y - 1, z=pos.z}, pattern, 1, floorId, onAirNodeCallback)
+          end
+        end
+
+        local addVines = core.humidity >= VINES_REQUIRED_HUMIDITY and core.temperature >= VINES_REQUIRED_TEMPERATURE
+        if floorDistance == nil then floorDistance = 0 end
+        local distance = round(vector.distance(originp, destp))
+        local step = vector.divide(vector.subtract(destp, originp), distance)
+
+        local pos    = vector.new(originp)
+        local newPos = vector.new(originp)
+
+        excavate(originp, 0 >= floorDistance, false)
+        for i = 1, distance do
+          newPos.x = newPos.x + step.x 
+          if round(newPos.x) ~= pos.x then
+            pos.x = round(newPos.x)
+            excavate(pos, i >= floorDistance, addVines, i <= floorDistance - 1 and i >= floorDistance - 2)
+          end
+          newPos.y = newPos.y + step.y
+          if round(newPos.y) ~= pos.y then
+            pos.y = round(newPos.y)
+            excavate(pos, i >= floorDistance, addVines, i <= floorDistance - 1 and i >= floorDistance - 2)
+          end
+          newPos.z = newPos.z + step.z
+          if round(newPos.z) ~= pos.z then
+            pos.z = round(newPos.z)
+            excavate(pos, i >= floorDistance, addVines, i <= floorDistance - 1 and i >= floorDistance - 2)
+          end
+        end
+
+        -- We only place vines after entire burrow entrance has been carved, to avoid placing
+        -- vines on blocks which will later be removed.
+        for _,vineFunction in ipairs(vinePlacements) do vineFunction(decoration_list) end
+
+        -- Replace airStandIn with real air.
+        -- This two-pass process was neccessary because the vine placing algorithm used
+        -- the presense of air to determine if a rock was facing outside and should have a vine.
+        -- Single-pass solutions result in vines inside the tunnel (where I'd rather overgrowth spawned)
+        for _,stampedIndex in ipairs(stampedIndexes) do 
+          if data[stampedIndex] == nodeId_airStandIn then 
+            data[stampedIndex] = nodeId_air
+            surfaceData[stampedIndex] = nodeId_air
+          end
+        end
+
+      end
+
+      local function placeNode(x, y, z, node_id)
+        if (x >= minp.x and x <= maxp.x and z >= minp.z and z <= maxp.z and y >= minp.y and y <= maxp.y) then
+          data[area:index(x, y, z)] = node_id
+        end
+      end
+
+      local function posInBounds(pos) 
+        return pos.x >= minp.x and pos.x <= maxp.x and pos.z >= minp.z and pos.z <= maxp.z and pos.y >= minp.y and pos.y <= maxp.y
+      end
+        
+      local zStart = math_max(core.z - burrowRadius, minp.z)
+      local xStart = math_max(core.x - burrowRadius, minp.x)
+      local xStop  = math_min(core.x + burrowRadius, maxp.x)
+      local yStart = math_max(burrowFloor, minp.y)
+
+      -- dig burrow
+      local dataBufferIndex = area:index(xStart, yStart, zStart)
+      for z = zStart, math_min(core.z + burrowRadius, maxp.z) do
+        for x = xStart, xStop do
+          local distanceSquared = (x - core.x)*(x - core.x) + (z - core.z)*(z - core.z)
+          if distanceSquared < radiusSquared then
+            local horz_easing = 1 - distanceSquared / radiusSquared          
+            for y = math_max(minp.y, burrowFloor + math_floor(1.4 - horz_easing)), math_min(maxp.y, burrowFloor + 1 + math_min(burrowHeight - 1, math_floor(0.8 + burrowHeight * horz_easing))) do
+              data[dataBufferIndex + (y - yStart) * area.ystride] = nodeId_air
+            end                
+          end
+          dataBufferIndex = dataBufferIndex + 1      
+        end
+        dataBufferIndex = dataBufferIndex + area.zstride - (xStop - xStart + 1)
+      end
+
+      local floorId
+      if core.biome.node_top == nil then floorId = nil else floorId = minetest.get_content_id(core.biome.node_top) end
+    
+      if isAncientBurrow then 
+        -- island overlaps can only happen at territory edges when a coreType has exclusive=true, so
+        -- angle the burrow entrance toward the center of the terrority to avoid any overlapping islands.
+        local territoryCenter = vector.new(
+          core.type.territorySize * math.floor(core.x / core.type.territorySize) + math.floor(0.5 + core.type.territorySize / 2),
+          burrowFloor,
+          core.type.territorySize * math.floor(core.z / core.type.territorySize) + math.floor(0.5 + core.type.territorySize / 2)
+        )
+        local burrowStart = vector.new(core.x, burrowFloor, core.z)
+        local direction = vector.direction(burrowStart, territoryCenter)
+        local directionOffsetZ = 4
+        if direction.z < 0 then directionOffsetZ = -directionOffsetZ end
+        burrowStart.z = burrowStart.z + directionOffsetZ  -- start the burrow enterance off-center
+        burrowStart.x = burrowStart.x + 2 -- start the burrow enterance off-center
+        direction = vector.direction(burrowStart, territoryCenter)
+        if vector.length(direction) == 0 then direction = vector.direction({x=0, y=0, z=0}, {x=2, y=0, z=1}) end
+
+        local path = vector.add(vector.multiply(direction, core.radius), {x=0, y=-4,z=0})
+        local floorStartingFrom = 4 + math.floor(0.5 + core.radius * 0.3)
+
+        -- carve burrow entrance
+        local pattern = {{x=0,z=0}, {x=-1,z=0}, {x=1,z=0}, {x=0,z=-1}, {x=0,z=1}}
+        carve(burrowStart, vector.add(burrowStart, path), pattern, 2, floorId, floorStartingFrom)    
+
+        -- place egg in burrow
+        local eggX = core.x
+        local eggZ = core.z - directionOffsetZ * 0.75 -- move the egg away from where the burrow entrance is carved
+        placeNode(eggX, burrowFloor, eggZ, nodeId_egg)
+        if nodeId_gravel ~= nodeId_ignore then placeNode(eggX, burrowFloor - 1, eggZ, nodeId_gravel) end
+        if nodeId_cobweb ~= nodeId_ignore then 
+          placeNode(core.x - 6, burrowFloor + 3, core.z - 1, nodeId_cobweb)
+          placeNode(core.x + 4, burrowFloor + 4, core.z + 3, nodeId_cobweb)
+          placeNode(core.x + 6, burrowFloor + 1, core.z - 3, nodeId_cobweb)
+        end
+      
+      else
+        -- Only attempt this if it can contain beds and a place to store the diary.
+        if (nodeId_bookshelf ~= nodeId_ignore or nodeId_chest ~= nodeId_ignore) and nodeId_bed_top ~= nodeId_ignore and nodeId_bed_bottom ~= nodeId_ignore then
+
+          -- carve stairs to the surface
+          local stairsStart   = vector.new(core.x - 3, burrowFloor, core.z - 7)
+          local stairsbottom  = vector.add(stairsStart, {x=0,y=0,z=1})
+          local stairsMiddle1 = vector.add(stairsStart, {x=8,y=8,z=0})
+          local stairsMiddle2 = vector.add(stairsMiddle1, {x=0,y=0,z=-1})
+          local stairsEnd     = vector.add(stairsMiddle2, {x=-16,y=16,z=0})
+          
+          carve(stairsEnd, stairsMiddle2, {{x=0,z=0}}, 3, floorId, 0)    
+          carve(stairsMiddle1, stairsStart, {{x=0,z=0}}, 2, floorId, 0)    
+          local pattern = {{x=0,z=0}, {x=1,z=0}, {x=0,z=2}, {x=0,z=1}, {x=1,z=1}}
+          carve(stairsbottom, stairsbottom, pattern, 2, floorId, 0)    
+          
+          -- fill the outpost    
+          placeNode(core.x + 2, burrowFloor, core.z + 5, nodeId_bed_top)
+          placeNode(core.x + 2, burrowFloor, core.z + 4, nodeId_bed_bottom)
+
+          placeNode(core.x + 2, burrowFloor, core.z + 2, nodeId_bed_top)
+          placeNode(core.x + 2, burrowFloor, core.z + 1, nodeId_bed_bottom)
+
+          placeNode(core.x + 4, burrowFloor, core.z + 2, nodeId_bed_top)
+          placeNode(core.x + 4, burrowFloor, core.z + 1, nodeId_bed_bottom)
+          
+          if (nodeId_torch ~= nodeId_ignore) then
+            decoration_list[#decoration_list + 1] = {
+              pos={x=core.x, y=burrowFloor + 2, z=core.z + 6}, 
+              node={name = minetest.get_name_from_content_id(nodeId_torch), param2 = 4}
+            }
+          end
+          if nodeId_junk      ~= nodeId_ignore then placeNode(core.x - 4, burrowFloor + 1, core.z + 5, nodeId_junk)      end
+          if nodeId_anvil     ~= nodeId_ignore then placeNode(core.x - 6, burrowFloor + 1, core.z,     nodeId_anvil)     end
+          if nodeId_workbench ~= nodeId_ignore then placeNode(core.x - 5, burrowFloor,     core.z + 2, nodeId_workbench) end
+          if nodeId_cobweb    ~= nodeId_ignore then placeNode(core.x + 4, burrowFloor + 4, core.z - 3, nodeId_cobweb)    end
+    
+          local bookshelf_pos
+          local invBookshelf = nil
+          local invChest     = nil
+          if nodeId_chest ~= nodeId_ignore then
+            local pos = {x = core.x - 3, y = burrowFloor + 1, z = core.z + 6}
+
+            local nodeName_chest = minetest.get_name_from_content_id(nodeId_chest)
+            local nodeNameAtPos = minetest.get_node(pos).name
+            -- falls back on the nodeNameAtPos:find("chest") check to avoid a race-condition where if the
+            -- chest is opened while nearby areas are being generated, the opened chest may be replaced with 
+            -- a new empty closed one.
+            if nodeNameAtPos ~= nodeName_chest and not nodeNameAtPos:find("chest") then minetest.set_node(pos, {name = nodeName_chest}) end
+            
+            if posInBounds(pos) then 
+              data[area:index(pos.x, pos.y, pos.z)] = nodeId_chest
+              invChest = minetest.get_inventory({type = "node", pos = pos})
+            end
+          end
+          if nodeId_bookshelf ~= nodeId_ignore then
+            local pos = {x = core.x - 2, y = burrowFloor + 1, z = core.z + 6}
+            bookshelf_pos = pos
+  
+            if minetest.get_node(pos).name ~= nodeName_bookshelf then minetest.set_node(pos, {name = nodeName_bookshelf}) end
+
+            if posInBounds(pos) then 
+              data[area:index(pos.x, pos.y, pos.z)] = nodeId_bookshelf
+              if not isMineCloneBookshelf then -- mineclone bookshelves are decorational (like Minecraft) and don't contain anything              
+                invBookshelf = minetest.get_inventory({type = "node", pos = pos})
+              end
+            end                            
+          end
+
+          if invBookshelf ~= nil or invChest ~= nil then
+            -- create diary
+            local groundDesc = "yvjr" --"rock"
+            if core.biome.node_filler ~= nil then 
+              local earthNames = string.lower(core.biome.node_filler) .. string.lower(core.biome.node_top)
+              if string.match(earthNames, "ice") or string.match(earthNames, "snow") or string.match(earthNames, "frozen") then
+                groundDesc = "pjl" --"ice"
+              end
+            end
+
+            local stackName_writtenBook = rot19("klmhbsa:ivvr_dypaalu") --"default:book_written"
+            if isMineCloneBookshelf then stackName_writtenBook = rot19("tjs_ivvrz:dypaalu_ivvr") end --"mcl_books:written_book"
+            
+            local book_itemstack = ItemStack(stackName_writtenBook)
+            local book_data = {}
+            book_data.title = rot19("Dlkklss Vbawvza") -- "Weddell Outpost"
+            book_data.text = rot19(
+            "Aol hlyvzaha pz svza.\n\n"..
+            "Vby zhschnl haaltwaz aoyvbnovba aol upnoa zhclk tvza vm aol\n"..
+            "wyvcpzpvuz.\n"..
+            "                                    ---====---\n\n"..
+            "Aopz pzshuk pz opnosf lewvzlk huk aol dlhaoly kpk uva aylha\n"..
+            "aol aluaz dlss. Dl ohcl lushynlk h zolsalylk jyhn pu aol " .. groundDesc .. ",\n"..
+            "iba pa pz shivyvbz dvyr huk aol jvukpapvu vm zvtl vm aol whyaf\n"..
+            "pz iljvtpun jhbzl mvy jvujlyu.\n\n"..
+            "Xbpal h qvbyulf pz ylxbpylk. Uvivkf dpss svvr mvy bz olyl.\n\n"..
+            "TjUpzo pz haaltwapun av zaylunaolu aol nspklyz.\n\n"..
+            "                                    ---====---")            
+            --[[The aerostat is lost.
+            
+            Our salvage attempts throughout the night saved most of the
+            provisions.
+                                                ---====---
+
+            This island is highly exposed and the weather did not treat
+            the tents well. We have enlarged a sheltered crag in the ice, 
+            but it is laborous work and the condition of some of the party 
+            is becoming cause for concern.
+
+            Quite a journey is required. Nobody will look for us here.
+
+            McNish is attempting to strengthen the gliders.
+
+                                                ---====---]]          
+            local second_chapter =
+            "Zvtl vm aol mbu vm Tpuljyhma dhz wpjrpun hwhya ovd pa "..
+            "dvyrlk huk alhzpun vba hss paz zljylaz. P ovwl fvb luqvflk :)"..
+            "\n\n"..
+            "'uvivkf mvbuk pa! P dhz zv ohwwf hivba aoha, P mpuhssf ruld ".. 
+            "zvtlaopun hivba aol nhtl aol wshflyz kpku'a ruvd.' -- Uvajo 2012 "..
+            "(ylkkpa.jvt/y/Tpuljyhma/jvttluaz/xxlux/tpujlyhma_h_wvza_tvyalt/)"..
+            "\n\n"..
+            "Mlls myll av pucvscl aol lnn, vy Ilya, pu vaoly tvkz."
+          --[[Some of the fun of Minecraft was picking apart how it
+            worked and teasing out all its secrets. I hope you enjoyed :)
+
+            "nobody found it! I was so happy about that, I finally knew 
+            something about the game the players didn't know." -- Notch 2012
+            (reddit.com/r/Minecraft/comments/qqenq/minceraft_a_post_mortem/)
+
+            Feel free to involve the egg, or Bert, in other mods.
+            ]]
+            if isMineCloneBookshelf then book_data.text = book_data.title .. "\n\n" .. book_data.text end -- MineClone2 doesn't show the title
+            book_data.owner = rot19("Ilya Zohjrslavu") --"Bert Shackleton"
+            book_data.author = book_data.owner
+            book_data.description = rot19("Kphyf vm Ilya Zohrslavu") --"Diary of Bert Shakleton"
+            book_data.page = 1
+            book_data.page_max = 1
+            book_data.generation = 0
+            book_itemstack:get_meta():from_table({fields = book_data})
+
+            if invBookshelf == nil then
+              -- mineclone bookshelves are decorational like Minecraft, put the book in the chest instead
+              -- (also testing for nil invBookshelf because it can happen. Weird race condition??)
+              if invChest ~= nil then invChest:add_item("main", book_itemstack) end
+            else
+              -- add the book to the bookshelf and manually trigger update_bookshelf() so its 
+              -- name will reflect the new contents.
+              invBookshelf:add_item("books", book_itemstack)
+              local dummyPlayer = {}
+              dummyPlayer.get_player_name = function() return "server" end           
+              minetest.registered_nodes[nodeName_bookshelf].on_metadata_inventory_put(bookshelf_pos, "books", 1, book_itemstack, dummyPlayer)
+            end
+          end
+
+          if invChest ~= nil then
+            -- leave some junk from the expedition in the chest     
+            local stack
+            local function addIfFound(item_aliases, amount)
+              for _,name in ipairs(item_aliases) do
+                if minetest.registered_items[name] ~= nil then
+                  stack = ItemStack(name .. " " .. amount)
+                  invChest:add_item("main", stack)
+                  break
+                end
+              end
+            end
+            addIfFound({"mcl_tools:pick_iron", "default:pick_steel"}, 1)
+            addIfFound({"binoculars:binoculars"}, 1)
+            addIfFound({"mcl_core:wood", "default:wood"}, 10)
+            addIfFound({"mcl_torches:torch",   "default:torch"}, 3)          
+          end
+
+        end
+      end
+    end
+  end
+end
+
+local function init_secrets__shhh_dont_tell_people()
+  nodeId_bed_top    = interop.find_node_id(rot19({"ilkz:ilk_avw"})) --{"beds:bed_top"}
+  nodeId_bed_bottom = interop.find_node_id(rot19({"ilkz:ilk_ivaavt"})) --{"beds:bed_bottom"}
+  nodeId_torch      = interop.find_node_id(rot19({"tjs_avyjolz:avyjo_dhss", "klmhbsa:avyjo_dhss"})) --{"mcl_torches:torch_wall", "default:torch_wall"}
+  nodeId_chest      = interop.find_node_id(rot19({"jolza", "tjs_jolzaz:jolza", "klmhbsa:jolza"})) --"chest", "mcl_chests:chest", "default:chest"
+  nodeId_junk       = interop.find_node_id(rot19({"ekljvy:ihyyls", "jvaahnlz:ihyyls", "ovtlkljvy:jvwwly_whuz", "clzzlsz:zalls_ivaasl", "tjs_msvdlywvaz:msvdly_wva"})) --{"xdecor:barrel", "cottages:barrel", "homedecor:copper_pans", "vessels:steel_bottle", "mcl_flowerpots:flower_pot"}
+  nodeId_anvil      = interop.find_node_id(rot19({"jhzasl:hucps", "jvaahnlz:hucps", "tjs_hucpsz:hucps", "klmhbsa:hucps" })) -- "default:anvil" isn't a thing, but perhaps one day. --{"castle:anvil", "cottages:anvil", "mcl_anvils:anvil", "default:anvil" }
+  nodeId_workbench  = interop.find_node_id(rot19({"ovtlkljvy:ahisl", "ekljvy:dvyrilujo", "tjs_jyhmapun_ahisl:jyhmapun_ahisl", "klmhbsa:ahisl", "yhukvt_ibpskpunz:ilujo"})) -- "default:table" isn't a thing, but perhaps one day. -- {"homedecor:table", "xdecor:workbench", "mcl_crafting_table:crafting_table", "default:table", "random_buildings:bench"}
+  nodeId_cobweb     = interop.find_node_id(rot19({"tjs_jvyl:jvidli", "ekljvy:jvidli", "ovtlkljvy:jvidli_wshuasprl", "klmhbsa:jvidli"})) --{"mcl_core:cobweb", "xdecor:cobweb", "homedecor:cobweb_plantlike", "default:cobweb"}
+
+  local mineCloneBookshelfName = rot19("tjs_ivvrz:ivvrzolsm") --"mcl_books:bookshelf"
+  nodeId_bookshelf  = interop.find_node_id({mineCloneBookshelfName, rot19("klmhbsa:ivvrzolsm")}) --"default:bookshelf"
+  nodeName_bookshelf = minetest.get_name_from_content_id(nodeId_bookshelf)
+  isMineCloneBookshelf = nodeName_bookshelf == mineCloneBookshelfName
+  
+  local nodeName_standinCobweb = MODNAME .. rot19(":jvidli") -- ":cobweb"   
+  if nodeId_cobweb ~= nodeId_ignore then
+    -- This game has proper cobwebs, replace any cobwebs this mod may have generated 
+    -- previously (when a cobweb mod wasn't included) with the proper cobwebs.
+    minetest.register_alias(nodeName_standinCobweb, minetest.get_name_from_content_id(nodeId_cobweb))
+  else
+    -- use a stand-in cobweb created by this mod
+    nodeId_cobweb = minetest.get_content_id(nodeName_standinCobweb)
+  end
+end
+------------------------------------------------------------------------------
+-- End of secrets section
+------------------------------------------------------------------------------
 
 
 local function renderCores(cores, minp, maxp, blockseed)
