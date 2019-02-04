@@ -1272,11 +1272,6 @@ local function renderCores(cores, minp, maxp, blockseed)
         local distanceSquared = (x - core.x)*(x - core.x) + (z - core.z)*(z - core.z)
         local radius        = core.radius
         local radiusSquared = radius * radius
-        local radiusRoot    = core.radiusRoot
-        if radiusRoot == nil then
-          radiusRoot = math_sqrt(radius)
-          core.radiusRoot = radiusRoot
-        end
 
         if distanceSquared <= radiusSquared then
 
@@ -1328,6 +1323,13 @@ local function renderCores(cores, minp, maxp, blockseed)
             -- a = 1 - x²
             -- b = 1 - √x
             -- e = 0.8*a*x + 1.2*b*(1 - x)
+
+            local radiusRoot = core.radiusRoot
+            if radiusRoot == nil then
+              radiusRoot = math_sqrt(radius)
+              core.radiusRoot = radiusRoot
+            end			
+
             local squared  = 1 - distanceSquared / radiusSquared
             local distance = math_sqrt(distanceSquared)
             local distance_normalized = distance / radius
