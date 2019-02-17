@@ -824,7 +824,7 @@ local function renderCores(cores, minp, maxp, blockseed)
 
           local surfaceNoise = noise_surfaceMap:get2d({x = x, y = z})
           if DEBUG_GEOMETRIC then surfaceNoise = SURFACEMAP_OFFSET end
-          local surface = round(surfaceNoise * 3 * (core.thickness + 1) * horz_easing)
+          local surface = round(surfaceNoise * 3 * (core.thickness + 1) * horz_easing) -- if you change this formular then update maxSufaceRise in on_generated()
           local coreBottom = math_floor(coreTop - (core.thickness + core.depth))
           local noisyDepthOfFiller = depth_filler;
           if noisyDepthOfFiller >= 3 then noisyDepthOfFiller = noisyDepthOfFiller + math_floor(randomNumbers[(x + z) % 256] * 3) - 1 end
@@ -970,7 +970,7 @@ local function renderCores(cores, minp, maxp, blockseed)
 
     vm:set_lighting({day=0, night=0}) -- Can't do the flags="nolight" trick here as mod is designed to run with other mapgens
     --vm:calc_lighting()
-    vm:calc_lighting(nil, nil, false) -- I can't see any effect from turning off propegation of shadows, but perhaps when islands cut the voxel area just right it might avoid shadows on the land?
+    vm:calc_lighting(nil, nil, false) -- turning off propegation of shadows from the chunk above will only avoid shadows on the land in some circumstances
     vm:write_to_map() -- seems to be unnecessary when other mods that use vm are running
   end
 end
@@ -982,10 +982,11 @@ local function on_generated(minp, maxp, blockseed)
   local osClockT0 = os.clock()
   if DEBUG then memUsageT0 = collectgarbage("count") end
 
-  local maxCoreThickness = coreTypes[1].thicknessMax
+  local maxCoreThickness = coreTypes[1].thicknessMax -- the first island is the biggest/thickest
   local maxCoreDepth     = coreTypes[1].radiusMax * 3 / 2
+  local maxSufaceRise    = 3 * (maxCoreThickness + 1)
 
-  if minp.y > ALTITUDE + (ALTITUDE_AMPLITUDE + maxCoreThickness + 5) or
+  if minp.y > ALTITUDE + (ALTITUDE_AMPLITUDE + maxSufaceRise + 10) or   -- the 10 is an arbitrary number because sometimes the noise values exceed their normal range.
      maxp.y < ALTITUDE - (ALTITUDE_AMPLITUDE + maxCoreThickness + maxCoreDepth + 1) then
     -- Hallelujah Mountains don't generate here
     return
