@@ -233,6 +233,7 @@ interop.find_node_id = function (node_aliases)
   return result  
 end
 
+-- returns the clone_name
 interop.register_clone = function(node_name, clone_name)
   local node = minetest.registered_nodes[node_name]
   if node == nil then
@@ -243,7 +244,7 @@ interop.register_clone = function(node_name, clone_name)
     if minetest.registered_nodes[clone_name] == nil then
       minetest.log("info", "attempting to register: " .. clone_name)
       local clone = {}
-      for key, value in pairs(node) do clone.key = value end
+      for key, value in pairs(node) do clone[key] = value end
       clone.name = clone_name
       minetest.register_node(clone_name, clone)
       --minetest.log("info", clone_name .. " id: " .. minetest.get_content_id(clone_name))
@@ -266,15 +267,37 @@ local function init_trees(trees)
   skyTree_maximumHeight       = 0
 
   for _,tree in pairs(trees) do
-    skyTree_minimumIslandRadius = math_min(skyTree_minimumIslandRadius, tree.requiredIslandRadius)
-    skyTree_minimumIslandDepth  = math_min(skyTree_minimumIslandDepth,  tree.requiredIslandDepth)
-    skyTree_maximumYOffset      = math_max(skyTree_maximumYOffset, tree.center.y)
-    skyTree_maximumHeight       = math_max(skyTree_maximumHeight,  tree.size.y)
-
     tree.fullFilename    = minetest.get_modpath(MODNAME) .. DIR_DELIM .. tree.filename
     tree.nodeName_trunk  = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_trunk))
     tree.nodeName_leaves = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_leaves))
-    tree.nodeName_bark   = 'default:stone'
+
+    if tree.nodeName_trunk == 'ignore' or not file_exists(tree.fullFilename) then
+      tree.deleteFromList = true
+    else
+      skyTree_minimumIslandRadius = math_min(skyTree_minimumIslandRadius, tree.requiredIslandRadius)
+      skyTree_minimumIslandDepth  = math_min(skyTree_minimumIslandDepth,  tree.requiredIslandDepth)
+      skyTree_maximumYOffset      = math_max(skyTree_maximumYOffset, tree.center.y)
+      skyTree_maximumHeight       = math_max(skyTree_maximumHeight,  tree.size.y)            
+
+      local sourceTreeName = tree.nodeName_trunk
+      local pos = sourceTreeName:find(':')
+      if pos ~= nil then sourceTreeName = sourceTreeName:sub(pos) end
+      tree.nodeName_bark = MODNAME .. sourceTreeName .. "_bark"
+
+      local trunkNode = minetest.registered_nodes[tree.nodeName_trunk]
+      local newBarkNode = {}
+      for key, value in pairs(trunkNode) do newBarkNode[key] = value end
+      newBarkNode.name = tree.nodeName_bark
+      newBarkNode.description = "Bark from " .. newBarkNode.description
+      newBarkNode.drop = tree.nodeName_trunk
+      local tiles = trunkNode.tiles
+      if type(tiles) == "table" then
+        newBarkNode.tiles = { tiles[#tiles] }
+      end
+
+      -- minetest.log("info", "newBarkNode: " .. dump(newBarkNode))
+      minetest.register_node(tree.nodeName_bark, newBarkNode)
+    end
   end
 end
 
@@ -330,8 +353,6 @@ local function init_mapgen()
     region_min_x > -32000 or region_min_z > -32000 
     or region_max_x < 32000 or region_max_z < 32000
     or limit_to_biomes ~= nil
-
-  init_trees(skyTrees)
 end
 
 -- Updates coreList to include all cores of type coreType within the given bounds
@@ -834,12 +855,13 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
   -- to also extract & run the init_trees() function.     
   local replacements = {
     ['treebark\r\n\r\n~~~ Cloudlands_tree mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = tree.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
-    ['ignore\0\r\n\r\n~~~ Cloudlands_tree1 mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = tree.nodeName_bark,
+    ['default:stone'] = tree.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
     ['default:tree']   = tree.nodeName_trunk,
     ['default:leaves'] = 'ignore',--tree.nodeName_leaves,
     ['default:dirt']   = core.biome.node_top
   }
 
+    minetest.log("info", "Placing tree: " .. dump(treePos) .. ", " .. tree.filename)
     minetest.place_schematic(treePos, tree.fullFilename, treeAngle, replacements, true)
   --minetest.place_schematic_on_vmanip(vm, treePos, tree.fullFilename, treeAngle, replacements, true)
   return true;
@@ -1167,6 +1189,9 @@ end
 
 
 minetest.register_on_generated(on_generated)
+
+
+init_trees(skyTrees)
 
 minetest.register_on_mapgen_init(
   -- invoked after mods initially run but before the environment is created, while the mapgen is being initialized
