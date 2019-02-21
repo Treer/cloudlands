@@ -272,6 +272,7 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
     MODNAME = minetest.get_current_modname() -- don't hardcode incase it's copied into other mods
   }
 
+  -- Must be called this during mod load time, as it uses minetest.register_node()
   SkyTrees.init = function()
 
     SkyTrees.minimumIslandRadius = 100000
@@ -279,13 +280,14 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
     SkyTrees.maximumYOffset      = 0
     SkyTrees.maximumHeight       = 0
   
-    for _,tree in pairs(SkyTrees.schematicInfo) do
+    for i,tree in pairs(SkyTrees.schematicInfo) do
       tree.fullFilename    = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. tree.filename
       tree.nodeName_trunk  = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_trunk))
       tree.nodeName_leaves = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_leaves))
   
       if tree.nodeName_trunk == 'ignore' or not file_exists(tree.fullFilename) then
-        tree.deleteFromList = true
+        -- remove the schematic from the list
+        SkyTrees.schematicInfo[i] = nil
       else
         SkyTrees.minimumIslandRadius = math_min(SkyTrees.minimumIslandRadius, tree.requiredIslandRadius)
         SkyTrees.minimumIslandDepth  = math_min(SkyTrees.minimumIslandDepth,  tree.requiredIslandDepth)
@@ -293,7 +295,7 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
         SkyTrees.maximumHeight       = math_max(SkyTrees.maximumHeight,       tree.size.y)            
   
         local _, treeName = interop.split_nodename(tree.nodeName_trunk)
-        tree.nodeName_bark = MODNAME .. ":" .. treeName .. "_bark"
+        tree.nodeName_bark = SkyTrees.MODNAME .. ":" .. treeName .. "_bark"
   
         local trunkNode = minetest.registered_nodes[tree.nodeName_trunk]
         local newBarkNode = {}
@@ -310,6 +312,54 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
         minetest.register_node(tree.nodeName_bark, newBarkNode)
       end
     end
+
+    function generate_woodTypes(nodeName_templateWood, overlay, barkoverlay, nodesuffix, description, dropsTemplateWood)
+
+      local trunkNode = minetest.registered_nodes[nodeName_templateWood]
+      local newTrunkNode = {}
+      for key, value in pairs(trunkNode) do newTrunkNode[key] = value end
+      newTrunkNode.name = SkyTrees.MODNAME .. ":" .. nodesuffix
+      newTrunkNode.description = description
+      if dropsTemplateWood then newTrunkNode.drop = nodeName_templateWood else newTrunkNode.drop = nil end
+      
+      local tiles = trunkNode.tiles
+      if type(tiles) == "table" then
+        newTrunkNode.tiles = {}
+        for key, value in pairs(tiles) do newTrunkNode.tiles[key] = value .. overlay end
+      else
+        newTrunkNode.tiles = tiles .. overlay
+      end
+      
+      local newBarkNode = {}
+      for key, value in pairs(newTrunkNode) do newBarkNode[key] = value end
+      newBarkNode.name = newBarkNode.name .. "_bark"
+      newBarkNode.description = "Bark of " .. newBarkNode.description
+      -- .drop: leave the bark nodes dropping the trunk wood
+      
+      local tiles = trunkNode.tiles
+      if type(tiles) == "table" then
+        newBarkNode.tiles = { tiles[#tiles] .. barkoverlay }
+      end      
+
+      --minetest.log("info", newTrunkNode.name .. ": " .. dump(newTrunkNode))
+      minetest.register_node(newTrunkNode.name, newTrunkNode)
+      minetest.register_node(newBarkNode.name,  newBarkNode)
+      return newTrunkNode.name
+    end
+
+    local templateWood = minetest.get_name_from_content_id(interop.find_node_id(NODENAMES_TREE1WOOD))
+    local normalwood = generate_woodTypes(templateWood, "", "", "Tree", "Giant tree", true)
+    local darkwood   = generate_woodTypes(templateWood, "^[colorize:black:205", "^[colorize:black:205", "darkwood", "Ziricote", false)
+    local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", "Dead bleached wood", true) -- make use of the bark blocks to introduce some color variance in the tree
+
+
+
+    SkyTrees.schematicInfo[1].nodeName_trunk = deadwood;
+    SkyTrees.schematicInfo[1].nodeName_bark  = deadwood .. '_bark';
+
+    -- generate wood types
+
+
   end
 
   -- position is a vector {x, y, z}
