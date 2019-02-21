@@ -62,27 +62,6 @@ local coreTypes = {
   }
 }
 
-local skyTrees = { -- Order the trees in this array from the largest island requirements to smallest
-  {
-    filename = 'cloudlands_tree1.mts',
-    size   = {x = 83, y = 109, z = 105},
-    center = {x = 49, y =  18, z =  67},
-    requiredIslandDepth = 20,
-    requiredIslandRadius = 36,
-    nodeNames_trunk  = NODENAMES_TREE1WOOD,
-    nodeNames_leaves = NODENAMES_TREE1LEAVES
-  },
-  {
-    filename = 'cloudlands_tree2.mts',
-    size   = {x = 62, y = 66, z = 65},
-    center = {x = 30, y = 12, z = 36},
-    requiredIslandDepth = 16,
-    requiredIslandRadius = 24,
-    nodeNames_trunk  = NODENAMES_TREE1WOOD,
-    nodeNames_leaves = NODENAMES_TREE1LEAVES
-  }
-}
-
 if minetest.get_biome_data == nil then error(MODNAME .. " requires Minetest v5.0 or greater", 0) end
 
 local function fromSettings(settings_name, default_value)
@@ -152,11 +131,6 @@ local noiseparams_skyReef = {
 local noiseAngle = -15 --degrees to rotate eddyField noise, so that the vertical and horizontal tendencies are off-axis
 local ROTATE_COS = math.cos(math.rad(noiseAngle))
 local ROTATE_SIN = math.sin(math.rad(noiseAngle))
-
-local skyTree_minimumIslandRadius
-local skyTree_minimumIslandDepth
-local skyTree_maximumYOffset
-local skyTree_maximumHeight
 
 local noise_eddyField
 local noise_heightMap
@@ -233,7 +207,7 @@ interop.find_node_id = function (node_aliases)
   return result  
 end
 
--- returns the clone_name
+-- returns the node name of the clone node.
 interop.register_clone = function(node_name, clone_name)
   local node = minetest.registered_nodes[node_name]
   if node == nil then
@@ -254,54 +228,140 @@ interop.register_clone = function(node_name, clone_name)
   end
 end
 
+-- converts "modname:nodename" into (modname, nodename), if no colon is found then modname is nil
+interop.split_nodename = function(nodeName)
+  local result_modname = nil
+  local result_nodename = nodeName
+
+  local pos = nodeName:find(':')
+  if pos ~= nil then
+    result_modname  = nodeName:sub(0, pos - 1) 
+    result_nodename = nodeName:sub(pos + 1) 
+  end
+  return result_modname, result_nodename
+end;
+
+
+--[[==============================
+              SkyTrees
+    ==============================]]--
+
+if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may already be defined
+
+  SkyTrees = {
+    schematicInfo = { -- Order the trees in this array from the largest island requirements to smallest
+      {
+        filename = 'cloudlands_tree1.mts',
+        size   = {x = 83, y = 109, z = 105},
+        center = {x = 49, y =  18, z =  67},
+        requiredIslandDepth = 20,
+        requiredIslandRadius = 36,
+        nodeNames_trunk  = NODENAMES_TREE1WOOD,
+        nodeNames_leaves = NODENAMES_TREE1LEAVES
+      },
+      {
+        filename = 'cloudlands_tree2.mts',
+        size   = {x = 62, y = 66, z = 65},
+        center = {x = 30, y = 12, z = 36},
+        requiredIslandDepth = 16,
+        requiredIslandRadius = 24,
+        nodeNames_trunk  = NODENAMES_TREE1WOOD,
+        nodeNames_leaves = NODENAMES_TREE1LEAVES
+      }
+    },
+    MODNAME = minetest.get_current_modname() -- don't hardcode incase it's copied into other mods
+  }
+
+  SkyTrees.init = function()
+
+    SkyTrees.minimumIslandRadius = 100000
+    SkyTrees.minimumIslandDepth  = 100000
+    SkyTrees.maximumYOffset      = 0
+    SkyTrees.maximumHeight       = 0
+  
+    for _,tree in pairs(SkyTrees.schematicInfo) do
+      tree.fullFilename    = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. tree.filename
+      tree.nodeName_trunk  = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_trunk))
+      tree.nodeName_leaves = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_leaves))
+  
+      if tree.nodeName_trunk == 'ignore' or not file_exists(tree.fullFilename) then
+        tree.deleteFromList = true
+      else
+        SkyTrees.minimumIslandRadius = math_min(SkyTrees.minimumIslandRadius, tree.requiredIslandRadius)
+        SkyTrees.minimumIslandDepth  = math_min(SkyTrees.minimumIslandDepth,  tree.requiredIslandDepth)
+        SkyTrees.maximumYOffset      = math_max(SkyTrees.maximumYOffset,      tree.center.y)
+        SkyTrees.maximumHeight       = math_max(SkyTrees.maximumHeight,       tree.size.y)            
+  
+        local _, treeName = interop.split_nodename(tree.nodeName_trunk)
+        tree.nodeName_bark = MODNAME .. ":" .. treeName .. "_bark"
+  
+        local trunkNode = minetest.registered_nodes[tree.nodeName_trunk]
+        local newBarkNode = {}
+        for key, value in pairs(trunkNode) do newBarkNode[key] = value end
+        newBarkNode.name = tree.nodeName_bark
+        newBarkNode.description = "Bark from " .. newBarkNode.description
+        newBarkNode.drop = tree.nodeName_trunk
+        local tiles = trunkNode.tiles
+        if type(tiles) == "table" then
+          newBarkNode.tiles = { tiles[#tiles] }
+        end
+  
+        -- minetest.log("info", "newBarkNode: " .. dump(newBarkNode))
+        minetest.register_node(tree.nodeName_bark, newBarkNode)
+      end
+    end
+  end
+
+  -- position is a vector {x, y, z}
+  -- rotation must be either 0, 90, 180, or 270
+  -- schematicInfo must be one of the items in SkyTrees.schematicInfo[]
+  -- topsoil [optional] is the biome's "node_top" (the ground node of the region)
+  SkyTrees.placeTree = function(position, rotation, schematicInfo, themeInfo, topsoil)
+
+    local rotatedCenter = vector.new(schematicInfo.center);
+    if rotation == 90 then
+      rotatedCenter.x = schematicInfo.center.z
+      rotatedCenter.z = schematicInfo.size.x - schematicInfo.center.x
+    elseif rotation == 180 then
+      rotatedCenter.x = schematicInfo.size.x - schematicInfo.center.x
+      rotatedCenter.z = schematicInfo.size.z - schematicInfo.center.z
+    elseif rotation == 270 then
+      rotatedCenter.x = schematicInfo.size.z - schematicInfo.center.z
+      rotatedCenter.z = schematicInfo.center.x
+    end
+  
+    local treePos = vector.subtract(position, rotatedCenter)
+
+    if topsoil == nil then 
+      topsoil = 'ignore'
+      if minetest.get_biome_data == nil then error(SkyTrees.MODNAME .. " requires Minetest v5.0 or greater, or to have minor modifications to support v0.4.x", 0) end
+      local treeBiome = minetest.get_biome_data(position).biome
+      if treeBiome ~= nil and treeBiome.node_top ~= nil then topsoil = treeBiome.node_top end
+    end
+  
+    -- If you want to extract the trees from this mod to use in a different mod, then remember
+    -- to also extract & run the init_trees() function.     
+    local replacements = {
+      ['treebark\r\n\r\n~~~ Cloudlands_tree mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = schematicInfo.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
+      ['default:stone'] = schematicInfo.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
+      ['default:tree']   = schematicInfo.nodeName_trunk,
+      ['default:leaves'] = schematicInfo.nodeName_leaves,
+      ['default:dirt']   = topsoil
+    }
+  
+    --minetest.log("info", "Placing tree: " .. dump(treePos) .. ", " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename)
+    minetest.place_schematic(treePos, schematicInfo.fullFilename, rotation, replacements, true)
+  end
+
+end
+
+SkyTrees.init();
+
 
 --[[==============================
        Initialization and Mapgen
     ==============================]]--
 
-local function init_trees(trees)
-
-  skyTree_minimumIslandRadius = 100000
-  skyTree_minimumIslandDepth  = 100000
-  skyTree_maximumYOffset      = 0
-  skyTree_maximumHeight       = 0
-
-  for _,tree in pairs(trees) do
-    tree.fullFilename    = minetest.get_modpath(MODNAME) .. DIR_DELIM .. tree.filename
-    tree.nodeName_trunk  = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_trunk))
-    tree.nodeName_leaves = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_leaves))
-
-    if tree.nodeName_trunk == 'ignore' or not file_exists(tree.fullFilename) then
-      tree.deleteFromList = true
-    else
-      skyTree_minimumIslandRadius = math_min(skyTree_minimumIslandRadius, tree.requiredIslandRadius)
-      skyTree_minimumIslandDepth  = math_min(skyTree_minimumIslandDepth,  tree.requiredIslandDepth)
-      skyTree_maximumYOffset      = math_max(skyTree_maximumYOffset, tree.center.y)
-      skyTree_maximumHeight       = math_max(skyTree_maximumHeight,  tree.size.y)            
-
-      local sourceTreeName = tree.nodeName_trunk
-      local pos = sourceTreeName:find(':')
-      if pos ~= nil then sourceTreeName = sourceTreeName:sub(pos) end
-      tree.nodeName_bark = MODNAME .. sourceTreeName .. "_bark"
-
-      local trunkNode = minetest.registered_nodes[tree.nodeName_trunk]
-      local newBarkNode = {}
-      for key, value in pairs(trunkNode) do newBarkNode[key] = value end
-      newBarkNode.name = tree.nodeName_bark
-      newBarkNode.description = "Bark from " .. newBarkNode.description
-      newBarkNode.drop = tree.nodeName_trunk
-      local tiles = trunkNode.tiles
-      if type(tiles) == "table" then
-        newBarkNode.tiles = { tiles[#tiles] }
-      end
-
-      -- minetest.log("info", "newBarkNode: " .. dump(newBarkNode))
-      minetest.register_node(tree.nodeName_bark, newBarkNode)
-    end
-  end
-end
-
-    
 local function init_mapgen()
   -- invoke get_perlin() here, since it can't be invoked before the environment
   -- is created because it uses the world's seed value.
@@ -780,7 +840,7 @@ end
 -- returns true if tree was added
 local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
 
-  if (core.radius < skyTree_minimumIslandRadius) or (core.depth < skyTree_minimumIslandDepth) then
+  if (core.radius < SkyTrees.minimumIslandRadius) or (core.depth < SkyTrees.minimumIslandDepth) then
     --no tree here
     return false
   end
@@ -788,7 +848,7 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
   local coreTop          = ALTITUDE + core.y
   local treeAltitude     = math_floor(coreTop + core.thickness)
 
-  if (maxp.y < treeAltitude - skyTree_maximumYOffset) or (minp.y > treeAltitude + skyTree_maximumHeight) then
+  if (maxp.y < treeAltitude - SkyTrees.maximumYOffset) or (minp.y > treeAltitude + SkyTrees.maximumHeight) then
     --no tree here
     return false
   end
@@ -804,7 +864,7 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
 
   -- choose a tree that will fit on the island
   local tree
-  for i, treeType in pairs(skyTrees) do
+  for i, treeType in pairs(SkyTrees.schematicInfo) do
     if i == 1 and (fastHash % 10) < 3 then
       -- 'continue', to allow small trees a chance to spawn on large islands
     elseif (core.radius >= treeType.requiredIslandRadius) and (core.depth >= treeType.requiredIslandDepth) then
@@ -813,11 +873,6 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
     end
   end
 
-  --if tree == nil then 
-    --no tree here
-  --  return false
-  --end
-  
   local coreX = core.x --save doing a table lookups
   local coreZ = core.z --save doing a table lookups
   local maxOffsetFromCenter = core.radius - tree.requiredIslandRadius;
@@ -830,40 +885,14 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
   )
 
   local treeAngle = 90 * prng:next(0, 4)
-  
-  local rotatedCenter = vector.new(tree.center);
-  if treeAngle == 90 then
-    rotatedCenter.x = tree.center.z
-    rotatedCenter.z = tree.size.x - tree.center.x
-  elseif treeAngle == 180 then
-    rotatedCenter.x = tree.size.x - tree.center.x
-    rotatedCenter.z = tree.size.z - tree.center.z
-  elseif treeAngle == 270 then
-    rotatedCenter.x = tree.size.z - tree.center.z
-    rotatedCenter.z = tree.center.x
-  end  
-
   local treePos = {
-    x = coreX - rotatedCenter.x + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2), 
-    y = treeAltitude - tree.center.y, 
-    z = coreZ - rotatedCenter.z + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2)
+    x = coreX + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2), 
+    y = treeAltitude, 
+    z = coreZ + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2)
   }
-
   if core.biome == nil then setCoreBiomeData(core) end -- We shouldn't assume the core biome has already been resolved, it might be below the emerged chunk and unrendered
 
-  -- If you want to extract the trees from this mod to use in a different mod, then remember
-  -- to also extract & run the init_trees() function.     
-  local replacements = {
-    ['treebark\r\n\r\n~~~ Cloudlands_tree mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = tree.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
-    ['default:stone'] = tree.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
-    ['default:tree']   = tree.nodeName_trunk,
-    ['default:leaves'] = 'ignore',--tree.nodeName_leaves,
-    ['default:dirt']   = core.biome.node_top
-  }
-
-    minetest.log("info", "Placing tree: " .. dump(treePos) .. ", " .. tree.filename)
-    minetest.place_schematic(treePos, tree.fullFilename, treeAngle, replacements, true)
-  --minetest.place_schematic_on_vmanip(vm, treePos, tree.fullFilename, treeAngle, replacements, true)
+  SkyTrees.placeTree(treePos, treeAngle, tree, nil, core.biome.node_top)
   return true;
 end
 
@@ -1189,9 +1218,6 @@ end
 
 
 minetest.register_on_generated(on_generated)
-
-
-init_trees(skyTrees)
 
 minetest.register_on_mapgen_init(
   -- invoked after mods initially run but before the environment is created, while the mapgen is being initialized
