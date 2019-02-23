@@ -23,9 +23,11 @@ local NODENAMES_WATER       = {"mapgen_water_source", "mcl_core:water_source", "
 local NODENAMES_ICE         = {"mapgen_ice",          "mcl_core:ice",          "pedology:ice_white", "default:ice"}
 local NODENAMES_GRAVEL      = {"mapgen_gravel",       "mcl_core:gravel",       "default:gravel"}
 local NODENAMES_SILT        = {"mapgen_silt", "default:silt", "aotearoa:silt", "darkage:silt", "mapgen_sand", "mcl_core:sand", "default:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
-local NODENAMES_VINES       = {"mcl_core:vine", "vines:side_end"}
-local NODENAMES_TREE1WOOD   = {"default:tree"}
-local NODENAMES_TREE1LEAVES = {"default:leaves"}
+local NODENAMES_VINES       = {"mcl_core:vine", "vines:side_end", "ethereal:vine"} -- ethereal vines don't grow, so only select that if there's nothing else. 
+local NODENAMES_HANGINGVINE = {"vines:vine_end"} 
+local NODENAMES_HANGINGROOT = {"vines:root_end"}
+local NODENAMES_TREEWOOD    = {"mcl_core:tree",   "default:tree",   "mapgen_tree"}
+local NODENAMES_TREELEAVES  = {"mcl_core:leaves", "default:leaves", "mapgen_leaves"}
 
 local MODNAME          = minetest.get_current_modname()
 local VINES_REQUIRED_HUMIDITY    = 45
@@ -215,6 +217,11 @@ interop.find_node_id = function (node_aliases)
   return result  
 end
 
+-- returns the name of the first name in the list that resolves to a node id, or 'ignore' if not found
+interop.find_node_name = function (node_aliases)
+  return minetest.get_name_from_content_id(interop.find_node_id(node_aliases))
+end
+
 -- returns the node name of the clone node.
 interop.register_clone = function(node_name, clone_name)
   local node = minetest.registered_nodes[node_name]
@@ -258,27 +265,30 @@ end;
 
 if SkyTrees == nil then -- If SkyTrees added into other mods, this may have already been defined
 
+  local TREE1_FILE  = 'cloudlands_tree1.mts'
+  local TREE2_FILE  = 'cloudlands_tree2.mts'
+  local BARK_SUFFIX = '_bark'
+  local GLOW_SUFFIX = '_glow'
+
   SkyTrees = {
-    schematicInfo = { -- Order the trees in this array from the largest island requirements to smallest
+    -- Order the trees in this schematicInfo array from the largest island requirements to smallest
+    -- The data in each schematicInfo must exactly match what's in the .mts file or things will break
+    schematicInfo = { 
       {
-        filename = 'cloudlands_tree1.mts',
+        filename = TREE1_FILE,
         size   = {x = 83, y = 109, z = 105},
         center = {x = 49, y =  18, z =  67},
         requiredIslandDepth = 20,
         requiredIslandRadius = 36,
         nodesWithConstructor = {},
-        nodeNames_trunk  = NODENAMES_TREE1WOOD,
-        nodeNames_leaves = NODENAMES_TREE1LEAVES
       },
       {
-        filename = 'cloudlands_tree2.mts',
+        filename = TREE2_FILE,
         size   = {x = 62, y = 66, z = 65},
         center = {x = 30, y = 12, z = 36},
         requiredIslandDepth = 16,
         requiredIslandRadius = 24,
         nodesWithConstructor = { {x=19, y=53, z=3}, {x=20, y=53, z=3}, {x=33, y=58, z=3}, {x=36, y=59, z=3}, {x=32, y=55, z=4}, {x=31, y=57, z=4}, {x=33, y=58, z=4}, {x=25, y=59, z=4}, {x=30, y=57, z=5}, {x=33, y=57, z=5}, {x=15, y=54, z=6}, {x=31, y=57, z=7}, {x=12, y=51, z=8}, {x=26, y=52, z=8}, {x=16, y=50, z=9}, {x=11, y=52, z=9}, {x=20, y=61, z=9}, {x=32, y=57, z=10}, {x=36, y=62, z=10}, {x=9, y=53, z=11}, {x=24, y=50, z=12}, {x=32, y=54, z=12}, {x=30, y=39, z=13}, {x=29, y=44, z=13}, {x=22, y=49, z=13}, {x=27, y=50, z=13}, {x=9, y=52, z=13}, {x=30, y=52, z=14}, {x=28, y=8, z=15}, {x=26, y=46, z=15}, {x=28, y=46, z=15}, {x=19, y=59, z=15}, {x=35, y=38, z=16}, {x=22, y=43, z=16}, {x=23, y=47, z=16}, {x=18, y=49, z=16}, {x=35, y=51, z=16}, {x=9, y=54, z=16}, {x=16, y=56, z=16}, {x=30, y=38, z=18}, {x=42, y=42, z=18}, {x=22, y=46, z=18}, {x=27, y=11, z=19}, {x=19, y=47, z=19}, {x=41, y=39, z=20}, {x=42, y=40, z=20}, {x=26, y=39, z=21}, {x=21, y=46, z=21}, {x=32, y=53, z=21}, {x=18, y=56, z=21}, {x=16, y=49, z=22}, {x=10, y=52, z=22}, {x=21, y=44, z=23}, {x=38, y=46, z=23}, {x=26, y=59, z=23}, {x=27, y=59, z=23}, {x=26, y=62, z=23}, {x=32, y=39, z=24}, {x=40, y=40, z=24}, {x=26, y=58, z=24}, {x=24, y=61, z=24}, {x=43, y=48, z=25}, {x=46, y=62, z=25}, {x=43, y=50, z=26}, {x=46, y=61, z=26}, {x=26, y=36, z=27}, {x=41, y=45, z=27}, {x=47, y=7, z=29}, {x=10, y=11, z=29}, {x=26, y=13, z=29}, {x=31, y=34, z=29}, {x=25, y=35, z=29}, {x=25, y=39, z=29}, {x=30, y=40, z=29}, {x=35, y=43, z=29}, {x=52, y=46, z=29}, {x=20, y=48, z=29}, {x=41, y=51, z=29}, {x=31, y=12, z=30}, {x=44, y=13, z=30}, {x=29, y=40, z=30}, {x=48, y=59, z=30}, {x=55, y=62, z=30}, {x=16, y=10, z=31}, {x=9, y=12, z=31}, {x=22, y=12, z=31}, {x=38, y=14, z=31}, {x=28, y=17, z=31}, {x=30, y=43, z=31}, {x=52, y=43, z=31}, {x=38, y=51, z=31}, {x=14, y=57, z=31}, {x=17, y=57, z=31}, {x=16, y=59, z=31}, {x=39, y=4, z=32}, {x=16, y=11, z=32}, {x=31, y=36, z=32}, {x=18, y=56, z=32}, {x=44, y=59, z=32}, {x=40, y=15, z=33}, {x=33, y=18, z=33}, {x=26, y=31, z=33}, {x=25, y=35, z=33}, {x=29, y=37, z=33}, {x=25, y=49, z=33}, {x=37, y=50, z=33}, {x=25, y=11, z=34}, {x=28, y=12, z=34}, {x=40, y=12, z=34}, {x=40, y=42, z=34}, {x=34, y=44, z=34}, {x=33, y=46, z=34}, {x=25, y=49, z=34}, {x=12, y=52, z=34}, {x=53, y=60, z=34}, {x=55, y=63, z=34}, {x=14, y=8, z=35}, {x=17, y=11, z=35}, {x=34, y=19, z=35}, {x=31, y=34, z=35}, {x=27, y=50, z=35}, {x=30, y=50, z=35}, {x=53, y=60, z=35}, {x=13, y=7, z=36}, {x=34, y=24, z=36}, {x=34, y=25, z=36}, {x=35, y=30, z=36}, {x=24, y=31, z=36}, {x=37, y=38, z=36}, {x=56, y=43, z=36}, {x=31, y=54, z=36}, {x=28, y=12, z=37}, {x=37, y=42, z=37}, {x=48, y=42, z=37}, {x=11, y=50, z=37}, {x=15, y=51, z=37}, {x=29, y=54, z=37}, {x=11, y=56, z=37}, {x=26, y=61, z=37}, {x=30, y=61, z=37}, {x=23, y=39, z=38}, {x=43, y=51, z=38}, {x=27, y=53, z=38}, {x=14, y=55, z=38}, {x=46, y=55, z=38}, {x=47, y=55, z=38}, {x=27, y=60, z=38}, {x=54, y=60, z=38}, {x=33, y=12, z=39}, {x=34, y=26, z=39}, {x=34, y=28, z=39}, {x=22, y=35, z=39}, {x=31, y=36, z=39}, {x=25, y=39, z=39}, {x=23, y=40, z=39}, {x=41, y=42, z=39}, {x=42, y=42, z=39}, {x=18, y=45, z=39}, {x=24, y=45, z=39}, {x=16, y=46, z=39}, {x=20, y=55, z=39}, {x=56, y=62, z=39}, {x=26, y=17, z=40}, {x=33, y=24, z=40}, {x=26, y=27, z=40}, {x=38, y=36, z=40}, {x=24, y=44, z=40}, {x=39, y=55, z=40}, {x=41, y=55, z=40}, {x=36, y=56, z=40}, {x=30, y=61, z=40}, {x=32, y=17, z=41}, {x=28, y=26, z=41}, {x=29, y=27, z=41}, {x=30, y=33, z=41}, {x=36, y=34, z=41}, {x=22, y=35, z=41}, {x=49, y=42, z=41}, {x=8, y=48, z=41}, {x=7, y=58, z=41}, {x=29, y=59, z=41}, {x=33, y=33, z=42}, {x=29, y=36, z=42}, {x=26, y=40, z=42}, {x=21, y=51, z=42}, {x=37, y=55, z=42}, {x=35, y=10, z=43}, {x=36, y=11, z=43}, {x=27, y=35, z=43}, {x=39, y=39, z=43}, {x=43, y=42, z=43}, {x=7, y=46, z=43}, {x=34, y=46, z=43}, {x=38, y=53, z=43}, {x=38, y=54, z=43}, {x=53, y=56, z=43}, {x=25, y=58, z=43}, {x=31, y=58, z=43}, {x=55, y=61, z=43}, {x=24, y=10, z=44}, {x=34, y=11, z=44}, {x=24, y=42, z=44}, {x=25, y=43, z=44}, {x=43, y=43, z=44}, {x=49, y=43, z=44}, {x=7, y=58, z=44}, {x=9, y=60, z=44}, {x=22, y=7, z=45}, {x=24, y=37, z=45}, {x=37, y=43, z=45}, {x=45, y=43, z=45}, {x=31, y=45, z=45}, {x=20, y=9, z=46}, {x=24, y=9, z=46}, {x=17, y=43, z=46}, {x=42, y=43, z=46}, {x=55, y=43, z=46}, {x=29, y=63, z=46}, {x=54, y=63, z=46}, {x=21, y=7, z=47}, {x=38, y=9, z=47}, {x=26, y=43, z=47}, {x=52, y=43, z=47}, {x=56, y=43, z=47}, {x=39, y=44, z=47}, {x=32, y=45, z=47}, {x=61, y=45, z=47}, {x=55, y=50, z=47}, {x=6, y=55, z=47}, {x=50, y=60, z=47}, {x=40, y=62, z=47}, {x=49, y=43, z=48}, {x=53, y=43, z=48}, {x=57, y=43, z=48}, {x=26, y=43, z=49}, {x=53, y=43, z=49}, {x=53, y=57, z=49}, {x=27, y=58, z=49}, {x=16, y=63, z=49}, {x=61, y=46, z=50}, {x=51, y=56, z=50}, {x=19, y=8, z=51}, {x=54, y=43, z=51}, {x=6, y=53, z=51}, {x=27, y=63, z=51}, {x=40, y=8, z=52}, {x=41, y=8, z=52}, {x=24, y=44, z=52}, {x=54, y=51, z=52}, {x=46, y=59, z=52}, {x=33, y=60, z=52}, {x=18, y=10, z=53}, {x=41, y=11, z=53}, {x=13, y=43, z=53}, {x=31, y=45, z=53}, {x=45, y=49, z=53}, {x=48, y=49, z=53}, {x=17, y=55, z=53}, {x=9, y=45, z=54}, {x=55, y=45, z=54}, {x=0, y=48, z=54}, {x=46, y=49, z=54}, {x=55, y=52, z=54}, {x=12, y=54, z=54}, {x=11, y=44, z=55}, {x=43, y=49, z=55}, {x=15, y=56, z=55}, {x=2, y=47, z=56}, {x=30, y=47, z=56}, {x=16, y=57, z=56}, {x=22, y=59, z=56}, {x=18, y=43, z=58}, {x=22, y=43, z=58}, {x=26, y=45, z=58}, {x=47, y=50, z=58}, {x=18, y=43, z=59}, {x=21, y=43, z=60}, {x=11, y=45, z=60}, {x=9, y=48, z=60}, {x=48, y=51, z=60}, {x=12, y=44, z=61}, {x=21, y=44, z=62}, {x=12, y=46, z=62}, {x=14, y=47, z=63} },
-        nodeNames_trunk  = NODENAMES_TREE1WOOD,
-        nodeNames_leaves = NODENAMES_TREE1LEAVES
       }
     },
     MODNAME = minetest.get_current_modname() -- don't hardcode incase it's copied into other mods
@@ -293,13 +303,15 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
     SkyTrees.minimumIslandDepth  = 100000
     SkyTrees.maximumYOffset      = 0
     SkyTrees.maximumHeight       = 0
-  
+
+    SkyTrees.nodeName_sideVines   = interop.find_node_name(NODENAMES_VINES)
+    SkyTrees.nodeName_hangingVine = interop.find_node_name(NODENAMES_HANGINGVINE)
+    SkyTrees.nodeName_hangingRoot = interop.find_node_name(NODENAMES_HANGINGROOT)
+
     for i,tree in pairs(SkyTrees.schematicInfo) do
       tree.fullFilename    = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. tree.filename
-      tree.nodeName_trunk  = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_trunk))
-      tree.nodeName_leaves = minetest.get_name_from_content_id(interop.find_node_id(tree.nodeNames_leaves))
   
-      if tree.nodeName_trunk == 'ignore' or not file_exists(tree.fullFilename) then
+      if not file_exists(tree.fullFilename) then
         -- remove the schematic from the list
         SkyTrees.schematicInfo[i] = nil
       else
@@ -307,23 +319,9 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
         SkyTrees.minimumIslandDepth  = math_min(SkyTrees.minimumIslandDepth,  tree.requiredIslandDepth)
         SkyTrees.maximumYOffset      = math_max(SkyTrees.maximumYOffset,      tree.center.y)
         SkyTrees.maximumHeight       = math_max(SkyTrees.maximumHeight,       tree.size.y)            
-  
-        local _, treeName = interop.split_nodename(tree.nodeName_trunk)
-        tree.nodeName_bark = SkyTrees.MODNAME .. ":" .. treeName .. "_bark"
-  
-        local trunkNode = minetest.registered_nodes[tree.nodeName_trunk]
-        local newBarkNode = {}
-        for key, value in pairs(trunkNode) do newBarkNode[key] = value end
-        newBarkNode.name = tree.nodeName_bark
-        newBarkNode.description = "Bark from " .. newBarkNode.description
-        newBarkNode.drop = tree.nodeName_trunk
-        local tiles = trunkNode.tiles
-        if type(tiles) == "table" then
-          newBarkNode.tiles = { tiles[#tiles] }
-        end
-  
-        -- minetest.log("info", "newBarkNode: " .. dump(newBarkNode))
-        minetest.register_node(tree.nodeName_bark, newBarkNode)
+
+        tree.theme = {}
+        SkyTrees.schematicInfo[tree.filename] = tree -- so schematicInfo of trees can be indexed by name
       end
     end
 
@@ -346,7 +344,7 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       
       local newBarkNode = {}
       for key, value in pairs(newTrunkNode) do newBarkNode[key] = value end
-      newBarkNode.name = newBarkNode.name .. "_bark"
+      newBarkNode.name = newBarkNode.name .. BARK_SUFFIX
       newBarkNode.description = "Bark of " .. newBarkNode.description
       -- .drop: leave the bark nodes dropping the trunk wood
       
@@ -361,7 +359,7 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       return newTrunkNode.name
     end
 
-    function generate_leafTypes(nodeName_templateLeaf, overlay, nodesuffix, description, dropsTemplateLeaf, glows)
+    function generate_leafTypes(nodeName_templateLeaf, overlay, nodesuffix, description, dropsTemplateLeaf, glowVariantBrightness)
 
       local leafNode = minetest.registered_nodes[nodeName_templateLeaf]
       local newLeafNode = {}
@@ -369,9 +367,7 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       newLeafNode.name = SkyTrees.MODNAME .. ":" .. nodesuffix
       newLeafNode.description = description
       newLeafNode.sunlight_propagates = true -- soo many leaves they otherwise blot out the sun.
-
       if dropsTemplateLeaf then newLeafNode.drop = nodeName_templateLeaf else newLeafNode.drop = nil end
-      if glows == true then newLeafNode.light_source = 6 end
       
       local tiles = leafNode.tiles
       if type(tiles) == "table" then
@@ -381,41 +377,142 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
         newLeafNode.tiles = tiles .. overlay
       end
       
-      --minetest.log("info", newLeafNode.name .. ": " .. dump(newLeafNode))
       minetest.register_node(newLeafNode.name, newLeafNode)
+
+      if glowVariantBrightness ~= nil and glowVariantBrightness > 0 and BIOLUMINESCENCE then
+        local glowingLeafNode = {}
+        for key, value in pairs(newLeafNode) do glowingLeafNode[key] = value end
+        glowingLeafNode.name = newLeafNode.name .. GLOW_SUFFIX
+        glowingLeafNode.description = "Glowing " .. description
+        glowingLeafNode.light_source = glowVariantBrightness
+        minetest.register_node(glowingLeafNode.name, glowingLeafNode)
+      end
+
       return newLeafNode.name
     end
---ethereal:sakura_leaves
+  
+    --ethereal:sakura_leaves
 
-    local templateWood = minetest.get_name_from_content_id(interop.find_node_id(NODENAMES_TREE1WOOD))
+    local templateWood = interop.find_node_name(NODENAMES_TREEWOOD)
     local normalwood = generate_woodTypes(templateWood, "", "", "Tree", "Giant tree", true)
     local darkwood   = generate_woodTypes(templateWood, "^[colorize:black:205", "^[colorize:black:205", "darkwood", "Giant Ziricote", false)
-    local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", "Dead bleached wood", true) -- make use of the bark blocks to introduce some color variance in the tree
-
-    local templateLeaf = minetest.get_name_from_content_id(interop.find_node_id(NODENAMES_TREE1LEAVES))
-    local blossom         = generate_leafTypes(templateLeaf, "^[colorize:#FFF0F0:255", "blossom_white",  "Blossom", false)
-    local cherryblossom   = generate_leafTypes(templateLeaf, "^[colorize:#fabcaf:240", "blossom_pink",   "Cherry blossom", false)
-    local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#cca4f3:240", "blossom_violet1", "Wisteria blossom", false)
-    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ecd9ff:240", "blossom_violet2", "Wisteria blossom", false)
-    local glowblossom     = generate_leafTypes(templateLeaf, "^[colorize:#FFF0F0:255", "blossom_glowing",  "Radiant blossom", false, true)
+    local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", "Dead bleached wood", false) -- make use of the bark blocks to introduce some color variance in the tree
 
 
-    SkyTrees.schematicInfo[1].nodeName_trunk = darkwood;
-    SkyTrees.schematicInfo[1].nodeName_bark  = darkwood .. '_bark';
-    SkyTrees.schematicInfo[1].nodeName_leaves = cherryblossom
-    SkyTrees.schematicInfo[1].nodeName_leaves_alt = blossom
+    local templateLeaf = interop.find_node_name(NODENAMES_TREELEAVES)
+    local greenleaf1   = generate_leafTypes(templateLeaf, "", "leaves",  "Leaves of a giant tree", false)
+    local greenleaf2   = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  "Leaves of a giant tree", false)
+    local greenleaf3   = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  "Leaves of a giant tree", false)
+
+    local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:255", "blossom_white1",  "Blossom", false)
+    local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:255", "blossom_white2",  "Blossom", false, 4)
+    --local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#fcd8df:240", "blossom_pink",   "Cherry blossom", false)
+    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:240", "blossom_pink",   "Cherry blossom", false, 4)
     
-    SkyTrees.schematicInfo[2].nodeName_leaves     = wisteriaBlossom1
-    SkyTrees.schematicInfo[2].nodeName_leaves_alt = wisteriaBlossom2
+    
+    --local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#cca4f3:240", "blossom_violet1", "Wisteria blossom", false)
+    --local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ecd9ff:240", "blossom_violet2", "Wisteria blossom", false)
+    local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8688f9:240", "blossom_wisteria1", "Wisteria blossom", false)
+    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:240", "blossom_wisteria2", "Wisteria blossom", false, 6)
 
-    if BIOLUMINESCENCE then 
-      SkyTrees.schematicInfo[2].nodeName_leaves_special = glowblossom
-    else 
-      SkyTrees.schematicInfo[2].nodeName_leaves_special = blossom
+
+    local tree = SkyTrees.schematicInfo[TREE1_FILE]
+    if tree ~= nil then
+
+      tree.defaultThemeName = "Green foliage"
+      tree.theme[tree.defaultThemeName] = {
+        trunk          = normalwood,
+        leaves1        = greenleaf1,
+        leaves2        = greenleaf2,
+        leaves_special = greenleaf3,
+        vineflags      = { leaves = true, hanging_leaves = true },
+
+        init = function(self, position)
+          -- if it's hot and humid then add vines
+          local viney = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
+
+          if viney then
+            local flagSeed = position.x * 3 + position.y + position.z + ISLANDS_SEED
+            self.vineflags.hanging_leaves = (flagSeed % 10) <= 2 or (flagSeed % 10) >= 8
+            self.vineflags.leaves         = (flagSeed % 10) <= 5
+            self.vineflags.bark           = (flagSeed % 10) <= 2
+          end
+        end
+      }
+
+      tree.theme["Haunted"] = {
+        trunk     = darkwood,
+        vineflags = { hanging_roots = true },
+
+        init = function(self, position)
+          -- 50% of these trees are a hanging roots variant
+          self.vineflags.hanging_roots = (position.x * 3 + position.y + position.z + ISLANDS_SEED) % 10 < 5
+        end
+      }
+
+      tree.theme["Dead"] = {
+        trunk = deadwood
+      }
+
+      tree.theme["Sakura"] = {
+        trunk = darkwood
+      }
+
+    end
+    
+    tree = SkyTrees.schematicInfo[TREE2_FILE]
+    if tree ~= nil then
+
+      -- copy the green leaves theme from tree1
+      tree.defaultThemeName = "Green foliage"
+      tree.theme[tree.defaultThemeName] = SkyTrees.schematicInfo[TREE1_FILE].theme["Green foliage"]
+
+      tree.theme["Wisteria"] = {
+        --local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8688f9:240", "blossom_violet1", "Wisteria blossom", false)
+        --local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:240", "blossom_violet2", "Wisteria blossom", false, 6)
+        trunk              = normalwood,
+        leaves1            = templateLeaf,
+        leaves2            = wisteriaBlossom1,
+        leaves_special     = wisteriaBlossom2,
+        vineflags          = { leaves = true, hanging_leaves = true, hanging_bark = true },
+
+        init = function(self, position)
+          -- 20% of these trees are a glowing variant
+          self.leaves_special = wisteriaBlossom2
+          if (position.x * 3 + position.y + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE then self.leaves_special = wisteriaBlossom2 .. GLOW_SUFFIX end
+
+          -- if it's hot and humid then allow vines on the trunk as well
+          self.vineflags.bark = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
+        end
+      }
+      tree.defaultThemeName = "Wisteria"
+
+      tree.theme["Blossom"] = {
+        trunk              = normalwood,
+        leaves1            = whiteblossom1,
+        leaves2            = whiteblossom2,
+        leaves_special     = normalwood..BARK_SUFFIX,
+
+        init = function(self, position)
+          -- 20% of these trees are a glowing variant
+          leaves_special     = normalwood..BARK_SUFFIX
+          if (position.x * 3 + position.y + position.z + ISLANDS_SEED) % 10 <= 2 and BIOLUMINESCENCE then self.leaves_special = pinkblossom .. GLOW_SUFFIX end
+        end
+      }      
+
     end
 
-    -- generate wood types
+    -- fill in any omitted fields in the themes with default values
+    for _,tree in pairs(SkyTrees.schematicInfo) do
+      for _,theme in pairs(tree.theme) do
+        if theme.bark           == nil then theme.bark           = theme.trunk .. BARK_SUFFIX end
+        if theme.leaves1        == nil then theme.leaves1        = 'ignore' end
+        if theme.leaves2        == nil then theme.leaves2        = 'ignore' end
+        if theme.leaves_special == nil then theme.leaves_special = theme.leaves1 end
 
+        if theme.vineflags == nil then theme.vineflags = {} end
+      end
+    end
 
   end
 
@@ -423,7 +520,7 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
   -- rotation must be either 0, 90, 180, or 270
   -- schematicInfo must be one of the items in SkyTrees.schematicInfo[]
   -- topsoil [optional] is the biome's "node_top" - the ground node of the region.
-  SkyTrees.placeTree = function(position, rotation, schematicInfo, theme, topsoil)
+  SkyTrees.placeTree = function(position, rotation, schematicInfo, themeName, topsoil)
 
     -- returns a new position vector, rotated around (0, 0) to match the schematic rotation (provided the schematic_size is correct!)
     function rotatePositon(position, schematic_size, rotation)
@@ -451,24 +548,36 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       if treeBiome ~= nil and treeBiome.node_top ~= nil then topsoil = treeBiome.node_top end
     end
   
+    if themeName == nil then themeName = schematicInfo.defaultThemeName end
+    local theme = schematicInfo.theme[themeName]
+    if theme == nil then error(MODNAME .. ' called SkyTrees.placeTree("' .. schematicInfo.filename .. '") with invalid theme: ' .. themeName, 0) end    
+    if theme.init ~= nil then theme.init(theme, position) end
+
+    -- theme.init() may have changed the vineflags, so update the replacement node names
+    if theme.vineflags.hanging_leaves  == true and SkyTrees.nodeName_hangingVine == 'ignore' then theme.vineflags.leaves = true end -- if there are no hanging vines then substitute side_vines
+    if theme.vineflags.leaves          == true then theme.leaf_vines         = SkyTrees.nodeName_sideVines    else theme.leaf_vines         = 'ignore' end
+    if theme.vineflags.bark            == true then theme.bark_vines         = SkyTrees.nodeName_sideVines    else theme.bark_vines         = 'ignore' end
+    if theme.vineflags.hanging_leaves  == true then theme.hanging_leaf_vines = SkyTrees.nodeName_hangingVine else theme.hanging_leaf_vines = 'ignore' end
+    if theme.vineflags.hanging_bark    == true then theme.hanging_bark_vines = SkyTrees.nodeName_hangingVine else theme.hanging_bark_vines = 'ignore' end
+    if theme.vineflags.hanging_roots   == true and SkyTrees.nodeName_hangingRoot ~= 'ignore' then theme.hanging_bark_vines = SkyTrees.nodeName_hangingRoot end
+
     local replacements = {
-      ['treebark\r\n\r\n~~~ Cloudlands_tree mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = schematicInfo.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
-      ['default:tree']       = schematicInfo.nodeName_trunk,
-      ['default:leaves']     = schematicInfo.nodeName_leaves,
-      ['leaves_alt']         = schematicInfo.nodeName_leaves_alt,
-      ['leaves_special']     = schematicInfo.nodeName_leaves_special,
-      ['leaf_vines']         = "vines:side_end",
-      ['bark_vines']         = "vines:side_end",
-      ['hanging_leaf_vines'] = "vines:vine_end",
-      ['hanging_bark_vines'] = "vines:root_end",
-      
-      ['default:dirt']   = topsoil
+      ['treebark\r\n\r\n~~~ Cloudlands_tree mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = theme.bark, -- because this node name is always replaced, it can double as space for a text header in the file.
+      ['default:tree']       = theme.trunk,
+      ['default:leaves']     = theme.leaves1,
+      ['leaves_alt']         = theme.leaves2,
+      ['leaves_special']     = theme.leaves_special,
+      ['leaf_vines']         = theme.leaf_vines,
+      ['bark_vines']         = theme.bark_vines,
+      ['hanging_leaf_vines'] = theme.hanging_leaf_vines,
+      ['hanging_bark_vines'] = theme.hanging_bark_vines,      
+      ['default:dirt']       = topsoil
     }
   
     --minetest.log("info", "Placing tree: " .. dump(treePos) .. ", " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename)
     minetest.place_schematic(treePos, schematicInfo.fullFilename, rotation, replacements, true)
 
-    -- minetest.place_schematic() doesn't invoke node constructors, so use set_node() for any nodes which require construction
+    -- minetest.place_schematic() doesn't invoke node constructors, so use set_node() for any nodes requiring construction
     for i, schematicCoords in pairs(schematicInfo.nodesWithConstructor) do
       if rotation ~= 0 then schematicCoords = rotatePositon(schematicCoords, schematicInfo.size, rotation) end
       local nodePos = vector.add(treePos, schematicCoords)
