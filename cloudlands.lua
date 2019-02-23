@@ -246,7 +246,9 @@ end;
               SkyTrees
     ==============================]]--
 
-if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may already be defined
+-- If splitting SkyTrees into a seperate mod, perhaps schemlib would be of help - https://forum.minetest.net/viewtopic.php?t=18084
+
+if SkyTrees == nil then -- People may want to add SkyTrees into other mods, in which case this may have been already be defined
 
   SkyTrees = {
     schematicInfo = { -- Order the trees in this array from the largest island requirements to smallest
@@ -256,15 +258,17 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
         center = {x = 49, y =  18, z =  67},
         requiredIslandDepth = 20,
         requiredIslandRadius = 36,
+        nodesWithConstructor = {},
         nodeNames_trunk  = NODENAMES_TREE1WOOD,
         nodeNames_leaves = NODENAMES_TREE1LEAVES
       },
       {
-        filename = 'cloudlands_tree2.mts',
+        filename = 'special_leaves.mts',--'cloudlands_tree2.mts',
         size   = {x = 62, y = 66, z = 65},
         center = {x = 30, y = 12, z = 36},
         requiredIslandDepth = 16,
         requiredIslandRadius = 24,
+        nodesWithConstructor = { {x=19, y=53, z=3}, {x=20, y=53, z=3}, {x=33, y=58, z=3}, {x=36, y=59, z=3}, {x=32, y=55, z=4}, {x=31, y=57, z=4}, {x=33, y=58, z=4}, {x=25, y=59, z=4}, {x=30, y=57, z=5}, {x=33, y=57, z=5}, {x=15, y=54, z=6}, {x=31, y=57, z=7}, {x=12, y=51, z=8}, {x=26, y=52, z=8}, {x=16, y=50, z=9}, {x=11, y=52, z=9}, {x=20, y=61, z=9}, {x=32, y=57, z=10}, {x=36, y=62, z=10}, {x=9, y=53, z=11}, {x=24, y=50, z=12}, {x=32, y=54, z=12}, {x=30, y=39, z=13}, {x=29, y=44, z=13}, {x=22, y=49, z=13}, {x=27, y=50, z=13}, {x=9, y=52, z=13}, {x=30, y=52, z=14}, {x=28, y=8, z=15}, {x=26, y=46, z=15}, {x=28, y=46, z=15}, {x=19, y=59, z=15}, {x=35, y=38, z=16}, {x=22, y=43, z=16}, {x=23, y=47, z=16}, {x=18, y=49, z=16}, {x=35, y=51, z=16}, {x=9, y=54, z=16}, {x=16, y=56, z=16}, {x=30, y=38, z=18}, {x=42, y=42, z=18}, {x=22, y=46, z=18}, {x=27, y=11, z=19}, {x=19, y=47, z=19}, {x=41, y=39, z=20}, {x=42, y=40, z=20}, {x=26, y=39, z=21}, {x=21, y=46, z=21}, {x=32, y=53, z=21}, {x=18, y=56, z=21}, {x=16, y=49, z=22}, {x=10, y=52, z=22}, {x=21, y=44, z=23}, {x=38, y=46, z=23}, {x=26, y=59, z=23}, {x=27, y=59, z=23}, {x=26, y=62, z=23}, {x=32, y=39, z=24}, {x=40, y=40, z=24}, {x=26, y=58, z=24}, {x=24, y=61, z=24}, {x=43, y=48, z=25}, {x=46, y=62, z=25}, {x=43, y=50, z=26}, {x=46, y=61, z=26}, {x=26, y=36, z=27}, {x=41, y=45, z=27}, {x=47, y=7, z=29}, {x=10, y=11, z=29}, {x=26, y=13, z=29}, {x=31, y=34, z=29}, {x=25, y=35, z=29}, {x=25, y=39, z=29}, {x=30, y=40, z=29}, {x=35, y=43, z=29}, {x=52, y=46, z=29}, {x=20, y=48, z=29}, {x=41, y=51, z=29}, {x=31, y=12, z=30}, {x=44, y=13, z=30}, {x=29, y=40, z=30}, {x=48, y=59, z=30}, {x=55, y=62, z=30}, {x=16, y=10, z=31}, {x=9, y=12, z=31}, {x=22, y=12, z=31}, {x=38, y=14, z=31}, {x=28, y=17, z=31}, {x=30, y=43, z=31}, {x=52, y=43, z=31}, {x=38, y=51, z=31}, {x=14, y=57, z=31}, {x=17, y=57, z=31}, {x=16, y=59, z=31}, {x=39, y=4, z=32}, {x=16, y=11, z=32}, {x=31, y=36, z=32}, {x=18, y=56, z=32}, {x=44, y=59, z=32}, {x=40, y=15, z=33}, {x=33, y=18, z=33}, {x=26, y=31, z=33}, {x=25, y=35, z=33}, {x=29, y=37, z=33}, {x=25, y=49, z=33}, {x=37, y=50, z=33}, {x=25, y=11, z=34}, {x=28, y=12, z=34}, {x=40, y=12, z=34}, {x=40, y=42, z=34}, {x=34, y=44, z=34}, {x=33, y=46, z=34}, {x=25, y=49, z=34}, {x=12, y=52, z=34}, {x=53, y=60, z=34}, {x=55, y=63, z=34}, {x=14, y=8, z=35}, {x=17, y=11, z=35}, {x=34, y=19, z=35}, {x=31, y=34, z=35}, {x=27, y=50, z=35}, {x=30, y=50, z=35}, {x=53, y=60, z=35}, {x=13, y=7, z=36}, {x=34, y=24, z=36}, {x=34, y=25, z=36}, {x=35, y=30, z=36}, {x=24, y=31, z=36}, {x=37, y=38, z=36}, {x=56, y=43, z=36}, {x=31, y=54, z=36}, {x=28, y=12, z=37}, {x=37, y=42, z=37}, {x=48, y=42, z=37}, {x=11, y=50, z=37}, {x=15, y=51, z=37}, {x=29, y=54, z=37}, {x=11, y=56, z=37}, {x=26, y=61, z=37}, {x=30, y=61, z=37}, {x=23, y=39, z=38}, {x=43, y=51, z=38}, {x=27, y=53, z=38}, {x=14, y=55, z=38}, {x=46, y=55, z=38}, {x=47, y=55, z=38}, {x=27, y=60, z=38}, {x=54, y=60, z=38}, {x=33, y=12, z=39}, {x=34, y=26, z=39}, {x=34, y=28, z=39}, {x=22, y=35, z=39}, {x=31, y=36, z=39}, {x=25, y=39, z=39}, {x=23, y=40, z=39}, {x=41, y=42, z=39}, {x=42, y=42, z=39}, {x=18, y=45, z=39}, {x=24, y=45, z=39}, {x=16, y=46, z=39}, {x=20, y=55, z=39}, {x=56, y=62, z=39}, {x=26, y=17, z=40}, {x=33, y=24, z=40}, {x=26, y=27, z=40}, {x=38, y=36, z=40}, {x=24, y=44, z=40}, {x=39, y=55, z=40}, {x=41, y=55, z=40}, {x=36, y=56, z=40}, {x=30, y=61, z=40}, {x=32, y=17, z=41}, {x=28, y=26, z=41}, {x=29, y=27, z=41}, {x=30, y=33, z=41}, {x=36, y=34, z=41}, {x=22, y=35, z=41}, {x=49, y=42, z=41}, {x=8, y=48, z=41}, {x=7, y=58, z=41}, {x=29, y=59, z=41}, {x=33, y=33, z=42}, {x=29, y=36, z=42}, {x=26, y=40, z=42}, {x=21, y=51, z=42}, {x=37, y=55, z=42}, {x=35, y=10, z=43}, {x=36, y=11, z=43}, {x=27, y=35, z=43}, {x=39, y=39, z=43}, {x=43, y=42, z=43}, {x=7, y=46, z=43}, {x=34, y=46, z=43}, {x=38, y=53, z=43}, {x=38, y=54, z=43}, {x=53, y=56, z=43}, {x=25, y=58, z=43}, {x=31, y=58, z=43}, {x=55, y=61, z=43}, {x=24, y=10, z=44}, {x=34, y=11, z=44}, {x=24, y=42, z=44}, {x=25, y=43, z=44}, {x=43, y=43, z=44}, {x=49, y=43, z=44}, {x=7, y=58, z=44}, {x=9, y=60, z=44}, {x=22, y=7, z=45}, {x=24, y=37, z=45}, {x=37, y=43, z=45}, {x=45, y=43, z=45}, {x=31, y=45, z=45}, {x=20, y=9, z=46}, {x=24, y=9, z=46}, {x=17, y=43, z=46}, {x=42, y=43, z=46}, {x=55, y=43, z=46}, {x=29, y=63, z=46}, {x=54, y=63, z=46}, {x=21, y=7, z=47}, {x=38, y=9, z=47}, {x=26, y=43, z=47}, {x=52, y=43, z=47}, {x=56, y=43, z=47}, {x=39, y=44, z=47}, {x=32, y=45, z=47}, {x=61, y=45, z=47}, {x=55, y=50, z=47}, {x=6, y=55, z=47}, {x=50, y=60, z=47}, {x=40, y=62, z=47}, {x=49, y=43, z=48}, {x=53, y=43, z=48}, {x=57, y=43, z=48}, {x=26, y=43, z=49}, {x=53, y=43, z=49}, {x=53, y=57, z=49}, {x=27, y=58, z=49}, {x=16, y=63, z=49}, {x=61, y=46, z=50}, {x=51, y=56, z=50}, {x=19, y=8, z=51}, {x=54, y=43, z=51}, {x=6, y=53, z=51}, {x=27, y=63, z=51}, {x=40, y=8, z=52}, {x=41, y=8, z=52}, {x=24, y=44, z=52}, {x=54, y=51, z=52}, {x=46, y=59, z=52}, {x=33, y=60, z=52}, {x=18, y=10, z=53}, {x=41, y=11, z=53}, {x=13, y=43, z=53}, {x=31, y=45, z=53}, {x=45, y=49, z=53}, {x=48, y=49, z=53}, {x=17, y=55, z=53}, {x=9, y=45, z=54}, {x=55, y=45, z=54}, {x=0, y=48, z=54}, {x=46, y=49, z=54}, {x=55, y=52, z=54}, {x=12, y=54, z=54}, {x=11, y=44, z=55}, {x=43, y=49, z=55}, {x=15, y=56, z=55}, {x=2, y=47, z=56}, {x=30, y=47, z=56}, {x=16, y=57, z=56}, {x=22, y=59, z=56}, {x=18, y=43, z=58}, {x=22, y=43, z=58}, {x=26, y=45, z=58}, {x=47, y=50, z=58}, {x=18, y=43, z=59}, {x=21, y=43, z=60}, {x=11, y=45, z=60}, {x=9, y=48, z=60}, {x=48, y=51, z=60}, {x=12, y=44, z=61}, {x=21, y=44, z=62}, {x=12, y=46, z=62}, {x=14, y=47, z=63} },
         nodeNames_trunk  = NODENAMES_TREE1WOOD,
         nodeNames_leaves = NODENAMES_TREE1LEAVES
       }
@@ -273,6 +277,8 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
   }
 
   -- Must be called this during mod load time, as it uses minetest.register_node()
+  -- (add an optional dependency for any mod where the tree & leaf textures might be 
+  -- sourced from, to ensure they are loaded before this is called)
   SkyTrees.init = function()
 
     SkyTrees.minimumIslandRadius = 100000
@@ -347,15 +353,50 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
       return newTrunkNode.name
     end
 
+    function generate_leafTypes(nodeName_templateLeaf, overlay, nodesuffix, description, dropsTemplateLeaf, glows)
+
+      local leafNode = minetest.registered_nodes[nodeName_templateLeaf]
+      local newLeafNode = {}
+      for key, value in pairs(leafNode) do newLeafNode[key] = value end
+      newLeafNode.name = SkyTrees.MODNAME .. ":" .. nodesuffix
+      newLeafNode.description = description
+      newLeafNode.sunlight_propagates = true -- soo many leaves they otherwise blot out the sun.
+
+      if dropsTemplateLeaf then newLeafNode.drop = nodeName_templateLeaf else newLeafNode.drop = nil end
+      if glows == true then newLeafNode.light_source = 6 end
+      
+      local tiles = leafNode.tiles
+      if type(tiles) == "table" then
+        newLeafNode.tiles = {}
+        for key, value in pairs(tiles) do newLeafNode.tiles[key] = value .. overlay end
+      else
+        newLeafNode.tiles = tiles .. overlay
+      end
+      
+      --minetest.log("info", newLeafNode.name .. ": " .. dump(newLeafNode))
+      minetest.register_node(newLeafNode.name, newLeafNode)
+      return newLeafNode.name
+    end
+--ethereal:sakura_leaves
+
     local templateWood = minetest.get_name_from_content_id(interop.find_node_id(NODENAMES_TREE1WOOD))
     local normalwood = generate_woodTypes(templateWood, "", "", "Tree", "Giant tree", true)
-    local darkwood   = generate_woodTypes(templateWood, "^[colorize:black:205", "^[colorize:black:205", "darkwood", "Ziricote", false)
+    local darkwood   = generate_woodTypes(templateWood, "^[colorize:black:205", "^[colorize:black:205", "darkwood", "Giant Ziricote", false)
     local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", "Dead bleached wood", true) -- make use of the bark blocks to introduce some color variance in the tree
 
+    local templateLeaf = minetest.get_name_from_content_id(interop.find_node_id(NODENAMES_TREE1LEAVES))
+    local blossom         = generate_leafTypes(templateLeaf, "^[colorize:#FFF0F0:255", "blossom_white",  "Blossom", false, false)
+    local cherryblossom   = generate_leafTypes(templateLeaf, "^[colorize:#fabcaf:240", "blossom_pink",   "Cherry blossom", false, false)
+    local wisteriablossom = generate_leafTypes(templateLeaf, "^[colorize:#cca4f3:240", "blossom_violet", "Wisteria blossom", false, false)
+    local glowblossom     = generate_leafTypes(templateLeaf, "^[colorize:#FFF0F0:255", "blossom_glowing",  "Glowing blossom", false, true)
 
 
-    SkyTrees.schematicInfo[1].nodeName_trunk = deadwood;
-    SkyTrees.schematicInfo[1].nodeName_bark  = deadwood .. '_bark';
+    SkyTrees.schematicInfo[1].nodeName_trunk = darkwood;
+    SkyTrees.schematicInfo[1].nodeName_bark  = darkwood .. '_bark';
+    SkyTrees.schematicInfo[1].nodeName_leaves = cherryblossom
+    SkyTrees.schematicInfo[1].nodeName_leaves_alt = blossom
+    SkyTrees.schematicInfo[2].nodeName_leaves = wisteriablossom
+    SkyTrees.schematicInfo[2].nodeName_leaves_alt = glowblossom
 
     -- generate wood types
 
@@ -365,21 +406,26 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
   -- position is a vector {x, y, z}
   -- rotation must be either 0, 90, 180, or 270
   -- schematicInfo must be one of the items in SkyTrees.schematicInfo[]
-  -- topsoil [optional] is the biome's "node_top" (the ground node of the region)
-  SkyTrees.placeTree = function(position, rotation, schematicInfo, themeInfo, topsoil)
+  -- topsoil [optional] is the biome's "node_top" - the ground node of the region.
+  SkyTrees.placeTree = function(position, rotation, schematicInfo, theme, topsoil)
 
-    local rotatedCenter = vector.new(schematicInfo.center);
-    if rotation == 90 then
-      rotatedCenter.x = schematicInfo.center.z
-      rotatedCenter.z = schematicInfo.size.x - schematicInfo.center.x
-    elseif rotation == 180 then
-      rotatedCenter.x = schematicInfo.size.x - schematicInfo.center.x
-      rotatedCenter.z = schematicInfo.size.z - schematicInfo.center.z
-    elseif rotation == 270 then
-      rotatedCenter.x = schematicInfo.size.z - schematicInfo.center.z
-      rotatedCenter.z = schematicInfo.center.x
+    -- returns a new position vector, rotated around (0, 0) to match the schematic rotation (provided the schematic_size is correct!)
+    function rotatePositon(position, schematic_size, rotation)
+      local result = vector.new(position);
+      if rotation == 90 then
+        result.x = position.z
+        result.z = schematic_size.x - position.x - 1
+      elseif rotation == 180 then
+        result.x = schematic_size.x - position.x - 1
+        result.z = schematic_size.z - position.z - 1
+      elseif rotation == 270 then
+        result.x = schematic_size.z - position.z - 1
+        result.z = position.x
+      end
+      return result
     end
-  
+    
+    local rotatedCenter = rotatePositon(schematicInfo.center, schematicInfo.size, rotation);
     local treePos = vector.subtract(position, rotatedCenter)
 
     if topsoil == nil then 
@@ -389,18 +435,35 @@ if SkyTrees == nil then -- If SkyTrees has been put into other mods then it may 
       if treeBiome ~= nil and treeBiome.node_top ~= nil then topsoil = treeBiome.node_top end
     end
   
-    -- If you want to extract the trees from this mod to use in a different mod, then remember
-    -- to also extract & run the init_trees() function.     
     local replacements = {
       ['treebark\r\n\r\n~~~ Cloudlands_tree mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = schematicInfo.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
-      ['default:stone'] = schematicInfo.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
       ['default:tree']   = schematicInfo.nodeName_trunk,
       ['default:leaves'] = schematicInfo.nodeName_leaves,
+      ['leaves_alt'] = schematicInfo.nodeName_leaves_alt,
+      ['leaves_special'] = schematicInfo.nodeName_leaves_alt,
+      ['leaf_vines'] = "vines:side_end",
+      ['bark_vines'] = "vines:side_end",
+      ['hanging_leaf_vines'] = "vines:vine_end",
+      ['hanging_bark_vines'] = "vines:root_end",
+      
       ['default:dirt']   = topsoil
     }
   
     --minetest.log("info", "Placing tree: " .. dump(treePos) .. ", " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename)
     minetest.place_schematic(treePos, schematicInfo.fullFilename, rotation, replacements, true)
+
+    -- minetest.place_schematic() doesn't invoke node constructors, so use set_node() for any nodes which require construction
+    for i, schematicCoords in pairs(schematicInfo.nodesWithConstructor) do
+      if rotation ~= 0 then schematicCoords = rotatePositon(schematicCoords, schematicInfo.size, rotation) end
+      local nodePos = vector.add(treePos, schematicCoords)
+      local nodeToConstruct = minetest.get_node(nodePos)
+      if nodeToConstruct.name == "air" or nodeToConstruct.name == "ignore" then 
+        minetest.log("error", "nodesWithConstructor["..i.."] does not match schematic " .. schematicInfo.filename .. " at " .. nodePos.x..","..nodePos.y..","..nodePos.z.." rotation "..rotation)
+      else 
+        minetest.set_node(nodePos, nodeToConstruct)
+      end
+    end
+
   end
 
 end
