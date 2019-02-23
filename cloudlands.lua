@@ -9,6 +9,12 @@ local GENERATE_ORES          = false -- set to true for island core stone to con
 local VINE_COVERAGE          = 0.3   -- set to 0 to turn off vines
 local REEF_RARITY            = 0.015 -- Chance of a viable island having a reef or atoll
 local TREE_RARITY            = 1.0   -- Chance of a viable island having a giant tree growing out the middle
+local BIOLUMINESCENCE        = false or -- Allow giant trees variants which have glowing parts 
+                               minetest.get_modpath("glowtest")   ~= nil or 
+                               minetest.get_modpath("ethereal")   ~= nil or
+                               minetest.get_modpath("glow")       ~= nil or
+                               minetest.get_modpath("nsspf")      ~= nil or
+                               minetest.get_modpath("moonflower") ~= nil -- a world using any of these mods is OK with bioluminescence
 local ISLANDS_SEED           = 1000  -- You only need to change this if you want to try different island layouts without changing the map seed
 
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
@@ -79,6 +85,8 @@ ALTITUDE_AMPLITUDE   = fromSettings(MODNAME .. "_altitude_amplitude", ALTITUDE_A
 GENERATE_ORES        = fromSettings(MODNAME .. "_generate_ores",      GENERATE_ORES)
 VINE_COVERAGE        = fromSettings(MODNAME .. "_vine_coverage",      VINE_COVERAGE * 100) / 100
 LOWLAND_BIOMES       = fromSettings(MODNAME .. "_use_lowland_biomes", LOWLAND_BIOMES)
+TREE_RARITY          = fromSettings(MODNAME .. "_giant_tree_rarety",  TREE_RARITY * 100) / 100
+BIOLUMINESCENCE      = fromSettings(MODNAME .. "_bioluminescence",    BIOLUMINESCENCE)
 
 local noiseparams_eddyField = {
 	offset      = -1,
@@ -248,7 +256,7 @@ end;
 
 -- If splitting SkyTrees into a seperate mod, perhaps schemlib would be of help - https://forum.minetest.net/viewtopic.php?t=18084
 
-if SkyTrees == nil then -- People may want to add SkyTrees into other mods, in which case this may have been already be defined
+if SkyTrees == nil then -- If SkyTrees added into other mods, this may have already been defined
 
   SkyTrees = {
     schematicInfo = { -- Order the trees in this array from the largest island requirements to smallest
@@ -263,7 +271,7 @@ if SkyTrees == nil then -- People may want to add SkyTrees into other mods, in w
         nodeNames_leaves = NODENAMES_TREE1LEAVES
       },
       {
-        filename = 'special_leaves.mts',--'cloudlands_tree2.mts',
+        filename = 'cloudlands_tree2.mts',
         size   = {x = 62, y = 66, z = 65},
         center = {x = 30, y = 12, z = 36},
         requiredIslandDepth = 16,
@@ -385,18 +393,26 @@ if SkyTrees == nil then -- People may want to add SkyTrees into other mods, in w
     local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", "Dead bleached wood", true) -- make use of the bark blocks to introduce some color variance in the tree
 
     local templateLeaf = minetest.get_name_from_content_id(interop.find_node_id(NODENAMES_TREE1LEAVES))
-    local blossom         = generate_leafTypes(templateLeaf, "^[colorize:#FFF0F0:255", "blossom_white",  "Blossom", false, false)
-    local cherryblossom   = generate_leafTypes(templateLeaf, "^[colorize:#fabcaf:240", "blossom_pink",   "Cherry blossom", false, false)
-    local wisteriablossom = generate_leafTypes(templateLeaf, "^[colorize:#cca4f3:240", "blossom_violet", "Wisteria blossom", false, false)
-    local glowblossom     = generate_leafTypes(templateLeaf, "^[colorize:#FFF0F0:255", "blossom_glowing",  "Glowing blossom", false, true)
+    local blossom         = generate_leafTypes(templateLeaf, "^[colorize:#FFF0F0:255", "blossom_white",  "Blossom", false)
+    local cherryblossom   = generate_leafTypes(templateLeaf, "^[colorize:#fabcaf:240", "blossom_pink",   "Cherry blossom", false)
+    local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#cca4f3:240", "blossom_violet1", "Wisteria blossom", false)
+    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ecd9ff:240", "blossom_violet2", "Wisteria blossom", false)
+    local glowblossom     = generate_leafTypes(templateLeaf, "^[colorize:#FFF0F0:255", "blossom_glowing",  "Radiant blossom", false, true)
 
 
     SkyTrees.schematicInfo[1].nodeName_trunk = darkwood;
     SkyTrees.schematicInfo[1].nodeName_bark  = darkwood .. '_bark';
     SkyTrees.schematicInfo[1].nodeName_leaves = cherryblossom
     SkyTrees.schematicInfo[1].nodeName_leaves_alt = blossom
-    SkyTrees.schematicInfo[2].nodeName_leaves = wisteriablossom
-    SkyTrees.schematicInfo[2].nodeName_leaves_alt = glowblossom
+    
+    SkyTrees.schematicInfo[2].nodeName_leaves     = wisteriaBlossom1
+    SkyTrees.schematicInfo[2].nodeName_leaves_alt = wisteriaBlossom2
+
+    if BIOLUMINESCENCE then 
+      SkyTrees.schematicInfo[2].nodeName_leaves_special = glowblossom
+    else 
+      SkyTrees.schematicInfo[2].nodeName_leaves_special = blossom
+    end
 
     -- generate wood types
 
@@ -437,12 +453,12 @@ if SkyTrees == nil then -- People may want to add SkyTrees into other mods, in w
   
     local replacements = {
       ['treebark\r\n\r\n~~~ Cloudlands_tree mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = schematicInfo.nodeName_bark, -- because this node name is always replaced, it can double as space for a text header in the file.
-      ['default:tree']   = schematicInfo.nodeName_trunk,
-      ['default:leaves'] = schematicInfo.nodeName_leaves,
-      ['leaves_alt'] = schematicInfo.nodeName_leaves_alt,
-      ['leaves_special'] = schematicInfo.nodeName_leaves_alt,
-      ['leaf_vines'] = "vines:side_end",
-      ['bark_vines'] = "vines:side_end",
+      ['default:tree']       = schematicInfo.nodeName_trunk,
+      ['default:leaves']     = schematicInfo.nodeName_leaves,
+      ['leaves_alt']         = schematicInfo.nodeName_leaves_alt,
+      ['leaves_special']     = schematicInfo.nodeName_leaves_special,
+      ['leaf_vines']         = "vines:side_end",
+      ['bark_vines']         = "vines:side_end",
       ['hanging_leaf_vines'] = "vines:vine_end",
       ['hanging_bark_vines'] = "vines:root_end",
       
