@@ -394,12 +394,20 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
     --ethereal:sakura_leaves
 
     local templateWood = interop.find_node_name(NODENAMES_TREEWOOD)
+    if templateWood == 'ignore' then 
+      SkyTrees.disabled = "Could not find any tree nodes"
+      return
+    end
     local normalwood = generate_woodTypes(templateWood, "", "", "Tree", "Giant tree", true)
     local darkwood   = generate_woodTypes(templateWood, "^[colorize:black:205", "^[colorize:black:205", "darkwood", "Giant Ziricote", false)
     local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", "Dead bleached wood", false) -- make use of the bark blocks to introduce some color variance in the tree
 
 
     local templateLeaf = interop.find_node_name(NODENAMES_TREELEAVES)
+    if templateLeaf == 'ignore' then 
+      SkyTrees.disabled = "Could not find any treeleaf nodes"
+      return
+    end
     local greenleaf1   = generate_leafTypes(templateLeaf, "", "leaves",  "Leaves of a giant tree", false)
     local greenleaf2   = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  "Leaves of a giant tree", false)
     local greenleaf3   = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  "Leaves of a giant tree", false)
@@ -521,6 +529,11 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
   -- schematicInfo must be one of the items in SkyTrees.schematicInfo[]
   -- topsoil [optional] is the biome's "node_top" - the ground node of the region.
   SkyTrees.placeTree = function(position, rotation, schematicInfo, themeName, topsoil)
+
+    if SkyTrees.disabled ~= nil then 
+      error(SkyTrees.MODNAME .. " - SkyTrees are disabled: " .. SkyTrees.disabled, 0) 
+      return
+    end
 
     -- returns a new position vector, rotated around (0, 0) to match the schematic rotation (provided the schematic_size is correct!)
     function rotatePositon(position, schematic_size, rotation)
@@ -1128,6 +1141,16 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
     y = treeAltitude, 
     z = coreZ + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2)
   }
+
+  --[[ Redrawing the tree every time a chunk it touches gets emitted helps work around the bugs 
+       in place_schematic() where large schematics are spawned incompletely.
+       (The bug in question: https://forum.minetest.net/viewtopic.php?f=6&t=22136 )
+  if (maxp.y < treePos.y) or (minp.y > treePos.y) or (maxp.x < treePos.x) or (minp.x > treePos.x) or (maxp.z < treePos.z) or (minp.z > treePos.z) then
+    -- Now that we know the exact position of the tree, we know it's spawn point is not in this chunk.
+    -- In the interests of only drawing trees once, we only invoke placeTree when the chunk containing treePos is emitted.
+    return false
+  end --]]
+
   if core.biome == nil then setCoreBiomeData(core) end -- We shouldn't assume the core biome has already been resolved, it might be below the emerged chunk and unrendered
 
   SkyTrees.placeTree(treePos, treeAngle, tree, nil, core.biome.node_top)
