@@ -276,12 +276,29 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
     schematicInfo = { 
       {
         filename = TREE1_FILE,
-        size   = {x = 83, y = 109, z = 105},
+        size   = {x = 81, y = 106, z = 111},
+        center = {x = 49, y =  11, z =  67},
+        requiredIslandDepth = 20,
+        requiredIslandRadius = 40,
+        nodesWithConstructor = { {x=15, y=49, z=0}, {x=11, y=51, z=2}, {x=46, y=69, z=2}, {x=44, y=69, z=2}, {x=25, y=53, z=3}, {x=11, y=49, z=4}, {x=45, y=69, z=5}, {x=17, y=51, z=8}, {x=40, y=69, z=10}, {x=12, y=51, z=11}, {x=11, y=52, z=12}, {x=41, y=68, z=12}, {x=41, y=69, z=12}, {x=48, y=67, z=14}, {x=41, y=69, z=15}, {x=22, y=49, z=16}, {x=12, y=50, z=16}, {x=11, y=50, z=16}, {x=18, y=52, z=16}, {x=13, y=49, z=17}, {x=47, y=67, z=17}, {x=15, y=49, z=18}, {x=46, y=64, z=18}, {x=45, y=64, z=18}, {x=61, y=67, z=18}, {x=17, y=47, z=20}, {x=25, y=66, z=20}, {x=8, y=47, z=21}, {x=18, y=48, z=21}, {x=24, y=65, z=21}, {x=62, y=66, z=21}, {x=58, y=67, z=21}, {x=45, y=67, z=21}, {x=23, y=67, z=21}, {x=13, y=67, z=21}, {x=13, y=45, z=22}, {x=9, y=48, z=22}, {x=12, y=57, z=22}, {x=49, y=59, z=22}, {x=28, y=65, z=22}, {x=44, y=66, z=22}, {x=13, y=51, z=23}, {x=46, y=58, z=23}, {x=46, y=62, z=23}, {x=67, y=66, z=23}, {x=8, y=68, z=23}, {x=6, y=57, z=24}, {x=47, y=58, z=24}, {x=11, y=60, z=24}, {x=27, y=64, z=24}, {x=71, y=66, z=24}, {x=14, y=66, z=24}, {x=11, y=66, z=24}, {x=30, y=67, z=24}, {x=77, y=68, z=24}, {x=3, y=53, z=25}, {x=14, y=56, z=25}, {x=18, y=58, z=25}, {x=43, y=59, z=25}, {x=70, y=67, z=25}, {x=79, y=69, z=25}, {x=16, y=57, z=26}, {x=45, y=58, z=26}, {x=42, y=61, z=26}, {x=43, y=63, z=26}, {x=31, y=63, z=26}, {x=19, y=65, z=26}, {x=74, y=66, z=26}, {x=17, y=67, z=26}, {x=73, y=68, z=26}, {x=9, y=54, z=27}, {x=11, y=55, z=27}, {x=53, y=61, z=27}, {x=44, y=62, z=27}, {x=54, y=63, z=27}, {x=68, y=66, z=27}, {x=11, y=55, z=28}, {x=45, y=59, z=28}, {x=54, y=61, z=28}, {x=22, y=64, z=28}, {x=67, y=65, z=28}, {x=55, y=77, z=28}, {x=1, y=53, z=29}, {x=51, y=60, z=29}, {x=18, y=60, z=29}, {x=8, y=60, z=29}, {x=9, y=61, z=29}, {x=60, y=62, z=29}, {x=22, y=63, z=29}, {x=66, y=64, z=29}, {x=20, y=64, z=29}, {x=4, y=64, z=29}, {x=19, y=75, z=29}, {x=52, y=76, z=29}, {x=56, y=78, z=29}, {x=1, y=53, z=30}, {x=1, y=55, z=30}, {x=38, y=61, z=30}, {x=17, y=61, z=30}, {x=59, y=62, z=30}, {x=31, y=64, z=30}, {x=1, y=53, z=31}, {x=43, y=60, z=31}, {x=12, y=60, z=31}, {x=51, y=61, z=31}, {x=23, y=61, z=31}, {x=16, y=64, z=31}, {x=22, y=68, z=31}, {x=3, y=68, z=31}, {x=18, y=71, z=31}, {x=15, y=72, z=31}, {x=20, y=74, z=31}, {x=15, y=76, z=31}, {x=7, y=55, z=32}, {x=10, y=59, z=32}, {x=42, y=61, z=32}, {x=11, y=62, z=32}, {x=13, y=64, z=32}, {x=23, y=72, z=32}, {x=46, y=74, z=32}, {x=23, y=100, z=32}, {x=45, y=0, z=33}, {x=45, y=58, z=33}, {x=58, y=60, z=33}, {x=24, y=60, z=33}, {x=13, y=60, z=33}, {x=35, y=65, z=33}, {x=15, y=71, z=33}, {x=59, y=76, z=33}, {x=46, y=76, z=33}, {x=14, y=52, z=34}, {x=59, y=59, z=34}, {x=20, y=60, z=34}, {x=47, y=73, z=34}, {x=51, y=74, z=34}, {x=21, y=75, z=34}, {x=43, y=80, z=34}, {x=39, y=86, z=34}, {x=33, y=99, z=34}, {x=43, y=57, z=35}, {x=62, y=63, z=35}, {x=32, y=64, z=35}, {x=21, y=65, z=35}, {x=42, y=81, z=35}, {x=24, y=100, z=35}, {x=25, y=102, z=35}, {x=38, y=55, z=36}, {x=29, y=56, z=36}, {x=16, y=57, z=36}, {x=8, y=58, z=36}, {x=12, y=62, z=36}, {x=30, y=63, z=36}, {x=37, y=64, z=36}, {x=41, y=87, z=36}, {x=38, y=101, z=36}, {x=35, y=54, z=37}, {x=36, y=58, z=37}, {x=50, y=60, z=37}, {x=14, y=62, z=37}, {x=59, y=64, z=37}, {x=48, y=73, z=37}, {x=43, y=73, z=37}, {x=42, y=83, z=37}, {x=35, y=96, z=37}, {x=33, y=99, z=37}, {x=32, y=99, z=37}, {x=34, y=104, z=37}, {x=42, y=7, z=38}, {x=17, y=48, z=38}, {x=18, y=55, z=38}, {x=10, y=56, z=38}, {x=6, y=58, z=38}, {x=60, y=62, z=38}, {x=21, y=64, z=38}, {x=48, y=65, z=38}, {x=44, y=77, z=38}, {x=46, y=79, z=38}, {x=37, y=98, z=38}, {x=30, y=100, z=38}, {x=29, y=100, z=38}, {x=32, y=103, z=38}, {x=43, y=8, z=39}, {x=50, y=44, z=39}, {x=34, y=54, z=39}, {x=43, y=55, z=39}, {x=40, y=57, z=39}, {x=11, y=57, z=39}, {x=4, y=58, z=39}, {x=52, y=60, z=39}, {x=50, y=60, z=39}, {x=28, y=60, z=39}, {x=59, y=62, z=39}, {x=55, y=63, z=39}, {x=40, y=85, z=39}, {x=36, y=98, z=39}, {x=36, y=100, z=39}, {x=14, y=47, z=40}, {x=18, y=54, z=40}, {x=33, y=55, z=40}, {x=38, y=57, z=40}, {x=59, y=59, z=40}, {x=59, y=61, z=40}, {x=6, y=61, z=40}, {x=47, y=62, z=40}, {x=27, y=62, z=40}, {x=46, y=69, z=40}, {x=43, y=7, z=41}, {x=42, y=9, z=41}, {x=43, y=10, z=41}, {x=17, y=54, z=41}, {x=52, y=56, z=41}, {x=40, y=86, z=41}, {x=35, y=87, z=41}, {x=24, y=90, z=41}, {x=45, y=5, z=42}, {x=43, y=11, z=42}, {x=48, y=42, z=42}, {x=15, y=49, z=42}, {x=54, y=55, z=42}, {x=31, y=58, z=42}, {x=46, y=70, z=42}, {x=42, y=75, z=42}, {x=50, y=80, z=42}, {x=45, y=6, z=43}, {x=50, y=46, z=43}, {x=57, y=57, z=43}, {x=12, y=57, z=43}, {x=13, y=62, z=43}, {x=16, y=64, z=43}, {x=8, y=65, z=43}, {x=40, y=67, z=43}, {x=42, y=87, z=43}, {x=32, y=89, z=43}, {x=47, y=7, z=44}, {x=48, y=8, z=44}, {x=54, y=23, z=44}, {x=48, y=42, z=44}, {x=45, y=45, z=44}, {x=47, y=46, z=44}, {x=23, y=56, z=44}, {x=21, y=56, z=44}, {x=32, y=57, z=44}, {x=12, y=57, z=44}, {x=32, y=60, z=44}, {x=19, y=64, z=44}, {x=10, y=66, z=44}, {x=2, y=67, z=44}, {x=49, y=80, z=44}, {x=26, y=88, z=44}, {x=25, y=88, z=44}, {x=27, y=90, z=44}, {x=51, y=18, z=45}, {x=27, y=54, z=45}, {x=41, y=56, z=45}, {x=34, y=58, z=45}, {x=40, y=89, z=45}, {x=45, y=13, z=46}, {x=51, y=42, z=46}, {x=52, y=44, z=46}, {x=47, y=52, z=46}, {x=35, y=55, z=46}, {x=12, y=55, z=46}, {x=56, y=59, z=46}, {x=14, y=61, z=46}, {x=30, y=62, z=46}, {x=48, y=80, z=46}, {x=27, y=89, z=46}, {x=47, y=7, z=47}, {x=49, y=14, z=47}, {x=47, y=18, z=47}, {x=47, y=44, z=47}, {x=46, y=48, z=47}, {x=24, y=56, z=47}, {x=23, y=57, z=47}, {x=50, y=60, z=47}, {x=49, y=60, z=47}, {x=14, y=62, z=47}, {x=35, y=85, z=47}, {x=51, y=14, z=48}, {x=37, y=31, z=48}, {x=15, y=49, z=48}, {x=36, y=55, z=48}, {x=37, y=57, z=48}, {x=42, y=8, z=49}, {x=41, y=10, z=49}, {x=50, y=50, z=49}, {x=44, y=51, z=49}, {x=53, y=84, z=49}, {x=45, y=44, z=50}, {x=43, y=49, z=50}, {x=41, y=56, z=50}, {x=43, y=61, z=50}, {x=78, y=1, z=51}, {x=15, y=1, z=51}, {x=10, y=49, z=51}, {x=34, y=50, z=51}, {x=31, y=51, z=51}, {x=53, y=53, z=51}, {x=30, y=65, z=51}, {x=35, y=86, z=51}, {x=18, y=4, z=52}, {x=15, y=48, z=52}, {x=38, y=57, z=52}, {x=40, y=59, z=52}, {x=38, y=87, z=52}, {x=72, y=4, z=53}, {x=20, y=8, z=53}, {x=16, y=49, z=53}, {x=29, y=54, z=53}, {x=39, y=57, z=53}, {x=22, y=7, z=54}, {x=15, y=49, z=54}, {x=15, y=51, z=54}, {x=53, y=54, z=54}, {x=29, y=54, z=54}, {x=75, y=2, z=55}, {x=44, y=7, z=55}, {x=69, y=8, z=55}, {x=40, y=30, z=55}, {x=37, y=36, z=55}, {x=36, y=37, z=55}, {x=31, y=58, z=55}, {x=31, y=61, z=55}, {x=28, y=62, z=55}, {x=24, y=6, z=56}, {x=26, y=9, z=56}, {x=27, y=10, z=56}, {x=44, y=36, z=56}, {x=51, y=56, z=56}, {x=48, y=58, z=56}, {x=29, y=62, z=56}, {x=33, y=70, z=56}, {x=33, y=71, z=56}, {x=65, y=9, z=57}, {x=46, y=44, z=57}, {x=37, y=46, z=57}, {x=52, y=50, z=57}, {x=31, y=51, z=57}, {x=25, y=58, z=57}, {x=23, y=58, z=57}, {x=22, y=2, z=58}, {x=66, y=5, z=58}, {x=44, y=7, z=58}, {x=19, y=7, z=58}, {x=30, y=8, z=58}, {x=62, y=9, z=58}, {x=20, y=11, z=58}, {x=43, y=35, z=58}, {x=44, y=41, z=58}, {x=61, y=5, z=59}, {x=29, y=7, z=59}, {x=31, y=8, z=59}, {x=34, y=12, z=59}, {x=49, y=13, z=59}, {x=38, y=36, z=59}, {x=52, y=48, z=59}, {x=52, y=49, z=59}, {x=26, y=6, z=60}, {x=70, y=11, z=60}, {x=58, y=12, z=60}, {x=49, y=55, z=60}, {x=48, y=55, z=60}, {x=48, y=56, z=60}, {x=26, y=7, z=61}, {x=57, y=8, z=61}, {x=57, y=13, z=61}, {x=40, y=13, z=61}, {x=51, y=41, z=61}, {x=36, y=45, z=61}, {x=52, y=47, z=61}, {x=59, y=6, z=62}, {x=68, y=7, z=62}, {x=49, y=9, z=62}, {x=53, y=13, z=62}, {x=60, y=14, z=62}, {x=44, y=35, z=62}, {x=44, y=36, z=62}, {x=34, y=47, z=62}, {x=52, y=50, z=62}, {x=31, y=6, z=63}, {x=67, y=8, z=63}, {x=40, y=10, z=63}, {x=40, y=11, z=63}, {x=45, y=33, z=63}, {x=28, y=41, z=63}, {x=34, y=51, z=63}, {x=50, y=9, z=64}, {x=65, y=11, z=64}, {x=46, y=23, z=64}, {x=43, y=30, z=64}, {x=42, y=33, z=64}, {x=33, y=40, z=64}, {x=53, y=41, z=64}, {x=40, y=7, z=65}, {x=41, y=17, z=65}, {x=49, y=20, z=65}, {x=45, y=22, z=65}, {x=49, y=26, z=65}, {x=50, y=28, z=65}, {x=38, y=38, z=65}, {x=50, y=52, z=65}, {x=36, y=52, z=65}, {x=37, y=55, z=65}, {x=58, y=6, z=66}, {x=39, y=7, z=66}, {x=48, y=8, z=66}, {x=30, y=8, z=66}, {x=29, y=9, z=66}, {x=41, y=22, z=66}, {x=41, y=23, z=66}, {x=41, y=27, z=66}, {x=37, y=38, z=66}, {x=49, y=52, z=66}, {x=35, y=6, z=67}, {x=45, y=7, z=67}, {x=62, y=11, z=67}, {x=40, y=19, z=67}, {x=53, y=20, z=67}, {x=53, y=30, z=67}, {x=52, y=45, z=67}, {x=36, y=46, z=67}, {x=61, y=11, z=68}, {x=31, y=13, z=68}, {x=54, y=21, z=68}, {x=53, y=26, z=68}, {x=52, y=45, z=68}, {x=36, y=16, z=69}, {x=33, y=41, z=69}, {x=37, y=45, z=69}, {x=51, y=46, z=69}, {x=40, y=7, z=70}, {x=38, y=7, z=70}, {x=57, y=10, z=70}, {x=33, y=13, z=70}, {x=55, y=23, z=70}, {x=54, y=38, z=70}, {x=37, y=40, z=70}, {x=58, y=13, z=71}, {x=37, y=20, z=71}, {x=34, y=41, z=71}, {x=35, y=43, z=71}, {x=40, y=8, z=72}, {x=36, y=18, z=72}, {x=38, y=40, z=72}, {x=46, y=5, z=73}, {x=35, y=16, z=73}, {x=37, y=23, z=73}, {x=46, y=49, z=73}, {x=36, y=20, z=74}, {x=36, y=21, z=74}, {x=54, y=28, z=74}, {x=38, y=31, z=74}, {x=38, y=52, z=74}, {x=54, y=7, z=75}, {x=34, y=8, z=75}, {x=54, y=31, z=75}, {x=38, y=33, z=75}, {x=52, y=37, z=75}, {x=46, y=43, z=75}, {x=45, y=54, z=75}, {x=61, y=10, z=76}, {x=61, y=12, z=76}, {x=55, y=23, z=76}, {x=44, y=40, z=76}, {x=42, y=42, z=76}, {x=41, y=47, z=76}, {x=45, y=49, z=76}, {x=45, y=51, z=76}, {x=53, y=7, z=77}, {x=49, y=37, z=77}, {x=45, y=38, z=77}, {x=43, y=48, z=77}, {x=45, y=60, z=77}, {x=63, y=14, z=78}, {x=37, y=20, z=78}, {x=50, y=34, z=78}, {x=42, y=34, z=78}, {x=47, y=36, z=78}, {x=47, y=7, z=79}, {x=41, y=9, z=79}, {x=48, y=10, z=79}, {x=49, y=32, z=79}, {x=31, y=7, z=80}, {x=27, y=12, z=80}, {x=42, y=28, z=80}, {x=50, y=29, z=80}, {x=40, y=56, z=80}, {x=37, y=61, z=80}, {x=59, y=7, z=81}, {x=46, y=7, z=81}, {x=25, y=12, z=81}, {x=61, y=15, z=81}, {x=30, y=6, z=82}, {x=62, y=7, z=82}, {x=47, y=7, z=82}, {x=70, y=9, z=82}, {x=49, y=13, z=82}, {x=27, y=14, z=82}, {x=38, y=15, z=82}, {x=57, y=16, z=82}, {x=56, y=17, z=82}, {x=53, y=59, z=82}, {x=42, y=7, z=83}, {x=40, y=9, z=83}, {x=22, y=10, z=83}, {x=54, y=12, z=83}, {x=44, y=18, z=83}, {x=47, y=22, z=83}, {x=45, y=23, z=83}, {x=50, y=58, z=83}, {x=47, y=58, z=83}, {x=41, y=59, z=83}, {x=40, y=65, z=83}, {x=46, y=6, z=84}, {x=47, y=7, z=84}, {x=66, y=8, z=84}, {x=21, y=11, z=84}, {x=64, y=14, z=84}, {x=48, y=58, z=84}, {x=45, y=58, z=84}, {x=53, y=59, z=84}, {x=41, y=59, z=84}, {x=53, y=61, z=84}, {x=25, y=7, z=85}, {x=45, y=17, z=85}, {x=30, y=9, z=86}, {x=60, y=12, z=86}, {x=47, y=58, z=86}, {x=43, y=60, z=86}, {x=40, y=61, z=86}, {x=45, y=62, z=86}, {x=77, y=6, z=87}, {x=18, y=10, z=87}, {x=66, y=11, z=87}, {x=19, y=11, z=87}, {x=27, y=11, z=88}, {x=50, y=59, z=88}, {x=43, y=59, z=88}, {x=72, y=6, z=89}, {x=15, y=7, z=89}, {x=27, y=11, z=89}, {x=24, y=12, z=89}, {x=50, y=60, z=89}, {x=48, y=60, z=89}, {x=48, y=8, z=90}, {x=62, y=10, z=90}, {x=37, y=60, z=90}, {x=46, y=61, z=90}, {x=19, y=2, z=91}, {x=13, y=4, z=91}, {x=40, y=57, z=91}, {x=41, y=2, z=92}, {x=21, y=4, z=92}, {x=20, y=9, z=92}, {x=45, y=58, z=92}, {x=39, y=1, z=93}, {x=16, y=4, z=93}, {x=40, y=5, z=93}, {x=13, y=6, z=93}, {x=43, y=57, z=93}, {x=49, y=11, z=95}, {x=48, y=12, z=95}, {x=48, y=9, z=97}, {x=42, y=12, z=97}, {x=42, y=9, z=98}, {x=46, y=7, z=99}, {x=48, y=9, z=99}, {x=42, y=8, z=100}, {x=46, y=5, z=105}, {x=47, y=8, z=106}, {x=42, y=6, z=107}, {x=44, y=7, z=108} },
+      },
+      --[[
+      {
+        filename = TREE1_FILE,
+        size   = {x = 85, y = 113, z = 116},
         center = {x = 49, y =  18, z =  67},
         requiredIslandDepth = 20,
         requiredIslandRadius = 36,
         nodesWithConstructor = {},
       },
+      {
+        filename = TREE1_FILE,
+        size   = {x = 83, y = 109, z = 105},
+        center = {x = 49, y =  18, z =  67},
+        requiredIslandDepth = 20,
+        requiredIslandRadius = 36,
+        nodesWithConstructor = {},
+      },--]]
       {
         filename = TREE2_FILE,
         size   = {x = 62, y = 66, z = 65},
@@ -391,8 +408,6 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       return newLeafNode.name
     end
   
-    --ethereal:sakura_leaves
-
     local templateWood = interop.find_node_name(NODENAMES_TREEWOOD)
     if templateWood == 'ignore' then 
       SkyTrees.disabled = "Could not find any tree nodes"
@@ -408,18 +423,17 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       SkyTrees.disabled = "Could not find any treeleaf nodes"
       return
     end
-    local greenleaf1   = generate_leafTypes(templateLeaf, "", "leaves",  "Leaves of a giant tree", false)
-    local greenleaf2   = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  "Leaves of a giant tree", false)
-    local greenleaf3   = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  "Leaves of a giant tree", false)
+    local greenleaf1       = generate_leafTypes(templateLeaf, "", "leaves",  "Leaves of a giant tree", false)
+    local greenleaf2       = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  "Leaves of a giant tree", false)
+    local greenleaf3       = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  "Leaves of a giant tree", false)
 
-    local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:255", "blossom_white1",  "Blossom", false)
-    local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:255", "blossom_white2",  "Blossom", false, 4)
-    --local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#fcd8df:240", "blossom_pink",   "Cherry blossom", false)
-    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:240", "blossom_pink",   "Cherry blossom", false, 4)
+    local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:255", "blossom_white1",    "Blossom", false)
+    local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:255", "blossom_white2",    "Blossom", false)
+    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:240", "blossom_whitepink", "Blossom", false, 4)
+
+    local sakurablossom1   = generate_leafTypes(templateLeaf, "^[colorize:#ea327c:240", "blossom_red",       "Sakura blossom", false, 4)
+    local sakurablossom2   = generate_leafTypes(templateLeaf, "^[colorize:#ffc3dd:240", "blossom_pink",      "Sakura blossom", false)
     
-    
-    --local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#cca4f3:240", "blossom_violet1", "Wisteria blossom", false)
-    --local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ecd9ff:240", "blossom_violet2", "Wisteria blossom", false)
     local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8688f9:240", "blossom_wisteria1", "Wisteria blossom", false)
     local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:240", "blossom_wisteria2", "Wisteria blossom", false, 6)
 
@@ -429,19 +443,20 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
 
       tree.defaultThemeName = "Green foliage"
       tree.theme[tree.defaultThemeName] = {
-        trunk          = normalwood,
-        leaves1        = greenleaf1,
-        leaves2        = greenleaf2,
-        leaves_special = greenleaf3,
-        vineflags      = { leaves = true, hanging_leaves = true },
+        relativeProbability = 5,
+        trunk               = normalwood,
+        leaves1             = greenleaf1,
+        leaves2             = greenleaf2,
+        leaves_special      = greenleaf3,
+        vineflags           = { leaves = true, hanging_leaves = true },
 
         init = function(self, position)
           -- if it's hot and humid then add vines
           local viney = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
 
           if viney then
-            local flagSeed = position.x * 3 + position.y + position.z + ISLANDS_SEED
-            self.vineflags.hanging_leaves = (flagSeed % 10) <= 2 or (flagSeed % 10) >= 8
+            local flagSeed = position.x * 3 + position.z + ISLANDS_SEED
+            self.vineflags.hanging_leaves = (flagSeed % 10) <= 3 or (flagSeed % 10) >= 8
             self.vineflags.leaves         = (flagSeed % 10) <= 5
             self.vineflags.bark           = (flagSeed % 10) <= 2
           end
@@ -449,8 +464,9 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       }
 
       tree.theme["Haunted"] = {
-        trunk     = darkwood,
-        vineflags = { hanging_roots = true },
+        relativeProbability = 2,
+        trunk               = darkwood,
+        vineflags           = { hanging_roots = true },
 
         init = function(self, position)
           -- 50% of these trees are a hanging roots variant
@@ -459,11 +475,22 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       }
 
       tree.theme["Dead"] = {
+        relativeProbability = 0, -- 0 because this theme will be chosen based on location, rather than chance.
         trunk = deadwood
       }
 
       tree.theme["Sakura"] = {
-        trunk = darkwood
+        relativeProbability = 2,
+        trunk               = darkwood,
+        leaves1             = sakurablossom2,
+        leaves2             = whiteblossom2,
+        leaves_special      = sakurablossom1,
+
+        init = function(self, position)
+          -- 20% of these trees are a glowing variant
+          leaves_special     = normalwood..BARK_SUFFIX
+          if (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE then self.leaves_special = sakurablossom1 .. GLOW_SUFFIX end
+        end
       }
 
     end
@@ -476,35 +503,34 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       tree.theme[tree.defaultThemeName] = SkyTrees.schematicInfo[TREE1_FILE].theme["Green foliage"]
 
       tree.theme["Wisteria"] = {
-        --local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8688f9:240", "blossom_violet1", "Wisteria blossom", false)
-        --local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:240", "blossom_violet2", "Wisteria blossom", false, 6)
-        trunk              = normalwood,
-        leaves1            = templateLeaf,
-        leaves2            = wisteriaBlossom1,
-        leaves_special     = wisteriaBlossom2,
-        vineflags          = { leaves = true, hanging_leaves = true, hanging_bark = true },
+        relativeProbability = 2.5,
+        trunk               = normalwood,
+        leaves1             = templateLeaf,
+        leaves2             = wisteriaBlossom1,
+        leaves_special      = wisteriaBlossom2,
+        vineflags           = { leaves = true, hanging_leaves = true, hanging_bark = true },
 
         init = function(self, position)
           -- 20% of these trees are a glowing variant
           self.leaves_special = wisteriaBlossom2
-          if (position.x * 3 + position.y + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE then self.leaves_special = wisteriaBlossom2 .. GLOW_SUFFIX end
+          if (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE then self.leaves_special = wisteriaBlossom2 .. GLOW_SUFFIX end
 
           -- if it's hot and humid then allow vines on the trunk as well
           self.vineflags.bark = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
         end
       }
-      tree.defaultThemeName = "Wisteria"
 
       tree.theme["Blossom"] = {
-        trunk              = normalwood,
-        leaves1            = whiteblossom1,
-        leaves2            = whiteblossom2,
-        leaves_special     = normalwood..BARK_SUFFIX,
+        relativeProbability = 1.5,
+        trunk               = normalwood,
+        leaves1             = whiteblossom1,
+        leaves2             = whiteblossom2,
+        leaves_special      = normalwood..BARK_SUFFIX,
 
         init = function(self, position)
           -- 20% of these trees are a glowing variant
           leaves_special     = normalwood..BARK_SUFFIX
-          if (position.x * 3 + position.y + position.z + ISLANDS_SEED) % 10 <= 2 and BIOLUMINESCENCE then self.leaves_special = pinkblossom .. GLOW_SUFFIX end
+          if (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 2 and BIOLUMINESCENCE then self.leaves_special = pinkblossom .. GLOW_SUFFIX end
         end
       }      
 
@@ -519,10 +545,77 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
         if theme.leaves_special == nil then theme.leaves_special = theme.leaves1 end
 
         if theme.vineflags == nil then theme.vineflags = {} end
+        if theme.relativeProbability == nil then theme.relativeProbability = 1 end
       end
     end
 
   end
+
+
+  -- Returns true if a tree in this location would be dead
+  -- (checks for desert)
+  SkyTrees.isDead = function(position)
+    heat     = minetest.get_heat(position)
+    humidity = minetest.get_humidity(position)
+
+    if humidity <= 10 or (humidity <= 20 and heat >= 80) then
+      return true
+    end
+
+    local biomeId = minetest.get_biome_data(position).biome
+    local biome = biomes[biomeId]
+    if biome ~= nil then
+      local modname, nodename = interop.split_nodename(biome.node_top)
+      if string.find(nodename, "sand") or string.find(nodename, "desert") then
+        return true
+      end
+    end
+  end
+
+
+  -- Returns the name of a suitable theme
+  -- Picks a theme from the schematicInfo automatically, based on the themes' relativeProbability, and location.
+  SkyTrees.selectTheme = function(position, schematicInfo, choiceSeed)
+
+    local deadThemeName = "Dead"
+
+    if schematicInfo.theme[deadThemeName] ~= nil then 
+      -- Tree is dead and bleached in desert biomes
+      if SkyTrees.isDead(position) then
+        return deadThemeName
+      end
+    end
+
+    if choiceSeed == nil then choiceSeed = 0 end
+    -- Use a known PRNG implementation
+    local prng = PcgRandom(
+      position.x           * 65732 +
+      position.z           * 729   +
+      schematicInfo.size.x * 3     +
+      choiceSeed
+    )
+
+    local sumProbabilities = 0
+    for _,theme in pairs(schematicInfo.theme) do 
+      sumProbabilities = sumProbabilities + theme.relativeProbability
+    end
+
+    local selection = prng:next(0, sumProbabilities * 1000) / 1000
+    minetest.log("info", "x: "..position.x.." y: ".. position.y .. " sumProbabilities: " .. sumProbabilities .. ", selection: " .. selection)
+
+    sumProbabilities = 0
+    for themeName,theme in pairs(schematicInfo.theme) do 
+      if selection <= sumProbabilities + theme.relativeProbability then
+        return themeName
+      else            
+        sumProbabilities = sumProbabilities + theme.relativeProbability
+      end
+    end
+
+    error(SkyTrees.MODNAME .. " - SkyTrees.selectTheme failed to find a theme", 0) 
+    return schematicInfo.defaultThemeName
+  end
+
 
   -- position is a vector {x, y, z}
   -- rotation must be either 0, 90, 180, or 270
@@ -561,7 +654,7 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       if treeBiome ~= nil and treeBiome.node_top ~= nil then topsoil = treeBiome.node_top end
     end
   
-    if themeName == nil then themeName = schematicInfo.defaultThemeName end
+    if themeName == nil then themeName = SkyTrees.selectTheme(position, schematicInfo) end
     local theme = schematicInfo.theme[themeName]
     if theme == nil then error(MODNAME .. ' called SkyTrees.placeTree("' .. schematicInfo.filename .. '") with invalid theme: ' .. themeName, 0) end    
     if theme.init ~= nil then theme.init(theme, position) end
@@ -595,8 +688,9 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       if rotation ~= 0 then schematicCoords = rotatePositon(schematicCoords, schematicInfo.size, rotation) end
       local nodePos = vector.add(treePos, schematicCoords)
       local nodeToConstruct = minetest.get_node(nodePos)
-      if nodeToConstruct.name == "air" or nodeToConstruct.name == "ignore" then 
-        minetest.log("error", "nodesWithConstructor["..i.."] does not match schematic " .. schematicInfo.filename .. " at " .. nodePos.x..","..nodePos.y..","..nodePos.z.." rotation "..rotation)
+      if nodeToConstruct.name == "air" or nodeToConstruct.name == "ignore" then
+        --this is now normal - e.g. if vines are set to 'ignore' then the nodeToConstruct won't be there.
+        --minetest.log("error", "nodesWithConstructor["..i.."] does not match schematic " .. schematicInfo.filename .. " at " .. nodePos.x..","..nodePos.y..","..nodePos.z.." rotation "..rotation)
       else 
         minetest.set_node(nodePos, nodeToConstruct)
       end
@@ -1102,6 +1196,9 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
   if (maxp.y < treeAltitude - SkyTrees.maximumYOffset) or (minp.y > treeAltitude + SkyTrees.maximumHeight) then
     --no tree here
     return false
+  elseif SkyTrees.disabled ~= nil then 
+    -- can't find nodes/textures in this game that are needed to build trees
+    return false
   end
 
   local fastHash = 3
@@ -1113,10 +1210,23 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
   fastHash = (37 * fastHash) + 76276 -- to keep this probability distinct from reefs and atols
   if (TREE_RARITY * 1000) < math_floor((math_abs(fastHash)) % 1000) then return false end
 
+  local coreX = core.x --save doing a table lookups
+  local coreZ = core.z --save doing a table lookups
+
   -- choose a tree that will fit on the island
   local tree
+
+  local skipLargeTree = (fastHash % 10) < 3 -- to allow small trees a chance to spawn on large islands
+  if skipLargeTree then
+    if SkyTrees.isDead({x = coreX, y = treeAltitude, z = coreZ}) then
+      -- small tree currently doesn't have a dead theme, so don't skip the large tree
+      skipLargeTree = false
+    end
+  end
+
+
   for i, treeType in pairs(SkyTrees.schematicInfo) do
-    if i == 1 and (fastHash % 10) < 3 then
+    if i == 1 and skipLargeTree then
       -- 'continue', to allow small trees a chance to spawn on large islands
     elseif (core.radius >= treeType.requiredIslandRadius) and (core.depth >= treeType.requiredIslandDepth) then
       tree = treeType
@@ -1124,8 +1234,6 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
     end
   end
 
-  local coreX = core.x --save doing a table lookups
-  local coreZ = core.z --save doing a table lookups
   local maxOffsetFromCenter = core.radius - tree.requiredIslandRadius;
   
   -- Use a known PRNG implementation
@@ -1142,8 +1250,9 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
     z = coreZ + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2)
   }
 
-  --[[ Redrawing the tree every time a chunk it touches gets emitted helps work around the bugs 
-       in place_schematic() where large schematics are spawned incompletely.
+  --[[ This check is commented out because redrawing the tree multiple times - every time a chunk it touches 
+       gets emitted - might be slower, but helps work around the bugs in place_schematic() where large schematics 
+       are spawned incompletely.
        (The bug in question: https://forum.minetest.net/viewtopic.php?f=6&t=22136 )
   if (maxp.y < treePos.y) or (minp.y > treePos.y) or (maxp.x < treePos.x) or (minp.x > treePos.x) or (maxp.z < treePos.z) or (minp.z > treePos.z) then
     -- Now that we know the exact position of the tree, we know it's spawn point is not in this chunk.
@@ -1151,16 +1260,25 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
     return false
   end --]]
 
+  if tree.theme["Dead"] == nil then
+    if SkyTrees.isDead(treePos) then
+      -- Trees in this location should be dead, but this tree doesn't have a dead theme, so don't put a tree here
+      return false
+    end
+  end
+
   if core.biome == nil then setCoreBiomeData(core) end -- We shouldn't assume the core biome has already been resolved, it might be below the emerged chunk and unrendered
+
+  minetest.log("info", "core x: "..coreX.." y: ".. coreZ .. " treePos: " .. treePos.x .. ", y: " .. treePos.y)
 
   SkyTrees.placeTree(treePos, treeAngle, tree, nil, core.biome.node_top)
   return true;
 end
 
 -- minified with https://mothereff.in/lua-minifier
-local function a(b)if type(b)=="table"then for c,d in ipairs(b)do b[c]=a(d)end;return b else return b:gsub("%a",function(e)e=e:byte()return string.char(e+(e%32<8 and 19 or-7))end)end end;if minetest.get_modpath("default")then local f=MODNAME..a(":jvidli")minetest.register_node(f,{tiles={"crack_anylength.png^[verticalframe:5:4^[brighten"},description=a("Jvidli"),groups={snappy=3,liquid=3,flammable=3,not_in_creative_inventory=1},drawtype="plantlike",walkable=false,liquid_viscosity=8,liquidtype="source",liquid_alternative_flowing=f,liquid_alternative_source=f,liquid_renewable=false,liquid_range=0,sunlight_propagates=true,paramtype="light"})end;local g=a("zljyla:mvzzpspglk_lnn")local h=a("klmhbsa_qbunslslhclz.wun")if minetest.get_modpath("ethereal")~=nil then h=a("laolylhs_myvza_slhclz.wun")end;local i=minetest.get_content_id(g)if i==nodeId_ignore then minetest.register_node(":"..g,{tiles={h.."^[colorize:#280040E0^[noalpha"},description=a("Mvzzpspglk Lnn"),groups={oddly_breakable_by_hand=3,not_in_creative_inventory=1},drawtype="nodebox",paramtype="light",node_box={type="fixed",fixed={{-0.066666,-0.5,-0.066666,0.066666,0.5,0.066666},{-0.133333,-0.476667,-0.133333,0.133333,0.42,0.133333},{-0.2,-0.435,-0.2,0.2,0.31,0.2},{-0.2,-0.36,-0.28,0.2,0.16667,0.28},{-0.28,-0.36,-0.2,0.28,0.16667,0.2}}}})i=minetest.get_content_id(g)end;local j=minetest.get_content_id(interop.register_clone("air",MODNAME..":tempAir"))local k;local l;local m;local n;local o;local p;local q;local r;local s;local t;local u;
+local function a(b)if type(b)=="table"then for c,d in ipairs(b)do b[c]=a(d)end;return b else return b:gsub("%a",function(e)e=e:byte()return string.char(e+(e%32<8 and 19 or-7))end)end end;if minetest.get_modpath("default")then local f=MODNAME..a(":jvidli")minetest.register_node(f,{tiles={"crack_anylength.png^[verticalframe:5:4^[brighten"},description=a("Jvidli"),groups={snappy=3,liquid=3,flammable=3,not_in_creative_inventory=1},drawtype="plantlike",walkable=false,liquid_viscosity=8,liquidtype="source",liquid_alternative_flowing=f,liquid_alternative_source=f,liquid_renewable=false,liquid_range=0,sunlight_propagates=true,paramtype="light"})end;local g=minetest.get_content_id(interop.register_clone("air",MODNAME..":tempAir"))local h=a("zljyla:mvzzpspglk_lnn")local i=a("klmhbsa_qbunslslhclz.wun")if minetest.get_modpath("ethereal")~=nil then i=a("laolylhs_myvza_slhclz.wun")end;local j=minetest.get_content_id(h)if j==nodeId_ignore then minetest.register_node(":"..h,{tiles={i.."^[colorize:#280040E0^[noalpha"},description=a("Mvzzpspglk Lnn"),groups={oddly_breakable_by_hand=3,not_in_creative_inventory=1},drawtype="nodebox",paramtype="light",node_box={type="fixed",fixed={{-0.066666,-0.5,-0.066666,0.066666,0.5,0.066666},{-0.133333,-0.476667,-0.133333,0.133333,0.42,0.133333},{-0.2,-0.435,-0.2,0.2,0.31,0.2},{-0.2,-0.36,-0.28,0.2,0.16667,0.28},{-0.28,-0.36,-0.2,0.28,0.16667,0.2}}}})j=minetest.get_content_id(h)end;local k;local l;local m;local n;local o;local p;local q;local r;local s;local t;local u;
 
-local function addDetail_secrets__shhh_dont_tell_people(w,x,y,z,A,B)if x.biome~=nil and x.radius>18 and x.depth>20 and x.radius+x.depth>60 then local C=math_floor(x.x/x.type.territorySize)local D=math_floor(x.z/x.type.territorySize)local E=x.temperature<=5 and x.x%3==0 and noise_surfaceMap:get2d({x=x.x,y=x.z-8})>=0;local F=x.humidity>=60 and x.temperature>=50;if(C+D)%2==0 and(E or F)then local G=7;local H=5;local I=12;local J=ALTITUDE+x.y-I;local K=G*G;local function L(M,N,O,P,Q,R)local S=vector.direction(M,N)local T={}if S.x>0 then T.x=-1 else T.x=1 end;if S.z>0 then T.z=-1 else T.z=1 end;local U={}local function V(W,X,Y)if y[W]==nodeId_air then local Z={}local _;local function a0(a1)return a1~=nodeId_air and a1~=j and(a1==Y or Y==nil)end;if a0(y[W+T.x])and X.x+T.x>=A.x and X.x+T.x<=B.x then if T.x>0 then _=2 else _=3 end;Z[#Z+1]={solid_vi=W+T.x,facing=_}end;if a0(y[W+T.z*z.zstride])and X.z+T.z>=A.z and X.z+T.z<=B.z then if T.z>0 then _=4 else _=5 end;Z[#Z+1]={solid_vi=W+T.z*z.zstride,facing=_}end;local a2=nil;if#Z==1 then a2=Z[1]elseif#Z==2 then local a3=math.abs(S.x)/(math.abs(S.x)+math.abs(S.z))if randomNumbers[(X.x+X.y+X.z)%256]<=a3 then a2=Z[1]else a2=Z[2]end end;if a2~=nil and(Y==nil or Y==y[a2.solid_vi])and y[a2.solid_vi]~=j then local a4=a2.solid_vi;local a5=1;while X.y+a5<=B.y+1 and y[a4+a5*z.ystride]~=nodeId_air and y[W+a5*z.ystride]==nodeId_air and(Y==nil or Y==y[a4+a5*z.ystride])do a5=a5+1 end;U[#U+1]=function(w)local a6=y[a4+(a5-1)*z.ystride]if a6~=j and a6~=nodeId_air and y[W]==nodeId_air then w[#w+1]={pos={x=X.x,y=X.y+a5-1,z=X.z},node={name=nodeName_vine,param2=a2.facing}}end end end end end;local a7={}local function a8(X,O,P,a1,a9)local aa={}local ab=-1;for ac=X.y,X.y+P-1 do if ac>=A.y and ac<=B.y then if ab==-1 then ab=z:index(X.x,ac,X.z)else ab=ab+z.ystride end;for ad,ae in ipairs(O)do local af=X.x+ae.x;local ag=X.z+ae.z;if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z then local W=ab+ae.x+ae.z*z.zstride;if y[W]==nodeId_air then if a9~=nil then aa[#aa+1]=function()a9(X,W,af,ac,ag)end end else y[W]=a1;a7[#a7+1]=W end end end end end;for ad,ah in ipairs(aa)do ah()end end;local function ai(X,aj,ak,al)local function am(an,ao,ap,aq,ar)if aq>an.y and aq+1<=B.y then V(ao+z.ystride,{x=ap,y=aq+1,z=ar})else V(ao,{x=ap,y=aq,z=ar},Q)end end;local as=am;local at=j;if not ak or nodeId_vine==nodeId_ignore then as=nil end;if al and s~=nodeId_ignore then at=s end;a8(X,O,P,at,as)if aj and Q~=nil then a8({x=X.x,y=X.y-1,z=X.z},O,1,Q,as)end end;local au=x.humidity>=VINES_REQUIRED_HUMIDITY and x.temperature>=VINES_REQUIRED_TEMPERATURE;if R==nil then R=0 end;local av=round(vector.distance(M,N))local aw=vector.divide(vector.subtract(N,M),av)local X=vector.new(M)local ax=vector.new(M)ai(M,0>=R,false)for ay=1,av do ax.x=ax.x+aw.x;if round(ax.x)~=X.x then X.x=round(ax.x)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.y=ax.y+aw.y;if round(ax.y)~=X.y then X.y=round(ax.y)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.z=ax.z+aw.z;if round(ax.z)~=X.z then X.z=round(ax.z)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end end;for ad,az in ipairs(U)do az(w)end;for ad,aA in ipairs(a7)do if y[aA]==j then y[aA]=nodeId_air;surfaceData[aA]=nodeId_air end end end;local function aB(af,ac,ag,a1)if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z and ac>=A.y and ac<=B.y then y[z:index(af,ac,ag)]=a1 end end;local function aC(X)return X.x>=A.x and X.x<=B.x and X.z>=A.z and X.z<=B.z and X.y>=A.y and X.y<=B.y end;local aD=math_max(x.z-G,A.z)local aE=math_max(x.x-G,A.x)local aF=math_min(x.x+G,B.x)local aG=math_max(J,A.y)local aH=z:index(aE,aG,aD)for ag=aD,math_min(x.z+G,B.z)do for af=aE,aF do local aI=(af-x.x)*(af-x.x)+(ag-x.z)*(ag-x.z)if aI<K then local aJ=1-aI/K;for ac=math_max(A.y,J+math_floor(1.4-aJ)),math_min(B.y,J+1+math_min(H-1,math_floor(0.8+H*aJ)))do y[aH+(ac-aG)*z.ystride]=nodeId_air end end;aH=aH+1 end;aH=aH+z.zstride-(aF-aE+1)end;local Q;if x.biome.node_top==nil then Q=nil else Q=minetest.get_content_id(x.biome.node_top)end;if F then local aK=vector.new(x.type.territorySize*math.floor(x.x/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2),J,x.type.territorySize*math.floor(x.z/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2))local aL=vector.new(x.x,J,x.z)local S=vector.direction(aL,aK)local aM=4;if S.z<0 then aM=-aM end;aL.z=aL.z+aM;aL.x=aL.x+2;S=vector.direction(aL,aK)if vector.length(S)==0 then S=vector.direction({x=0,y=0,z=0},{x=2,y=0,z=1})end;local aN=vector.add(vector.multiply(S,x.radius),{x=0,y=-4,z=0})local aO=4+math.floor(0.5+x.radius*0.3)local O={{x=0,z=0},{x=-1,z=0},{x=1,z=0},{x=0,z=-1},{x=0,z=1}}L(aL,vector.add(aL,aN),O,2,Q,aO)local aP=x.x;local aQ=x.z-aM*0.75;aB(aP,J,aQ,i)if nodeId_gravel~=nodeId_ignore then aB(aP,J-1,aQ,nodeId_gravel)end;if s~=nodeId_ignore then aB(x.x-6,J+3,x.z-1,s)aB(x.x+4,J+4,x.z+3,s)aB(x.x+6,J+1,x.z-3,s)end else if(o~=nodeId_ignore or n~=nodeId_ignore)and k~=nodeId_ignore and l~=nodeId_ignore then local aR=vector.new(x.x-3,J,x.z-7)local aS=vector.add(aR,{x=0,y=0,z=1})local aT=vector.add(aR,{x=8,y=8,z=0})local aU=vector.add(aT,{x=0,y=0,z=-1})local aV=vector.add(aU,{x=-16,y=16,z=0})L(aV,aU,{{x=0,z=0}},3,Q,0)L(aT,aR,{{x=0,z=0}},2,Q,0)local O={{x=0,z=0},{x=1,z=0},{x=0,z=2},{x=0,z=1},{x=1,z=1}}L(aS,aS,O,2,Q,0)aB(x.x+2,J,x.z+5,k)aB(x.x+2,J,x.z+4,l)aB(x.x+2,J,x.z+2,k)aB(x.x+2,J,x.z+1,l)aB(x.x+4,J,x.z+2,k)aB(x.x+4,J,x.z+1,l)if m~=nodeId_ignore then w[#w+1]={pos={x=x.x,y=J+2,z=x.z+6},node={name=minetest.get_name_from_content_id(m),param2=4}}end;if p~=nodeId_ignore then aB(x.x-4,J+1,x.z+5,p)end;if q~=nodeId_ignore then aB(x.x-6,J+1,x.z,q)end;if r~=nodeId_ignore then aB(x.x-5,J,x.z+2,r)end;if s~=nodeId_ignore then aB(x.x+4,J+4,x.z-3,s)end;local aW;local aX=nil;local aY=nil;if n~=nodeId_ignore then local X={x=x.x-3,y=J+1,z=x.z+6}local aZ=minetest.get_name_from_content_id(n)local a_=minetest.get_node(X).name;if a_~=aZ and not a_:find("chest")then minetest.set_node(X,{name=aZ})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=n;aY=minetest.get_inventory({type="node",pos=X})end end;if o~=nodeId_ignore then local X={x=x.x-2,y=J+1,z=x.z+6}aW=X;if minetest.get_node(X).name~=t then minetest.set_node(X,{name=t})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=o;if not u then aX=minetest.get_inventory({type="node",pos=X})end end end;if aX~=nil or aY~=nil then local b0="yvjr"if x.biome.node_filler~=nil then local b1=string.lower(x.biome.node_filler)..string.lower(x.biome.node_top)if string.match(b1,"ice")or string.match(b1,"snow")or string.match(b1,"frozen")then b0="pjl"end end;local b2=a("klmhbsa:ivvr_dypaalu")if u then b2=a("tjs_ivvrz:dypaalu_ivvr")end;local b3=ItemStack(b2)local b4={}b4.title=a("Dlkklss Vbawvza")b4.text=a("Aol hlyvzaha pz svza.\n\n".."Vby zhschnl haaltwaz aoyvbnovba aol upnoa zhclk tvza vm aol\n".."wyvcpzpvuz.\n".."                                    ---====---\n\n".."Aopz pzshuk pz opnosf lewvzlk huk aol dlhaoly kpk uva aylha\n".."aol aluaz dlss. Dl ohcl lushynlk h zolsalylk jyhn pu aol "..b0 ..",\n".."iba pa pz shivyvbz dvyr huk aol jvukpapvu vm zvtl vm aol whyaf\n".."pz iljvtpun jhbzl mvy jvujlyu.\n\n".."Xbpal h qvbyulf pz ylxbpylk. Uvivkf dpss svvr mvy bz olyl.\n\n".."TjUpzo pz haaltwapun av zaylunaolu aol nspklyz.\n\n".."                                    ---====---")local b5="Zvtl vm aol mbu vm Tpuljyhma dhz wpjrpun hwhya ovd pa ".."dvyrlk huk alhzpun vba hss paz zljylaz. P ovwl fvb luqvflk :)".."\n\n".."'uvivkf mvbuk pa! P dhz zv ohwwf hivba aoha, P mpuhssf ruld ".."zvtlaopun hivba aol nhtl aol wshflyz kpku'a ruvd.' -- Uvajo 2012 ".."(ylkkpa.jvt/y/Tpuljyhma/jvttluaz/xxlux/tpujlyhma_h_wvza_tvyalt/)".."\n\n".."Mlls myll av pucvscl aol lnn, vy Ilya, pu vaoly tvkz."if u then b4.text=b4.title.."\n\n"..b4.text end;b4.owner=a("Ilya Zohjrslavu")b4.author=b4.owner;b4.description=a("Kphyf vm Ilya Zohrslavu")b4.page=1;b4.page_max=1;b4.generation=0;b3:get_meta():from_table({fields=b4})if aX==nil then if aY~=nil then aY:add_item("main",b3)end else aX:add_item("books",b3)local b6={}b6.get_player_name=function()return"server"end;minetest.registered_nodes[t].on_metadata_inventory_put(aW,"books",1,b3,b6)end end;if aY~=nil then local b7;local function b8(b9,ba)for ad,bb in ipairs(b9)do if minetest.registered_items[bb]~=nil then b7=ItemStack(bb.." "..ba)aY:add_item("main",b7)break end end end;b8({"mcl_tools:pick_iron","default:pick_steel"},1)b8({"binoculars:binoculars"},1)b8({"mcl_core:wood","default:wood"},10)b8({"mcl_torches:torch","default:torch"},3)end end end end end end;
+local function addDetail_secrets__shhh_dont_tell_people(w,x,y,z,A,B)if x.biome~=nil and x.radius>18 and x.depth>20 and x.radius+x.depth>60 then local C=math_floor(x.x/x.type.territorySize)local D=math_floor(x.z/x.type.territorySize)local E=x.temperature<=5 and x.x%3==0 and noise_surfaceMap:get2d({x=x.x,y=x.z-8})>=0;local F=x.humidity>=60 and x.temperature>=50;if(C+D)%2==0 and(E or F)then local G=7;local H=5;local I=12;local J=ALTITUDE+x.y-I;local K=G*G;local function L(M,N,O,P,Q,R)local S=vector.direction(M,N)local T={}if S.x>0 then T.x=-1 else T.x=1 end;if S.z>0 then T.z=-1 else T.z=1 end;local U={}local function V(W,X,Y)if y[W]==nodeId_air then local Z={}local _;local function a0(a1)return a1~=nodeId_air and a1~=g and(a1==Y or Y==nil)end;if a0(y[W+T.x])and X.x+T.x>=A.x and X.x+T.x<=B.x then if T.x>0 then _=2 else _=3 end;Z[#Z+1]={solid_vi=W+T.x,facing=_}end;if a0(y[W+T.z*z.zstride])and X.z+T.z>=A.z and X.z+T.z<=B.z then if T.z>0 then _=4 else _=5 end;Z[#Z+1]={solid_vi=W+T.z*z.zstride,facing=_}end;local a2=nil;if#Z==1 then a2=Z[1]elseif#Z==2 then local a3=math.abs(S.x)/(math.abs(S.x)+math.abs(S.z))if randomNumbers[(X.x+X.y+X.z)%256]<=a3 then a2=Z[1]else a2=Z[2]end end;if a2~=nil and(Y==nil or Y==y[a2.solid_vi])and y[a2.solid_vi]~=g then local a4=a2.solid_vi;local a5=1;while X.y+a5<=B.y+1 and y[a4+a5*z.ystride]~=nodeId_air and y[W+a5*z.ystride]==nodeId_air and(Y==nil or Y==y[a4+a5*z.ystride])do a5=a5+1 end;U[#U+1]=function(w)local a6=y[a4+(a5-1)*z.ystride]if a6~=g and a6~=nodeId_air and y[W]==nodeId_air then w[#w+1]={pos={x=X.x,y=X.y+a5-1,z=X.z},node={name=nodeName_vine,param2=a2.facing}}end end end end end;local a7={}local function a8(X,O,P,a1,a9)local aa={}local ab=-1;for ac=X.y,X.y+P-1 do if ac>=A.y and ac<=B.y then if ab==-1 then ab=z:index(X.x,ac,X.z)else ab=ab+z.ystride end;for ad,ae in ipairs(O)do local af=X.x+ae.x;local ag=X.z+ae.z;if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z then local W=ab+ae.x+ae.z*z.zstride;if y[W]==nodeId_air then if a9~=nil then aa[#aa+1]=function()a9(X,W,af,ac,ag)end end else y[W]=a1;a7[#a7+1]=W end end end end end;for ad,ah in ipairs(aa)do ah()end end;local function ai(X,aj,ak,al)local function am(an,ao,ap,aq,ar)if aq>an.y and aq+1<=B.y then V(ao+z.ystride,{x=ap,y=aq+1,z=ar})else V(ao,{x=ap,y=aq,z=ar},Q)end end;local as=am;local at=g;if not ak or nodeId_vine==nodeId_ignore then as=nil end;if al and s~=nodeId_ignore then at=s end;a8(X,O,P,at,as)if aj and Q~=nil then a8({x=X.x,y=X.y-1,z=X.z},O,1,Q,as)end end;local au=x.humidity>=VINES_REQUIRED_HUMIDITY and x.temperature>=VINES_REQUIRED_TEMPERATURE;if R==nil then R=0 end;local av=round(vector.distance(M,N))local aw=vector.divide(vector.subtract(N,M),av)local X=vector.new(M)local ax=vector.new(M)ai(M,0>=R,false)for ay=1,av do ax.x=ax.x+aw.x;if round(ax.x)~=X.x then X.x=round(ax.x)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.y=ax.y+aw.y;if round(ax.y)~=X.y then X.y=round(ax.y)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end;ax.z=ax.z+aw.z;if round(ax.z)~=X.z then X.z=round(ax.z)ai(X,ay>=R,au,ay<=R-1 and ay>=R-2)end end;for ad,az in ipairs(U)do az(w)end;for ad,aA in ipairs(a7)do if y[aA]==g then y[aA]=nodeId_air;surfaceData[aA]=nodeId_air end end end;local function aB(af,ac,ag,a1)if af>=A.x and af<=B.x and ag>=A.z and ag<=B.z and ac>=A.y and ac<=B.y then y[z:index(af,ac,ag)]=a1 end end;local function aC(X)return X.x>=A.x and X.x<=B.x and X.z>=A.z and X.z<=B.z and X.y>=A.y and X.y<=B.y end;local aD=math_max(x.z-G,A.z)local aE=math_max(x.x-G,A.x)local aF=math_min(x.x+G,B.x)local aG=math_max(J,A.y)local aH=z:index(aE,aG,aD)for ag=aD,math_min(x.z+G,B.z)do for af=aE,aF do local aI=(af-x.x)*(af-x.x)+(ag-x.z)*(ag-x.z)if aI<K then local aJ=1-aI/K;for ac=math_max(A.y,J+math_floor(1.4-aJ)),math_min(B.y,J+1+math_min(H-1,math_floor(0.8+H*aJ)))do y[aH+(ac-aG)*z.ystride]=nodeId_air end end;aH=aH+1 end;aH=aH+z.zstride-(aF-aE+1)end;local Q;if x.biome.node_top==nil then Q=nil else Q=minetest.get_content_id(x.biome.node_top)end;if F then local aK=vector.new(x.type.territorySize*math.floor(x.x/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2),J,x.type.territorySize*math.floor(x.z/x.type.territorySize)+math.floor(0.5+x.type.territorySize/2))local aL=vector.new(x.x,J,x.z)local S=vector.direction(aL,aK)local aM=4;if S.z<0 then aM=-aM end;aL.z=aL.z+aM;aL.x=aL.x+2;S=vector.direction(aL,aK)if vector.length(S)==0 then S=vector.direction({x=0,y=0,z=0},{x=2,y=0,z=1})end;local aN=vector.add(vector.multiply(S,x.radius),{x=0,y=-4,z=0})local aO=4+math.floor(0.5+x.radius*0.3)local O={{x=0,z=0},{x=-1,z=0},{x=1,z=0},{x=0,z=-1},{x=0,z=1}}L(aL,vector.add(aL,aN),O,2,Q,aO)local aP=x.x;local aQ=x.z-aM*0.75;aB(aP,J,aQ,j)if nodeId_gravel~=nodeId_ignore then aB(aP,J-1,aQ,nodeId_gravel)end;if s~=nodeId_ignore then aB(x.x-6,J+3,x.z-1,s)aB(x.x+4,J+4,x.z+3,s)aB(x.x+6,J+1,x.z-3,s)end else if(o~=nodeId_ignore or n~=nodeId_ignore)and k~=nodeId_ignore and l~=nodeId_ignore then local aR=vector.new(x.x-3,J,x.z-7)local aS=vector.add(aR,{x=0,y=0,z=1})local aT=vector.add(aR,{x=8,y=8,z=0})local aU=vector.add(aT,{x=0,y=0,z=-1})local aV=vector.add(aU,{x=-16,y=16,z=0})L(aV,aU,{{x=0,z=0}},3,Q,0)L(aT,aR,{{x=0,z=0}},2,Q,0)local O={{x=0,z=0},{x=1,z=0},{x=0,z=2},{x=0,z=1},{x=1,z=1}}L(aS,aS,O,2,Q,0)aB(x.x+2,J,x.z+5,k)aB(x.x+2,J,x.z+4,l)aB(x.x+2,J,x.z+2,k)aB(x.x+2,J,x.z+1,l)aB(x.x+4,J,x.z+2,k)aB(x.x+4,J,x.z+1,l)if m~=nodeId_ignore then w[#w+1]={pos={x=x.x,y=J+2,z=x.z+6},node={name=minetest.get_name_from_content_id(m),param2=4}}end;if p~=nodeId_ignore then aB(x.x-4,J+1,x.z+5,p)end;if q~=nodeId_ignore then aB(x.x-6,J+1,x.z,q)end;if r~=nodeId_ignore then aB(x.x-5,J,x.z+2,r)end;if s~=nodeId_ignore then aB(x.x+4,J+4,x.z-3,s)end;local aW;local aX=nil;local aY=nil;if n~=nodeId_ignore then local X={x=x.x-3,y=J+1,z=x.z+6}local aZ=minetest.get_name_from_content_id(n)local a_=minetest.get_node(X).name;if a_~=aZ and not a_:find("chest")then minetest.set_node(X,{name=aZ})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=n;aY=minetest.get_inventory({type="node",pos=X})end end;if o~=nodeId_ignore then local X={x=x.x-2,y=J+1,z=x.z+6}aW=X;if minetest.get_node(X).name~=t then minetest.set_node(X,{name=t})end;if aC(X)then y[z:index(X.x,X.y,X.z)]=o;if not u then aX=minetest.get_inventory({type="node",pos=X})end end end;if aX~=nil or aY~=nil then local b0="yvjr"if x.biome.node_filler~=nil then local b1=string.lower(x.biome.node_filler)..string.lower(x.biome.node_top)if string.match(b1,"ice")or string.match(b1,"snow")or string.match(b1,"frozen")then b0="pjl"end end;local b2=a("klmhbsa:ivvr_dypaalu")if u then b2=a("tjs_ivvrz:dypaalu_ivvr")end;local b3=ItemStack(b2)local b4={}b4.title=a("Dlkklss Vbawvza")b4.text=a("Aol hlyvzaha pz svza.\n\n".."Vby zhschnl haaltwaz aoyvbnovba aol upnoa zhclk tvza vm aol\n".."wyvcpzpvuz.\n".."                                    ---====---\n\n".."Aopz pzshuk pz opnosf lewvzlk huk aol dlhaoly kpk uva aylha\n".."aol aluaz dlss. Dl ohcl lushynlk h zolsalylk jyhn pu aol "..b0 ..",\n".."iba pa pz shivyvbz dvyr huk aol jvukpapvu vm zvtl vm aol whyaf\n".."pz iljvtpun jhbzl mvy jvujlyu.\n\n".."Xbpal h qvbyulf pz ylxbpylk. Uvivkf dpss svvr mvy bz olyl.\n\n".."TjUpzo pz haaltwapun av zaylunaolu aol nspklyz.\n\n".."                                    ---====---")local b5="Zvtl vm aol mbu vm Tpuljyhma dhz wpjrpun hwhya ovd pa ".."dvyrlk huk alhzpun vba hss paz zljylaz. P ovwl fvb luqvflk :)".."\n\n".."'uvivkf mvbuk pa! P dhz zv ohwwf hivba aoha, P mpuhssf ruld ".."zvtlaopun hivba aol nhtl aol wshflyz kpku'a ruvd.' -- Uvajo 2012 ".."(ylkkpa.jvt/y/Tpuljyhma/jvttluaz/xxlux/tpujlyhma_h_wvza_tvyalt/)".."\n\n".."Mlls myll av pucvscl aol lnn, vy Ilya, pu vaoly tvkz."if u then b4.text=b4.title.."\n\n"..b4.text end;b4.owner=a("Ilya Zohjrslavu")b4.author=b4.owner;b4.description=a("Kphyf vm Ilya Zohrslavu")b4.page=1;b4.page_max=1;b4.generation=0;b3:get_meta():from_table({fields=b4})if aX==nil then if aY~=nil then aY:add_item("main",b3)end else aX:add_item("books",b3)local b6={}b6.get_player_name=function()return"server"end;minetest.registered_nodes[t].on_metadata_inventory_put(aW,"books",1,b3,b6)end end;if aY~=nil then local b7;local function b8(b9,ba)for ad,bb in ipairs(b9)do if minetest.registered_items[bb]~=nil then b7=ItemStack(bb.." "..ba)aY:add_item("main",b7)break end end end;b8({"mcl_tools:pick_iron","default:pick_steel"},1)b8({"binoculars:binoculars"},1)b8({"mcl_core:wood","default:wood"},10)b8({"mcl_torches:torch","default:torch"},3)end end end end end end;
 
 local function init_secrets__shhh_dont_tell_people()k=interop.find_node_id(a({"ilkz:ilk_avw"}))l=interop.find_node_id(a({"ilkz:ilk_ivaavt"}))m=interop.find_node_id(a({"tjs_avyjolz:avyjo_dhss","klmhbsa:avyjo_dhss"}))n=interop.find_node_id(a({"jolza","tjs_jolzaz:jolza","klmhbsa:jolza"}))p=interop.find_node_id(a({"ekljvy:ihyyls","jvaahnlz:ihyyls","ovtlkljvy:jvwwly_whuz","clzzlsz:zalls_ivaasl","tjs_msvdlywvaz:msvdly_wva"}))q=interop.find_node_id(a({"jhzasl:hucps","jvaahnlz:hucps","tjs_hucpsz:hucps","klmhbsa:hucps"}))r=interop.find_node_id(a({"ovtlkljvy:ahisl","ekljvy:dvyrilujo","tjs_jyhmapun_ahisl:jyhmapun_ahisl","klmhbsa:ahisl","yhukvt_ibpskpunz:ilujo"}))s=interop.find_node_id(a({"tjs_jvyl:jvidli","ekljvy:jvidli","ovtlkljvy:jvidli_wshuasprl","klmhbsa:jvidli"}))local bd=a("tjs_ivvrz:ivvrzolsm")o=interop.find_node_id({bd,a("klmhbsa:ivvrzolsm")})t=minetest.get_name_from_content_id(o)u=t==bd;local f=MODNAME..a(":jvidli")if s~=nodeId_ignore then minetest.register_alias(f,minetest.get_name_from_content_id(s))else s=minetest.get_content_id(f)end end
 
