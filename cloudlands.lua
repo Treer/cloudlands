@@ -312,9 +312,9 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
     SkyTrees.nodeName_hangingRoot = interop.find_node_name(NODENAMES_HANGINGROOT)
 
     for i,tree in pairs(SkyTrees.schematicInfo) do
-      tree.fullFilename    = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. tree.filename
+      local fullFilename = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. tree.filename
   
-      if not file_exists(tree.fullFilename) then
+      if not file_exists(fullFilename) then
         -- remove the schematic from the list
         SkyTrees.schematicInfo[i] = nil
       else
@@ -474,9 +474,10 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
         leaves_special      = sakurablossom1,
 
         init = function(self, position)
-          -- 20% of these trees are a glowing variant
-          leaves_special     = normalwood..BARK_SUFFIX
-          if (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE then self.leaves_special = sakurablossom1 .. GLOW_SUFFIX end
+          -- 40% of these trees are a glowing variant
+          self.glowing = (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE
+          self.leaves_special = sakurablossom1
+          if self.glowing then self.leaves_special = sakurablossom1 .. GLOW_SUFFIX end
         end
       }
 
@@ -498,9 +499,10 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
         vineflags           = { leaves = true, hanging_leaves = true, hanging_bark = true },
 
         init = function(self, position)
-          -- 20% of these trees are a glowing variant
+          -- 40% of these trees are a glowing variant
+          self.glowing = (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE
           self.leaves_special = wisteriaBlossom2
-          if (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE then self.leaves_special = wisteriaBlossom2 .. GLOW_SUFFIX end
+          if self.glowing then self.leaves_special = wisteriaBlossom2 .. GLOW_SUFFIX end
 
           -- if it's hot and humid then allow vines on the trunk as well
           self.vineflags.bark = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
@@ -515,9 +517,10 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
         leaves_special      = normalwood..BARK_SUFFIX,
 
         init = function(self, position)
-          -- 20% of these trees are a glowing variant
-          leaves_special     = normalwood..BARK_SUFFIX
-          if (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 2 and BIOLUMINESCENCE then self.leaves_special = pinkblossom .. GLOW_SUFFIX end
+          -- 30% of these trees are a glowing variant
+          self.glowing = (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 2 and BIOLUMINESCENCE
+          leaves_special = normalwood..BARK_SUFFIX
+          if self.glowing then self.leaves_special = pinkblossom .. GLOW_SUFFIX end
         end
       }      
 
@@ -526,16 +529,52 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
     -- fill in any omitted fields in the themes with default values
     for _,tree in pairs(SkyTrees.schematicInfo) do
       for _,theme in pairs(tree.theme) do
-        if theme.bark           == nil then theme.bark           = theme.trunk .. BARK_SUFFIX end
-        if theme.leaves1        == nil then theme.leaves1        = 'ignore' end
-        if theme.leaves2        == nil then theme.leaves2        = 'ignore' end
-        if theme.leaves_special == nil then theme.leaves_special = theme.leaves1 end
+        if theme.bark                == nil then theme.bark                = theme.trunk .. BARK_SUFFIX end
+        if theme.leaves1             == nil then theme.leaves1             = 'ignore'                   end
+        if theme.leaves2             == nil then theme.leaves2             = 'ignore'                   end
+        if theme.leaves_special      == nil then theme.leaves_special      = theme.leaves1              end
 
-        if theme.vineflags == nil then theme.vineflags = {} end
-        if theme.relativeProbability == nil then theme.relativeProbability = 1 end
+        if theme.vineflags           == nil then theme.vineflags           = {}                         end
+        if theme.relativeProbability == nil then theme.relativeProbability = 1.0                        end
+        if theme.glowing             == nil then theme.glowing             = false                      end
       end
     end
 
+  end
+
+  -- this is hack to work around how place_schematic() never invalidates its cache
+  -- a unique schematic filename is generated for each unique theme
+  SkyTrees.getMalleatedFilename = function(schematicInfo, themeName)
+
+    -- create a unique id for the theme
+    local theme = schematicInfo.theme[themeName]
+    local flags = 0
+    if theme.glowing                  then flags = flags +  1 end
+    if theme.vineflags.leaves         then flags = flags +  2 end
+    if theme.vineflags.hanging_leaves then flags = flags +  4 end
+    if theme.vineflags.bark           then flags = flags +  8 end
+    if theme.vineflags.hanging_bark   then flags = flags + 16 end
+    if theme.vineflags.hanging_roots  then flags = flags + 32 end
+
+    local uniqueId = themeName .. flags
+
+    if schematicInfo.malleatedFilenames == nil then schematicInfo.malleatedFilenames = {} end
+
+    if schematicInfo.malleatedFilenames[uniqueId] == nil then
+
+      local malleationCount = 0
+      for _ in pairs(schematicInfo.malleatedFilenames) do malleationCount = malleationCount + 1 end
+
+      local malleatedFilename = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM
+      for i = 1, malleationCount do
+        malleatedFilename = malleatedFilename .. '.' .. DIR_DELIM -- should work on both Linux and Windows
+      end
+      malleatedFilename = malleatedFilename .. schematicInfo.filename
+      schematicInfo.malleatedFilenames[uniqueId] = malleatedFilename
+    end
+
+    --minetest.log("info", "Malleated file name for " .. uniqueId .. " is " .. schematicInfo.malleatedFilenames[uniqueId])
+    return schematicInfo.malleatedFilenames[uniqueId]
   end
 
 
@@ -667,8 +706,10 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       ['default:dirt']       = topsoil
     }
   
+    local malleatedFilename = SkyTrees.getMalleatedFilename(schematicInfo, themeName)
+
     --minetest.log("info", "Placing tree: " .. dump(treePos) .. ", " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename)
-    minetest.place_schematic(treePos, schematicInfo.fullFilename, rotation, replacements, true)
+    minetest.place_schematic(treePos, malleatedFilename, rotation, replacements, true)
 
     -- minetest.place_schematic() doesn't invoke node constructors, so use set_node() for any nodes requiring construction
     for i, schematicCoords in pairs(schematicInfo.nodesWithConstructor) do
