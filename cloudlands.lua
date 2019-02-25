@@ -492,7 +492,7 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       tree.theme["Wisteria"] = {
         relativeProbability = 2.5,
         trunk               = normalwood,
-        leaves1             = templateLeaf,
+        leaves1             = greenleaf1,
         leaves2             = wisteriaBlossom1,
         leaves_special      = wisteriaBlossom2,
         vineflags           = { leaves = true, hanging_leaves = true, hanging_bark = true },
