@@ -1,9 +1,10 @@
 <p align="center">
    <img src="https://i.imgur.com/4KT3lhF.png"/>
 </p>
-<img src="https://raw.githubusercontent.com/wiki/treer/amidstest/screenshots/150px-Minetest-logo.png" align="right" />
 
 # Hallelujah Mountains for Minetest
+
+<img src="https://raw.githubusercontent.com/wiki/treer/amidstest/screenshots/150px-Minetest-logo.png" align="right" />
 
 AKA Cloudlands — giant rocks floating suspended in magnetic eddies. Now with giant trees
 
