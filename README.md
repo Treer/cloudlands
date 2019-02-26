@@ -1,5 +1,5 @@
 <p align="center">
-   <img src="https://i.imgur.com/B06sTZ5.png"/>
+   <img src="https://i.imgur.com/uh8Ee9T.jpg"/>
 </p>
 
 # Hallelujah Mountains for Minetest
