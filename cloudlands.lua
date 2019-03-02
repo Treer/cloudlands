@@ -1271,7 +1271,7 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
     worldSeed + 43786
   )
 
-  local treeAngle = 90 * prng:next(0, 4)
+  local treeAngle = 90 * prng:next(0, 3)
   local treePos = {
     x = coreX + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2), 
     y = treeAltitude, 
