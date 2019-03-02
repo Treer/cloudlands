@@ -335,7 +335,13 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       for key, value in pairs(trunkNode) do newTrunkNode[key] = value end
       newTrunkNode.name = SkyTrees.MODNAME .. ":" .. nodesuffix
       newTrunkNode.description = description
-      if dropsTemplateWood then newTrunkNode.drop = nodeName_templateWood else newTrunkNode.drop = nil end
+      if dropsTemplateWood then 
+        newTrunkNode.drop = nodeName_templateWood 
+        if newTrunkNode.groups == nil then newTrunkNode.groups = {} end
+        newTrunkNode.groups.not_in_creative_inventory = 1
+      else 
+        newTrunkNode.drop = nil 
+      end
       
       local tiles = trunkNode.tiles
       if type(tiles) == "table" then
@@ -705,25 +711,48 @@ if SkyTrees == nil then -- If SkyTrees added into other mods, this may have alre
       ['hanging_bark_vines'] = theme.hanging_bark_vines,      
       ['default:dirt']       = topsoil
     }
-  
-    local malleatedFilename = SkyTrees.getMalleatedFilename(schematicInfo, themeName)
 
-    --minetest.log("info", "Placing tree: " .. dump(treePos) .. ", " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename)
-    minetest.place_schematic(treePos, malleatedFilename, rotation, replacements, true)
+    if schemlib ~= nil then
+      -- Use schemlib instead minetest.place_schematic(), to avoid bugs in place_schematic()
+      
+      local filename = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. schematicInfo.filename
+      local plan_obj = schemlib.plan.new()
+      plan_obj:read_from_schem_file(filename)
+      plan_obj.data.facedir = round(rotation / 90)
+      local rotatedCenter = plan_obj:get_world_pos(vector.multiply(schematicInfo.center, -1), position); -- this function performs the rotation I require, even if it's named/intended for something else.
+      plan_obj.data.anchor_pos = rotatedCenter
+      
+      -- not sure how replacements are supposed to be specified in schemlib, surely not by writing value straight into the cache like this:
+      for k, v in pairs(replacements) do
+        plan_obj.mapping_cache[k] = {
+          name = v,
+          node_def = minetest.registered_nodes[v]
+        }      
+      end      
 
-    -- minetest.place_schematic() doesn't invoke node constructors, so use set_node() for any nodes requiring construction
-    for i, schematicCoords in pairs(schematicInfo.nodesWithConstructor) do
-      if rotation ~= 0 then schematicCoords = rotatePositon(schematicCoords, schematicInfo.size, rotation) end
-      local nodePos = vector.add(treePos, schematicCoords)
-      local nodeToConstruct = minetest.get_node(nodePos)
-      if nodeToConstruct.name == "air" or nodeToConstruct.name == "ignore" then
-        --this is now normal - e.g. if vines are set to 'ignore' then the nodeToConstruct won't be there.
-        --minetest.log("error", "nodesWithConstructor["..i.."] does not match schematic " .. schematicInfo.filename .. " at " .. nodePos.x..","..nodePos.y..","..nodePos.z.." rotation "..rotation)
-      else 
-        minetest.set_node(nodePos, nodeToConstruct)
+      plan_obj:set_status("build")
+
+    else -- fall back on minetest.place_schematic()  
+
+      local malleatedFilename = SkyTrees.getMalleatedFilename(schematicInfo, themeName)
+
+      --minetest.log("info", "Placing tree: " .. dump(treePos) .. ", " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename)
+      minetest.place_schematic(treePos, malleatedFilename, rotation, replacements, true)
+
+      -- minetest.place_schematic() doesn't invoke node constructors, so use set_node() for any nodes requiring construction
+      for i, schematicCoords in pairs(schematicInfo.nodesWithConstructor) do
+        if rotation ~= 0 then schematicCoords = rotatePositon(schematicCoords, schematicInfo.size, rotation) end
+        local nodePos = vector.add(treePos, schematicCoords)
+        local nodeToConstruct = minetest.get_node(nodePos)
+        if nodeToConstruct.name == "air" or nodeToConstruct.name == "ignore" then
+          --this is now normal - e.g. if vines are set to 'ignore' then the nodeToConstruct won't be there.
+          --minetest.log("error", "nodesWithConstructor["..i.."] does not match schematic " .. schematicInfo.filename .. " at " .. nodePos.x..","..nodePos.y..","..nodePos.z.." rotation "..rotation)
+        else 
+          minetest.set_node(nodePos, nodeToConstruct)
+        end
       end
-    end
 
+    end
   end
 
 end
@@ -1278,15 +1307,18 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
     z = coreZ + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2)
   }
 
-  --[[ This check is commented out because redrawing the tree multiple times - every time a chunk it touches 
-       gets emitted - might be slower, but helps work around the bugs in place_schematic() where large schematics 
-       are spawned incompletely.
-       (The bug in question: https://forum.minetest.net/viewtopic.php?f=6&t=22136 )
-  if (maxp.y < treePos.y) or (minp.y > treePos.y) or (maxp.x < treePos.x) or (minp.x > treePos.x) or (maxp.z < treePos.z) or (minp.z > treePos.z) then
-    -- Now that we know the exact position of the tree, we know it's spawn point is not in this chunk.
-    -- In the interests of only drawing trees once, we only invoke placeTree when the chunk containing treePos is emitted.
-    return false
-  end --]]
+  if schemlib ~= nil then
+    -- This check is skipped when not using schemlib, because while redrawing the tree multiple times - every time a chunk it 
+    -- touches gets emitted - might be slower, it helps work around the bugs in minetest.place_schematic() where large schematics 
+    -- are spawned incompletely.
+    -- The bug in question: https://forum.minetest.net/viewtopic.php?f=6&t=22136
+    -- (it isn't an issue if schemlib is used)
+    if (maxp.y < treePos.y) or (minp.y > treePos.y) or (maxp.x < treePos.x) or (minp.x > treePos.x) or (maxp.z < treePos.z) or (minp.z > treePos.z) then
+      -- Now that we know the exact position of the tree, we know it's spawn point is not in this chunk.
+      -- In the interests of only drawing trees once, we only invoke placeTree when the chunk containing treePos is emitted.
+      return false
+    end
+  end
 
   if tree.theme["Dead"] == nil then
     if SkyTrees.isDead(treePos) then
