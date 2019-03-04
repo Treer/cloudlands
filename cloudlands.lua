@@ -427,15 +427,15 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
     local greenleaf2       = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  "Leaves of a giant tree", false)
     local greenleaf3       = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  "Leaves of a giant tree", false)
 
-    local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:255", "blossom_white1",    "Blossom", false)
-    local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:255", "blossom_white2",    "Blossom", false)
-    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:240", "blossom_whitepink", "Blossom", false, 4)
+    local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:alpha", "blossom_white1",    "Blossom", false)
+    local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:alpha", "blossom_white2",    "Blossom", false)
+    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:alpha", "blossom_whitepink", "Blossom", false, 4)
 
-    local sakurablossom1   = generate_leafTypes(templateLeaf, "^[colorize:#ea327c:240", "blossom_red",       "Sakura blossom", false, 4)
-    local sakurablossom2   = generate_leafTypes(templateLeaf, "^[colorize:#ffc3dd:240", "blossom_pink",      "Sakura blossom", false)
+    local sakurablossom1   = generate_leafTypes(templateLeaf, "^[colorize:#ea327c:alpha", "blossom_red",       "Sakura blossom", false, 4)
+    local sakurablossom2   = generate_leafTypes(templateLeaf, "^[colorize:#ffc3dd:alpha", "blossom_pink",      "Sakura blossom", false)
     
-    local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8688f9:240", "blossom_wisteria1", "Wisteria blossom", false)
-    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:240", "blossom_wisteria2", "Wisteria blossom", false, 6)
+    local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8087ec:alpha", "blossom_wisteria1", "Wisteria blossom", false)
+    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:alpha", "blossom_wisteria2", "Wisteria blossom", false, 6)
 
 
     local tree = SkyTrees.schematicInfo[TREE1_FILE]
