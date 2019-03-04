@@ -378,7 +378,13 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       newLeafNode.name = SkyTrees.MODNAME .. ":" .. nodesuffix
       newLeafNode.description = description
       newLeafNode.sunlight_propagates = true -- soo many leaves they otherwise blot out the sun.
-      if dropsTemplateLeaf then newLeafNode.drop = nodeName_templateLeaf else newLeafNode.drop = nil end
+      if dropsTemplateLeaf then 
+        newLeafNode.drop = nodeName_templateLeaf 
+        if newLeafNode.groups == nil then newLeafNode.groups = {} end
+        newLeafNode.groups.not_in_creative_inventory = 1
+      else 
+        newLeafNode.drop = nil 
+      end
       
       local tiles = leafNode.tiles
       if type(tiles) == "table" then
@@ -417,7 +423,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       SkyTrees.disabled = "Could not find any treeleaf nodes"
       return
     end
-    local greenleaf1       = generate_leafTypes(templateLeaf, "", "leaves",  "Leaves of a giant tree", false)
+    local greenleaf1       = generate_leafTypes(templateLeaf, "",                      "leaves",   "Leaves of a giant tree", true) -- drops templateLeaf because these look close enough to the original leaves that we won't clutter the game & creative-menu with tiny visual variants that other recipes/parts of the game won't know about
     local greenleaf2       = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  "Leaves of a giant tree", false)
     local greenleaf3       = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  "Leaves of a giant tree", false)
 
@@ -557,7 +563,9 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
     -- The difference between a living tree and and a haunted/darkened husk
     --
     -- Ideally trees would slowly fizzlefade to/from the Haunted theme depending on 
-    -- whether a player takes or replaces the heart.
+    -- whether a player steals or restores the heart, meaning a house hollowed out inside 
+    -- a living tree would need the heart to still be kept inside it, perhaps on its 
+    -- own pedestal (unless wanting an Addam's Family treehouse).
     local heartwoodTexture = minetest.registered_nodes[templateWood].tiles
     if type(heartwoodTexture) == "table" then heartwoodTexture = heartwoodTexture[1] end
     local heartwoodGlow = 15 -- plants can grow under the heart of the Tree
@@ -1089,7 +1097,7 @@ local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
         local function isIsland(nodeId)
           return (nodeId == nodeId_filler    or nodeId == nodeId_top 
                or nodeId == nodeId_stoneBase or nodeId == nodeId_dust
-               or nodeId == nodeId_silt)
+               or nodeId == nodeId_silt      or nodeId == nodeId_water)
         end
 
         local function findHighestNodeFace(y, solidIndex, emptyIndex)
@@ -1626,10 +1634,12 @@ local function renderCores(cores, minp, maxp, blockseed)
                   if y > minp.y then data[vi - area.ystride] = pondBottom end
                   --remove any dust above ponds
                   if y < maxp.y and data[vi + area.ystride] == nodeId_dust then data[vi + area.ystride] = nodeId_air end
+                  data[vi] = pondWater -- to let isIsland() know not to put vines here (only seems to be an issue when pond is 2 deep or more)
                 else
                   -- make sure there are some walls to keep the water in
                   if y == coreTop then 
                     surfaceData[vi] = nodeId_top
+                    data[vi] = nodeId_top -- to let isIsland() know not to put vines here (only seems to be an issue when pond is 2 deep or more)
                   else
                     surfaceData[vi] = nodeId_air
                     data[vi] = nodeId_filler
