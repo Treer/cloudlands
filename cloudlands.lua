@@ -429,13 +429,13 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
 
     local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:alpha", "blossom_white1",    "Blossom", false)
     local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:alpha", "blossom_white2",    "Blossom", false)
-    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:alpha", "blossom_whitepink", "Blossom", false, 4)
+    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:alpha", "blossom_whitepink", "Blossom", false, 5)
 
-    local sakurablossom1   = generate_leafTypes(templateLeaf, "^[colorize:#ea327c:alpha", "blossom_red",       "Sakura blossom", false, 4)
+    local sakurablossom1   = generate_leafTypes(templateLeaf, "^[colorize:#ea327c:alpha", "blossom_red",       "Sakura blossom", false, 5)
     local sakurablossom2   = generate_leafTypes(templateLeaf, "^[colorize:#ffc3dd:alpha", "blossom_pink",      "Sakura blossom", false)
     
     local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8087ec:alpha", "blossom_wisteria1", "Wisteria blossom", false)
-    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:alpha", "blossom_wisteria2", "Wisteria blossom", false, 6)
+    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:alpha", "blossom_wisteria2", "Wisteria blossom", false, 7)
 
 
     local tree = SkyTrees.schematicInfo[TREE1_FILE]
@@ -787,15 +787,6 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       local rotatedCenter = plan_obj:get_world_pos(vector.add(vector.multiply(schematicInfo.center, -1), -1), position); -- this function performs the rotation I require, even if it's named/intended for something else.
       plan_obj.data.anchor_pos = rotatedCenter
       
-      --[[
-      -- not sure how replacements are supposed to be specified in schemlib, surely not by writing value straight into the cache like this:
-      for k, v in pairs(replacements) do
-        plan_obj.mapping_cache[k] = {
-          name = v,
-          node_def = minetest.registered_nodes[v]
-        }      
-      end ]]     
-
       if DEBUG_SKYTREES then minetest.log("info", "building tree at " .. dump(position) .. "rotated to " .. dump(treePos) .. "rotatedCenter " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename) end
       plan_obj:set_status("build")
 
