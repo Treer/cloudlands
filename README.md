@@ -10,7 +10,7 @@ AKA Cloudlands — giant rocks floating suspended in magnetic eddies. Now with g
 
 This can be run with or without a normal terrain mapgen, allowing pure skylands or an exotic addition to the landscape.
 
-Configurable settings include the altitude islands appear, and the ability to restrict the areas they spawn.
+Many Configurable settings, including the altitude islands appear, and the ability to restrict the areas they spawn.
 
 It's a single file with no hard dependencies for easy integration into modpacks or games, e.g. as an exotic biome. 
 
