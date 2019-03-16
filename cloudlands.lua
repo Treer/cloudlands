@@ -9,7 +9,7 @@ local EDDYFIELD_SIZE         = 1     -- size of the "eddy field-lines" that smal
 local GENERATE_ORES          = false -- set to true for island core stone to contain patches of dirt and sand etc.
 local VINE_COVERAGE          = 0.3   -- set to 0 to turn off vines
 local REEF_RARITY            = 0.015 -- Chance of a viable island having a reef or atoll
-local TREE_RARITY            = 0.06  -- Chance of a viable island having a giant tree growing out the middle
+local TREE_RARITY            = 0.06  -- Chance of a viable island having a giant tree growing out of it
 local BIOLUMINESCENCE        = false or -- Allow giant trees variants which have glowing parts 
                                minetest.get_modpath("glowtest")   ~= nil or 
                                minetest.get_modpath("ethereal")   ~= nil or
@@ -30,7 +30,7 @@ local NODENAMES_HANGINGROOT = {"vines:root_end"}
 local NODENAMES_TREEWOOD    = {"mcl_core:tree",   "default:tree",   "mapgen_tree"}
 local NODENAMES_TREELEAVES  = {"mcl_core:leaves", "default:leaves", "mapgen_leaves"}
 
-local MODNAME          = minetest.get_current_modname()
+local MODNAME                    = minetest.get_current_modname()
 local VINES_REQUIRED_HUMIDITY    = 45
 local VINES_REQUIRED_TEMPERATURE = 40
 local ICE_REQUIRED_TEMPERATURE   =  5
@@ -299,7 +299,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
     MODNAME = minetest.get_current_modname() -- don't hardcode incase it's copied into other mods
   }
 
-  -- Must be called this during mod load time, as it uses minetest.register_node()
+  -- Must be called during mod load time, as it uses minetest.register_node()
   -- (add an optional dependency for any mod where the tree & leaf textures might be 
   -- sourced from, to ensure they are loaded before this is called)
   SkyTrees.init = function()
@@ -611,12 +611,14 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
     -- create a unique id for the theme
     local theme = schematicInfo.theme[themeName]
     local flags = 0
-    if theme.glowing                  then flags = flags +  1 end
-    if theme.vineflags.leaves         then flags = flags +  2 end
-    if theme.vineflags.hanging_leaves then flags = flags +  4 end
-    if theme.vineflags.bark           then flags = flags +  8 end
-    if theme.vineflags.hanging_bark   then flags = flags + 16 end
-    if theme.vineflags.hanging_roots  then flags = flags + 32 end
+    if theme.glowing                  then flags = flags +   1 end
+    if theme.vineflags.leaves         then flags = flags +   2 end
+    if theme.vineflags.hanging_leaves then flags = flags +   4 end
+    if theme.vineflags.bark           then flags = flags +   8 end
+    if theme.vineflags.hanging_bark   then flags = flags +  16 end
+    if theme.vineflags.hanging_roots  then flags = flags +  32 end
+    if theme.hasSoil                  then flags = flags +  64 end
+    if theme.hasHeart                 then flags = flags + 128 end
 
     local uniqueId = themeName .. flags
 
@@ -1656,7 +1658,7 @@ local function renderCores(cores, minp, maxp, blockseed)
   if voxelsWereManipulated then
     -- Generate decorations on surfaceData only, then combine surfaceData and decorations
     -- with the main data buffer. This avoids trees growing off dirt exposed by maxp.y
-    -- (A faster way would be nice, overgeneration perhaps?)
+    -- (A faster way would be nice, overgeneration perhaps? Though not having two buffers would mean dust nodes must be deferred until after decorations -> still end up with two buffers of a sort)
     vm:set_data(surfaceData)
     minetest.generate_decorations(vm)
     vm:get_data(surfaceData)
@@ -1687,12 +1689,12 @@ local function on_generated(minp, maxp, blockseed)
   local osClockT0 = os.clock()
   if DEBUG then memUsageT0 = collectgarbage("count") end
 
-  local maxCoreThickness = coreTypes[1].thicknessMax -- the first island is the biggest/thickest
+  local maxCoreThickness = coreTypes[1].thicknessMax -- the first island type is the biggest/thickest
   local maxCoreDepth     = coreTypes[1].radiusMax * 3 / 2
   local maxSufaceRise    = 3 * (maxCoreThickness + 1)
 
   if minp.y > ALTITUDE + (ALTITUDE_AMPLITUDE + maxSufaceRise + 10) or   -- the 10 is an arbitrary number because sometimes the noise values exceed their normal range.
-     maxp.y < ALTITUDE - (ALTITUDE_AMPLITUDE + maxCoreThickness + maxCoreDepth + 1) then
+     maxp.y < ALTITUDE - (ALTITUDE_AMPLITUDE + maxCoreThickness + maxCoreDepth + 10) then
     -- Hallelujah Mountains don't generate here
     return
   end
