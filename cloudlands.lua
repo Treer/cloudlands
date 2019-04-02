@@ -215,7 +215,7 @@ interop.find_node_id = function (node_aliases)
     end
     if result ~= nodeId_ignore then return result end
   end
-  return result  
+  return result
 end
 
 -- returns the name of the first name in the list that resolves to a node id, or 'ignore' if not found
@@ -654,7 +654,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
 
     local biomeId = minetest.get_biome_data(position).biome
     local biome = biomes[biomeId]
-    if biome ~= nil then
+    if biome ~= nil and biome.node_top ~= nil then
       local modname, nodename = interop.split_nodename(biome.node_top)
       if string.find(nodename, "sand") or string.find(nodename, "desert") then
         return true
