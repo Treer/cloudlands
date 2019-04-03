@@ -578,7 +578,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
         groups = {oddly_breakable_by_hand = 3},
         drawtype = "nodebox",
         paramtype = "light",
-        light_source = 15, -- plants can grow under the heart of the Tree
+        light_source = heartwoodGlow, -- plants can grow under the heart of the Tree
         node_box = {
           type = "fixed",
           fixed = {
