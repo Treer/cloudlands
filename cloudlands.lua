@@ -536,7 +536,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
         init = function(self, position)
           -- 30% of these trees are a glowing variant
           self.glowing = (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 2 and BIOLUMINESCENCE
-          leaves_special = normalwood..BARK_SUFFIX
+          self.leaves_special = normalwood..BARK_SUFFIX
           if self.glowing then self.leaves_special = pinkblossom .. GLOW_SUFFIX end
         end
       }      
@@ -568,7 +568,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
     -- own pedestal (unless wanting an Addam's Family treehouse).
     local heartwoodTexture = minetest.registered_nodes[templateWood].tiles
     if type(heartwoodTexture) == "table" then heartwoodTexture = heartwoodTexture[1] end
-    local heartwoodGlow = 15 -- plants can grow under the heart of the Tree
+    local heartwoodGlow = minetest.LIGHT_MAX -- plants can grow under the heart of the Tree
     if not BIOLUMINESCENCE then heartwoodGlow = 0 end -- :(
     minetest.register_node(
       SkyTrees.MODNAME .. ":HeartWood", 
@@ -746,7 +746,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       if topsoil == nil then 
         topsoil = 'ignore'
         if minetest.get_biome_data == nil then error(SkyTrees.MODNAME .. " requires Minetest v5.0 or greater, or to have minor modifications to support v0.4.x", 0) end
-        local treeBiome = minetest.get_biome_data(position).biome
+        local treeBiome = biomes[minetest.get_biome_data(position).biome]
         if treeBiome ~= nil and treeBiome.node_top ~= nil then topsoil = treeBiome.node_top end
       end
     else 
@@ -1400,7 +1400,12 @@ local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
 
   if core.biome == nil then setCoreBiomeData(core) end -- We shouldn't assume the core biome has already been resolved, it might be below the emerged chunk and unrendered
 
-  minetest.log("info", "core x: "..coreX.." y: ".. coreZ .. " treePos: " .. treePos.x .. ", y: " .. treePos.y)
+  if core.biome.node_top == nil then
+    -- solid stone isn't fertile enough for giant trees, and there's a solid stone biome in MT-Game: tundra_highland
+    return false
+  end
+
+  if DEBUG_SKYTREES then minetest.log("info", "core x: "..coreX.." y: ".. coreZ .. " treePos: " .. treePos.x .. ", y: " .. treePos.y) end
 
   SkyTrees.placeTree(treePos, treeAngle, tree, nil, core.biome.node_top)
   return true;
