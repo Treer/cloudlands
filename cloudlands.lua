@@ -1,26 +1,41 @@
-local DEBUG                  = false -- dev logging
-local DEBUG_GEOMETRIC        = false -- turn off noise from island shapes
-local LOWLAND_BIOMES         = false -- If true then determine an island's biome using the biome at altitude "LOWLAND_BIOME_ALTITUDE"
-local LOWLAND_BIOME_ALTITUDE = 10    -- Higher than beaches, lower than mountains (See LOWLAND_BIOMES)
-local ALTITUDE               = 200   -- average altitude of islands
-local ALTITUDE_AMPLITUDE     = 40    -- rough island altitude variance (plus or minus)
-local EDDYFIELD_SIZE         = 1     -- size of the "eddy field-lines" that smaller islands follow
-local GENERATE_ORES          = false -- set to true for island core stone to contain patches of dirt and sand etc.
-local VINE_COVERAGE          = 0.3   -- set to 0 to turn off vines
-local REEF_RARITY            = 0.015 -- Chance of a viable island having a reef or atoll
-local ISLANDS_SEED           = 1000  -- You only need to change this if you want to try different island layouts without changing the map seed
+local ALTITUDE               = 200      -- average altitude of islands
+local ALTITUDE_AMPLITUDE     = 40       -- rough island altitude variance (plus or minus)
+local GENERATE_ORES          = false    -- set to true for island core stone to contain patches of dirt and sand etc.
+local LOWLAND_BIOMES         = false or -- If true then determine an island's biome using the biome at altitude "LOWLAND_BIOME_ALTITUDE"
+                               minetest.get_modpath("ethereal")   ~= nil -- Ethereal has an alpine biome above altitude 40, so default to lowland biomes
+local LOWLAND_BIOME_ALTITUDE = 10       -- Higher than beaches, lower than mountains (See LOWLAND_BIOMES)
+local VINE_COVERAGE          = 0.3      -- set to 0 to turn off vines
+local REEF_RARITY            = 0.015    -- Chance of a viable island having a reef or atoll
+local TREE_RARITY            = 0.06     -- Chance of a viable island having a giant tree growing out of it
+local BIOLUMINESCENCE        = false or -- Allow giant trees variants which have glowing parts 
+                               minetest.get_modpath("glowtest")   ~= nil or 
+                               minetest.get_modpath("ethereal")   ~= nil or
+                               minetest.get_modpath("glow")       ~= nil or
+                               minetest.get_modpath("nsspf")      ~= nil or
+                               minetest.get_modpath("moonflower") ~= nil -- a world using any of these mods is OK with bioluminescence
+local EDDYFIELD_SIZE         = 1        -- size of the "eddy field-lines" that smaller islands follow
+local ISLANDS_SEED           = 1000     -- You only need to change this if you want to try different island layouts without changing the map seed
 
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
-local NODENAMES_STONE  = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
-local NODENAMES_WATER  = {"mapgen_water_source", "mcl_core:water_source", "default:water_source"}
-local NODENAMES_ICE    = {"mapgen_ice",          "mcl_core:ice",          "pedology:ice_white", "default:ice"}
-local NODENAMES_GRAVEL = {"mapgen_gravel",       "mcl_core:gravel",       "default:gravel"}
-local NODENAMES_SILT   = {"mapgen_silt", "default:silt", "aotearoa:silt", "darkage:silt", "mapgen_sand", "mcl_core:sand", "default:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
-local NODENAMES_VINES  = {"mcl_core:vine", "vines:side_end"}
-local MODNAME          = minetest.get_current_modname()
+local NODENAMES_STONE       = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
+local NODENAMES_WATER       = {"mapgen_water_source", "mcl_core:water_source", "default:water_source"}
+local NODENAMES_ICE         = {"mapgen_ice",          "mcl_core:ice",          "pedology:ice_white", "default:ice"}
+local NODENAMES_GRAVEL      = {"mapgen_gravel",       "mcl_core:gravel",       "default:gravel"}
+local NODENAMES_SILT        = {"mapgen_silt", "default:silt", "aotearoa:silt", "darkage:silt", "mapgen_sand", "mcl_core:sand", "default:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
+local NODENAMES_VINES       = {"mcl_core:vine", "vines:side_end", "ethereal:vine"} -- ethereal vines don't grow, so only select that if there's nothing else.
+local NODENAMES_HANGINGVINE = {"vines:vine_end"}
+local NODENAMES_HANGINGROOT = {"vines:root_end"}
+local NODENAMES_TREEWOOD    = {"mcl_core:tree",   "default:tree",   "mapgen_tree"}
+local NODENAMES_TREELEAVES  = {"mcl_core:leaves", "default:leaves", "mapgen_leaves"}
+
+local MODNAME                    = minetest.get_current_modname()
 local VINES_REQUIRED_HUMIDITY    = 45
 local VINES_REQUIRED_TEMPERATURE = 40
 local ICE_REQUIRED_TEMPERATURE   =  5
+
+local DEBUG                  = false -- dev logging
+local DEBUG_GEOMETRIC        = false -- turn off noise from island shapes
+local DEBUG_SKYTREES         = false -- dev logging
 
 local coreTypes = {
   {
@@ -48,7 +63,7 @@ local coreTypes = {
   {
     territorySize     = 30,
     coresPerTerritory = 3,
-    radiusMax         = 16,
+    radiusMax         = 16, -- I feel this and depthMax should be bigger, say 18, and territorySize increased to 34 to match, but I can't change it any more or existing worlds will mismatch along previously emerged chunk boundaries
     depthMax          = 16,
     thicknessMax      = 2,
     frequency         = 0.1,
@@ -75,6 +90,8 @@ ALTITUDE_AMPLITUDE   = fromSettings(MODNAME .. "_altitude_amplitude", ALTITUDE_A
 GENERATE_ORES        = fromSettings(MODNAME .. "_generate_ores",      GENERATE_ORES)
 VINE_COVERAGE        = fromSettings(MODNAME .. "_vine_coverage",      VINE_COVERAGE * 100) / 100
 LOWLAND_BIOMES       = fromSettings(MODNAME .. "_use_lowland_biomes", LOWLAND_BIOMES)
+TREE_RARITY          = fromSettings(MODNAME .. "_giant_tree_rarety",  TREE_RARITY * 100) / 100
+BIOLUMINESCENCE      = fromSettings(MODNAME .. "_bioluminescence",    BIOLUMINESCENCE)
 
 local noiseparams_eddyField = {
 	offset      = -1,
@@ -200,28 +217,620 @@ interop.find_node_id = function (node_aliases)
     end
     if result ~= nodeId_ignore then return result end
   end
-  return result  
+  return result
 end
 
-interop.register_clone = function(node_name)
+-- returns the name of the first name in the list that resolves to a node id, or 'ignore' if not found
+interop.find_node_name = function (node_aliases)
+  return minetest.get_name_from_content_id(interop.find_node_id(node_aliases))
+end
+
+-- returns the node name of the clone node.
+interop.register_clone = function(node_name, clone_name)
   local node = minetest.registered_nodes[node_name]
   if node == nil then
     minetest.log("error", "cannot clone " .. node_name)
     return nil
   else 
-    local cloneName = MODNAME .. ":" .. string.gsub(node.name, ":", "_")
-    if minetest.registered_nodes[cloneName] == nil then
-      minetest.log("info", "attempting to register: " .. cloneName)
+    if clone_name == nil then clone_name = MODNAME .. ":" .. string.gsub(node.name, ":", "_") end
+    if minetest.registered_nodes[clone_name] == nil then
+      minetest.log("info", "attempting to register: " .. clone_name)
       local clone = {}
-      for key, value in pairs(node) do clone.key = value end
-      clone.name = cloneName
-      minetest.register_node(cloneName, clone)
-      --minetest.log("info", cloneName .. " id: " .. minetest.get_content_id(cloneName))
-      --minetest.log("info", cloneName .. ": " .. dump(minetest.registered_nodes[cloneName]))
+      for key, value in pairs(node) do clone[key] = value end
+      clone.name = clone_name
+      minetest.register_node(clone_name, clone)
+      --minetest.log("info", clone_name .. " id: " .. minetest.get_content_id(clone_name))
+      --minetest.log("info", clone_name .. ": " .. dump(minetest.registered_nodes[clone_name]))
     end
-    return cloneName
+    return clone_name
   end
 end
+
+-- converts "modname:nodename" into (modname, nodename), if no colon is found then modname is nil
+interop.split_nodename = function(nodeName)
+  local result_modname = nil
+  local result_nodename = nodeName
+
+  local pos = nodeName:find(':')
+  if pos ~= nil then
+    result_modname  = nodeName:sub(0, pos - 1) 
+    result_nodename = nodeName:sub(pos + 1) 
+  end
+  return result_modname, result_nodename
+end;
+
+
+--[[==============================
+              SkyTrees
+    ==============================]]--
+
+-- If splitting SkyTrees into a seperate mod, perhaps schemlib would be of help - https://forum.minetest.net/viewtopic.php?t=18084
+
+
+if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other mods, this may have already been defined
+
+  local TREE1_FILE  = 'cloudlands_tree1.mts'
+  local TREE2_FILE  = 'cloudlands_tree2.mts'
+  local BARK_SUFFIX = '_bark'
+  local GLOW_SUFFIX = '_glow'
+
+  SkyTrees = {
+    -- Order the trees in this schematicInfo array from the largest island requirements to smallest
+    -- The data in each schematicInfo must exactly match what's in the .mts file or things will break
+    schematicInfo = { 
+      {
+        filename = TREE1_FILE,
+        size   = {x = 81, y = 106, z = 111},
+        center = {x = 37, y =  11, z =  73},
+        requiredIslandDepth = 20,
+        requiredIslandRadius = 40,
+        nodesWithConstructor = {
+          {x=35, y=69, z=1}, {x=61, y=51, z=2}, {x=36, y=68, z=2}, {x=68, y=48, z=3}, {x=61, y=50, z=4}, {x=71, y=50, z=5}, {x=58, y=52, z=5}, {x=65, y=50, z=9}, {x=72, y=53, z=11}, {x=41, y=67, z=12}, {x=63, y=48, z=13}, {x=69, y=52, z=13}, {x=33, y=66, z=14}, {x=39, y=68, z=15}, {x=72, y=68, z=15}, {x=40, y=67, z=16}, {x=39, y=66, z=17}, {x=68, y=45, z=19}, {x=69, y=44, z=20}, {x=72, y=55, z=20}, {x=66, y=56, z=20}, {x=58, y=66, z=20}, {x=71, y=58, z=21}, {x=68, y=45, z=22}, {x=70, y=51, z=22}, {x=73, y=55, z=22}, {x=36, y=62, z=22}, {x=70, y=67, z=22}, {x=21, y=65, z=23}, {x=22, y=66, z=23}, {x=53, y=66, z=23}, {x=70, y=68, z=23}, {x=73, y=54, z=24}, {x=75, y=57, z=24}, {x=37, y=63, z=24}, {x=7, y=68, z=24}, {x=69, y=56, z=25}, {x=34, y=58, z=25}, {x=66, y=62, z=25}, {x=64, y=66, z=25}, {x=6, y=67, z=25}, {x=3, y=68, z=25}, {x=68, y=56, z=26}, {x=65, y=57, z=26}, {x=61, y=63, z=26}, {x=31, y=59, z=27}, {x=48, y=62, z=27}, {x=50, y=63, z=27}, {x=78, y=65, z=27}, {x=78, y=52, z=28}, {x=68, y=57, z=28}, {x=76, y=57, z=28}, {x=31, y=60, z=28}, {x=15, y=63, z=28}, {x=16, y=63, z=28}, {x=66, y=64, z=28}, {x=60, y=65, z=28}, {x=61, y=76, z=28}, {x=63, y=76, z=28}, {x=69, y=59, z=29}, {x=51, y=65, z=29}, {x=72, y=57, z=30}, {x=20, y=60, z=30}, {x=21, y=61, z=30}, {x=49, y=65, z=30}, {x=52, y=53, z=31}, {x=72, y=57, z=31}, {x=36, y=58, z=31}, {x=63, y=60, z=31}, {x=54, y=63, z=31}, {x=45, y=65, z=31}, {x=79, y=66, z=31}, {x=62, y=70, z=31}, {x=55, y=103, z=31}, {x=52, y=53, z=32}, {x=68, y=60, z=32}, {x=19, y=61, z=32}, {x=53, y=63, z=32}, {x=37, y=64, z=32}, {x=21, y=65, z=32}, {x=56, y=65, z=32}, {x=59, y=71, z=32}, {x=35, y=74, z=32}, {x=23, y=75, z=32}, {x=35, y=58, z=33}, {x=62, y=60, z=33}, {x=18, y=63, z=33}, {x=73, y=67, z=33}, {x=37, y=74, z=33}, {x=65, y=75, z=33}, {x=38, y=2, z=34}, {x=67, y=52, z=34}, {x=71, y=60, z=34}, {x=25, y=63, z=34}, {x=19, y=64, z=34}, {x=32, y=66, z=34}, {x=66, y=72, z=34}, {x=41, y=81, z=34}, {x=45, y=93, z=34}, {x=54, y=99, z=34}, {x=38, y=5, z=35}, {x=68, y=48, z=35}, {x=69, y=51, z=35}, {x=48, y=53, z=35}, {x=37, y=57, z=35}, {x=77, y=58, z=35}, {x=32, y=60, z=35}, {x=20, y=61, z=35}, {x=27, y=61, z=35}, {x=33, y=65, z=35}, {x=58, y=65, z=35}, {x=58, y=72, z=35}, {x=60, y=73, z=35}, {x=30, y=74, z=35}, {x=41, y=74, z=35}, {x=41, y=87, z=35}, {x=22, y=58, z=36}, {x=64, y=58, z=36}, {x=39, y=70, z=36}, {x=36, y=77, z=36}, {x=44, y=83, z=36}, {x=40, y=86, z=36}, {x=35, y=56, z=37}, {x=65, y=59, z=37}, {x=66, y=62, z=37}, {x=62, y=67, z=37}, {x=39, y=68, z=37}, {x=40, y=86, z=37}, {x=53, y=88, z=37}, {x=43, y=97, z=37}, {x=52, y=99, z=37}, {x=37, y=3, z=38}, {x=35, y=55, z=38}, {x=38, y=56, z=38}, {x=25, y=57, z=38}, {x=65, y=57, z=38}, {x=71, y=61, z=38}, {x=33, y=65, z=38}, {x=61, y=65, z=38}, {x=50, y=66, z=38}, {x=38, y=68, z=38}, {x=46, y=97, z=38}, {x=44, y=100, z=38}, {x=51, y=102, z=38}, {x=29, y=42, z=39}, {x=27, y=43, z=39}, {x=70, y=48, z=39}, {x=72, y=52, z=39}, {x=23, y=57, z=39}, {x=26, y=57, z=39}, {x=28, y=58, z=39}, {x=55, y=58, z=39}, {x=73, y=59, z=39}, {x=65, y=65, z=39}, {x=41, y=68, z=39}, {x=42, y=81, z=39}, {x=55, y=88, z=39}, {x=43, y=91, z=39}, {x=45, y=100, z=39}, {x=23, y=57, z=40}, {x=29, y=57, z=40}, {x=76, y=58, z=40}, {x=73, y=59, z=40}, {x=78, y=59, z=40}, {x=31, y=60, z=40}, {x=64, y=64, z=40}, {x=41, y=67, z=40}, {x=42, y=75, z=40}, {x=37, y=78, z=40}, {x=42, y=92, z=40}, {x=51, y=101, z=40}, {x=48, y=105, z=40}, {x=75, y=59, z=41}, {x=55, y=63, z=41}, {x=35, y=68, z=41}, {x=35, y=69, z=41}, {x=35, y=71, z=41}, {x=34, y=42, z=42}, {x=29, y=55, z=42}, {x=50, y=61, z=42}, {x=34, y=65, z=42}, {x=57, y=88, z=42}, {x=48, y=89, z=42}, {x=49, y=89, z=42}, {x=27, y=22, z=43}, {x=26, y=28, z=43}, {x=31, y=46, z=43}, {x=66, y=52, z=43}, {x=49, y=57, z=43}, {x=56, y=57, z=43}, {x=41, y=69, z=43}, {x=36, y=52, z=44}, {x=63, y=54, z=44}, {x=51, y=55, z=44}, {x=57, y=56, z=44}, {x=69, y=57, z=44}, {x=64, y=65, z=44}, {x=55, y=90, z=44}, {x=30, y=42, z=45}, {x=31, y=52, z=45}, {x=51, y=54, z=45}, {x=24, y=57, z=45}, {x=70, y=62, z=45}, {x=39, y=69, z=45}, {x=35, y=80, z=45}, {x=29, y=81, z=45}, {x=44, y=85, z=45}, {x=41, y=86, z=45}, {x=33, y=9, z=46}, {x=28, y=44, z=46}, {x=50, y=54, z=46}, {x=47, y=55, z=46}, {x=45, y=56, z=46}, {x=45, y=58, z=46}, {x=47, y=58, z=46}, {x=30, y=63, z=46}, {x=27, y=81, z=46}, {x=28, y=81, z=46}, {x=40, y=86, z=46}, {x=29, y=16, z=47}, {x=32, y=10, z=48}, {x=66, y=49, z=48}, {x=29, y=52, z=48}, {x=53, y=54, z=48}, {x=55, y=54, z=48}, {x=61, y=58, z=48}, {x=59, y=61, z=48}, {x=50, y=63, z=48}, {x=26, y=82, z=48}, {x=43, y=85, z=48}, {x=48, y=86, z=48}, {x=31, y=19, z=49}, {x=30, y=46, z=49}, {x=63, y=51, z=49}, {x=41, y=53, z=49}, {x=31, y=60, z=49}, {x=67, y=1, z=50}, {x=37, y=8, z=50}, {x=40, y=30, z=50}, {x=43, y=57, z=50}, {x=59, y=57, z=50}, {x=60, y=57, z=50}, {x=29, y=61, z=50}, {x=34, y=63, z=50}, {x=49, y=65, z=50}, {x=65, y=3, z=51}, {x=45, y=29, z=51}, {x=41, y=58, z=51}, {x=42, y=60, z=51}, {x=46, y=64, z=51}, {x=47, y=67, z=51}, {x=52, y=68, z=51}, {x=69, y=51, z=52}, {x=53, y=55, z=52}, {x=45, y=62, z=52}, {x=64, y=2, z=53}, {x=3, y=3, z=53}, {x=10, y=6, z=53}, {x=31, y=14, z=53}, {x=37, y=35, z=53}, {x=43, y=48, z=53}, {x=71, y=50, z=53}, {x=52, y=54, z=53}, {x=43, y=57, z=53}, {x=55, y=57, z=53}, {x=52, y=67, z=53}, {x=48, y=72, z=53}, {x=5, y=1, z=54}, {x=9, y=4, z=54}, {x=62, y=4, z=54}, {x=33, y=8, z=54}, {x=42, y=29, z=54}, {x=42, y=32, z=54}, {x=43, y=34, z=54}, {x=41, y=39, z=54}, {x=41, y=57, z=54}, {x=34, y=61, z=54}, {x=58, y=2, z=55}, {x=59, y=3, z=55}, {x=38, y=7, z=55}, {x=40, y=12, z=55}, {x=38, y=39, z=55}, {x=33, y=46, z=55}, {x=28, y=54, z=55}, {x=29, y=55, z=55}, {x=30, y=57, z=55}, {x=54, y=58, z=55}, {x=52, y=63, z=55}, {x=37, y=7, z=56}, {x=55, y=8, z=56}, {x=33, y=45, z=56}, {x=58, y=0, z=57}, {x=9, y=5, z=57}, {x=34, y=7, z=57}, {x=54, y=8, z=57}, {x=17, y=9, z=57}, {x=32, y=12, z=57}, {x=37, y=39, z=57}, {x=41, y=45, z=57}, {x=31, y=46, z=57}, {x=49, y=50, z=57}, {x=50, y=56, z=57}, {x=46, y=59, z=57}, {x=48, y=66, z=57}, {x=51, y=67, z=57}, {x=15, y=3, z=58}, {x=8, y=10, z=58}, {x=41, y=11, z=58}, {x=40, y=13, z=58}, {x=42, y=45, z=58}, {x=50, y=51, z=58}, {x=20, y=5, z=59}, {x=19, y=7, z=59}, {x=22, y=8, z=59}, {x=23, y=9, z=59}, {x=40, y=13, z=59}, {x=33, y=14, z=59}, {x=42, y=41, z=59}, {x=20, y=6, z=60}, {x=9, y=8, z=60}, {x=46, y=8, z=60}, {x=34, y=39, z=60}, {x=30, y=52, z=60}, {x=43, y=57, z=60}, {x=18, y=5, z=61}, {x=11, y=10, z=61}, {x=36, y=36, z=61}, {x=47, y=55, z=61}, {x=38, y=56, z=61}, {x=61, y=59, z=61}, {x=56, y=60, z=61}, {x=36, y=6, z=62}, {x=55, y=7, z=62}, {x=26, y=10, z=62}, {x=29, y=13, z=62}, {x=46, y=13, z=62}, {x=57, y=60, z=62}, {x=18, y=7, z=63}, {x=30, y=11, z=63}, {x=53, y=13, z=63}, {x=45, y=14, z=63}, {x=36, y=32, z=63}, {x=46, y=41, z=63}, {x=29, y=43, z=63}, {x=29, y=44, z=63}, {x=29, y=46, z=63}, {x=29, y=50, z=63}, {x=30, y=52, z=63}, {x=46, y=54, z=63}, {x=19, y=6, z=64}, {x=54, y=8, z=64}, {x=16, y=11, z=64}, {x=42, y=16, z=64}, {x=36, y=25, z=64}, {x=37, y=27, z=64}, {x=36, y=28, z=64}, {x=37, y=29, z=64}, {x=40, y=33, z=64}, {x=30, y=36, z=64}, {x=43, y=39, z=64}, {x=62, y=61, z=64}, {x=21, y=6, z=65}, {x=24, y=6, z=65}, {x=53, y=10, z=65}, {x=52, y=12, z=65}, {x=27, y=17, z=65}, {x=39, y=17, z=65}, {x=29, y=19, z=65}, {x=32, y=22, z=65}, {x=28, y=42, z=65}, {x=60, y=61, z=65}, {x=24, y=6, z=66}, {x=26, y=6, z=66}, {x=19, y=12, z=66}, {x=28, y=20, z=66}, {x=31, y=26, z=66}, {x=39, y=55, z=66}, {x=42, y=6, z=67}, {x=24, y=7, z=67}, {x=20, y=14, z=67}, {x=41, y=21, z=67}, {x=28, y=22, z=67}, {x=29, y=46, z=67}, 
+          {x=34, y=52, z=67}, {x=45, y=17, z=68}, {x=42, y=25, z=68}, {x=28, y=43, z=68}, {x=46, y=44, z=68}, {x=29, y=7, z=69}, {x=49, y=12, z=69}, {x=29, y=43, z=69}, {x=48, y=9, z=70}, {x=45, y=17, z=70}, {x=36, y=9, z=71}, {x=47, y=10, z=71}, {x=25, y=11, z=71}, {x=45, y=17, z=71}, {x=42, y=46, z=71}, {x=34, y=47, z=71}, {x=35, y=48, z=71}, {x=45, y=10, z=72}, {x=25, y=12, z=72}, {x=45, y=35, z=72}, {x=45, y=43, z=72}, {x=36, y=52, z=72}, {x=39, y=55, z=72}, {x=26, y=19, z=73}, {x=27, y=21, z=73}, {x=26, y=27, z=73}, {x=26, y=29, z=73}, {x=43, y=31, z=73}, {x=28, y=36, z=73}, {x=42, y=41, z=73}, {x=34, y=46, z=73}, {x=39, y=59, z=73}, {x=24, y=9, z=74}, {x=48, y=9, z=74}, {x=35, y=48, z=74}, {x=35, y=51, z=74}, {x=42, y=53, z=74}, {x=33, y=57, z=74}, {x=30, y=60, z=74}, {x=47, y=8, z=75}, {x=22, y=12, z=75}, {x=45, y=18, z=75}, {x=27, y=30, z=75}, {x=45, y=33, z=75}, {x=36, y=49, z=75}, {x=36, y=1, z=76}, {x=45, y=7, z=76}, {x=21, y=14, z=76}, {x=44, y=23, z=76}, {x=29, y=35, z=76}, {x=38, y=40, z=76}, {x=39, y=42, z=76}, {x=33, y=58, z=76}, {x=34, y=1, z=77}, {x=21, y=7, z=77}, {x=18, y=11, z=77}, {x=26, y=23, z=77}, {x=43, y=25, z=77}, {x=41, y=32, z=77}, {x=36, y=41, z=77}, {x=39, y=47, z=77}, {x=35, y=56, z=77}, {x=35, y=1, z=78}, {x=26, y=3, z=78}, {x=34, y=3, z=78}, {x=18, y=9, z=78}, {x=27, y=23, z=78}, {x=51, y=33, z=78}, {x=41, y=37, z=78}, {x=36, y=1, z=79}, {x=25, y=2, z=79}, {x=18, y=8, z=79}, {x=15, y=10, z=79}, {x=14, y=11, z=79}, {x=27, y=23, z=79}, {x=28, y=25, z=79}, {x=45, y=32, z=79}, {x=33, y=34, z=79}, {x=34, y=34, z=79}, {x=37, y=55, z=79}, {x=40, y=62, z=79}, {x=27, y=0, z=80}, {x=31, y=18, z=80}, {x=30, y=26, z=80}, {x=34, y=61, z=80}, {x=20, y=7, z=81}, {x=51, y=7, z=81}, {x=25, y=8, z=81}, {x=53, y=8, z=81}, {x=42, y=10, z=81}, {x=56, y=12, z=81}, {x=21, y=15, z=81}, {x=37, y=28, z=81}, {x=36, y=29, z=81}, {x=37, y=29, z=81}, {x=44, y=35, z=81}, {x=22, y=7, z=82}, {x=26, y=8, z=82}, {x=29, y=8, z=82}, {x=44, y=9, z=82}, {x=42, y=10, z=82}, {x=32, y=13, z=82}, {x=13, y=14, z=82}, {x=29, y=22, z=82}, {x=31, y=25, z=82}, {x=35, y=27, z=82}, {x=27, y=60, z=82}, {x=41, y=64, z=82}, {x=20, y=8, z=83}, {x=57, y=8, z=83}, {x=24, y=9, z=83}, {x=58, y=9, z=83}, {x=36, y=22, z=83}, {x=32, y=24, z=83}, {x=47, y=8, z=84}, {x=56, y=8, z=84}, {x=59, y=11, z=84}, {x=45, y=13, z=84}, {x=58, y=13, z=84}, {x=17, y=14, z=84}, {x=23, y=14, z=84}, {x=56, y=14, z=84}, {x=29, y=19, z=84}, {x=36, y=19, z=84}, {x=27, y=59, z=84}, {x=35, y=6, z=85}, {x=9, y=8, z=85}, {x=41, y=11, z=85}, {x=50, y=13, z=85}, {x=33, y=58, z=85}, {x=34, y=58, z=85}, {x=33, y=7, z=86}, {x=18, y=10, z=86}, {x=9, y=12, z=86}, {x=41, y=12, z=87}, {x=41, y=60, z=87}, {x=9, y=2, z=88}, {x=7, y=5, z=88}, {x=5, y=10, z=88}, {x=41, y=11, z=88}, {x=62, y=11, z=88}, {x=42, y=68, z=88}, {x=37, y=6, z=89}, {x=66, y=8, z=89}, {x=9, y=10, z=89}, {x=19, y=10, z=89}, {x=58, y=12, z=89}, {x=45, y=62, z=89}, {x=7, y=5, z=90}, {x=67, y=5, z=90}, {x=7, y=9, z=90}, {x=31, y=11, z=90}, {x=62, y=11, z=90}, {x=1, y=2, z=91}, {x=5, y=5, z=91}, {x=69, y=5, z=91}, {x=62, y=8, z=91}, {x=58, y=9, z=91}, {x=63, y=10, z=91}, {x=35, y=7, z=92}, {x=62, y=9, z=92}, {x=33, y=13, z=92}, {x=36, y=62, z=92}, {x=37, y=3, z=93}, {x=37, y=6, z=93}, {x=64, y=6, z=93}, {x=32, y=10, z=93}, {x=34, y=14, z=93}, {x=39, y=57, z=93}, {x=41, y=67, z=93}, {x=33, y=9, z=94}, {x=38, y=57, z=94}, {x=41, y=69, z=94}, {x=40, y=1, z=95}, {x=34, y=7, z=97}, {x=33, y=9, z=97}, {x=33, y=10, z=102}, {x=33, y=7, z=105}, {x=35, y=9, z=107}
+        }
+      },
+      {
+        filename = TREE2_FILE,
+        size   = {x = 62, y = 65, z = 65},
+        center = {x = 30, y = 12, z = 36},
+        requiredIslandDepth = 16,
+        requiredIslandRadius = 24,
+        nodesWithConstructor = { {x=35, y=53, z=1}, {x=33, y=59, z=1}, {x=32, y=58, z=3}, {x=31, y=57, z=5}, {x=40, y=58, z=6}, {x=29, y=57, z=7}, {x=39, y=51, z=8}, {x=52, y=53, z=8}, {x=32, y=53, z=9}, {x=25, y=58, z=9}, {x=51, y=51, z=10}, {x=47, y=50, z=11}, {x=50, y=55, z=11}, {x=28, y=57, z=11}, {x=26, y=39, z=12}, {x=30, y=39, z=12}, {x=24, y=40, z=12}, {x=53, y=52, z=12}, {x=29, y=57, z=12}, {x=43, y=59, z=12}, {x=26, y=39, z=13}, {x=36, y=48, z=13}, {x=27, y=39, z=14}, {x=39, y=48, z=14}, {x=33, y=50, z=14}, {x=43, y=50, z=14}, {x=24, y=59, z=14}, {x=41, y=49, z=15}, {x=33, y=12, z=16}, {x=36, y=46, z=16}, {x=50, y=51, z=16}, {x=46, y=57, z=16}, {x=36, y=45, z=17}, {x=27, y=46, z=17}, {x=22, y=48, z=17}, {x=45, y=50, z=17}, {x=31, y=38, z=18}, {x=32, y=38, z=18}, {x=39, y=46, z=18}, {x=51, y=51, z=18}, {x=31, y=11, z=19}, {x=32, y=38, z=19}, {x=39, y=41, z=19}, {x=45, y=57, z=19}, {x=29, y=58, z=19}, {x=28, y=60, z=20}, {x=38, y=40, z=21}, {x=30, y=58, z=21}, {x=31, y=13, z=22}, {x=20, y=41, z=22}, {x=22, y=43, z=22}, {x=20, y=48, z=22}, {x=22, y=39, z=23}, {x=49, y=50, z=23}, {x=52, y=52, z=23}, {x=53, y=53, z=23}, {x=32, y=55, z=23}, {x=36, y=59, z=23}, {x=31, y=60, z=23}, {x=25, y=46, z=24}, {x=40, y=56, z=24}, {x=34, y=58, z=24}, {x=38, y=58, z=24}, {x=32, y=39, z=25}, {x=40, y=46, z=25}, {x=39, y=55, z=25}, {x=36, y=45, z=26}, {x=12, y=7, z=28}, {x=34, y=33, z=28}, {x=31, y=36, z=28}, {x=37, y=41, z=28}, {x=14, y=60, z=28}, {x=19, y=13, z=29}, {x=12, y=43, z=29}, {x=8, y=45, z=29}, {x=31, y=46, z=29}, {x=39, y=47, z=29}, {x=13, y=60, z=29}, {x=22, y=63, z=29}, {x=51, y=9, z=30}, {x=32, y=39, z=30}, {x=33, y=40, z=30}, {x=34, y=44, z=30}, {x=22, y=1, z=31}, {x=24, y=2, z=31}, {x=20, y=7, z=31}, {x=51, y=9, z=31}, {x=16, y=12, z=31}, {x=34, y=27, z=31}, {x=22, y=43, z=31}, {x=27, y=44, z=31}, {x=23, y=51, z=31}, {x=42, y=58, z=31}, {x=9, y=60, z=31}, {x=22, y=5, z=32}, {x=22, y=6, z=32}, {x=50, y=10, z=32}, {x=53, y=11, z=32}, {x=41, y=15, z=32}, {x=43, y=15, z=32}, {x=31, y=21, z=32}, {x=31, y=28, z=32}, {x=12, y=42, z=32}, {x=15, y=42, z=32}, {x=13, y=48, z=32}, {x=37, y=49, z=32}, {x=18, y=59, z=32}, {x=52, y=9, z=33}, {x=40, y=10, z=33}, {x=43, y=10, z=33}, {x=22, y=11, z=33}, {x=27, y=11, z=33}, {x=50, y=11, z=33}, {x=22, y=15, z=33}, {x=36, y=29, z=33}, {x=33, y=37, z=33}, {x=9, y=42, z=33}, {x=14, y=42, z=33}, {x=18, y=43, z=33}, {x=23, y=43, z=33}, {x=33, y=49, z=33}, {x=43, y=53, z=33}, {x=54, y=53, z=33}, {x=31, y=55, z=33}, {x=23, y=58, z=33}, {x=43, y=10, z=34}, {x=44, y=10, z=34}, {x=32, y=12, z=34}, {x=46, y=13, z=34}, {x=28, y=29, z=34}, {x=20, y=42, z=34}, {x=39, y=50, z=34}, {x=51, y=52, z=34}, {x=54, y=52, z=34}, {x=35, y=55, z=34}, {x=51, y=56, z=34}, {x=35, y=5, z=35}, {x=34, y=8, z=35}, {x=33, y=10, z=35}, {x=49, y=10, z=35}, {x=43, y=14, z=35}, {x=36, y=35, z=35}, {x=30, y=47, z=35}, {x=9, y=48, z=35}, {x=39, y=51, z=35}, {x=56, y=52, z=35}, {x=40, y=56, z=35}, {x=13, y=59, z=35}, {x=26, y=62, z=35}, {x=28, y=13, z=36}, {x=38, y=17, z=36}, {x=38, y=20, z=36}, {x=27, y=26, z=36}, {x=38, y=35, z=36}, {x=24, y=39, z=36}, {x=6, y=43, z=36}, {x=13, y=57, z=36}, {x=48, y=7, z=37}, {x=33, y=8, z=37}, {x=50, y=9, z=37}, {x=36, y=11, z=37}, {x=27, y=20, z=37}, {x=27, y=22, z=37}, {x=38, y=24, z=37}, {x=33, y=34, z=37}, {x=9, y=42, z=37}, {x=14, y=42, z=37}, {x=25, y=42, z=37}, {x=53, y=50, z=37}, {x=33, y=53, z=37}, {x=54, y=59, z=37}, {x=28, y=21, z=38}, {x=39, y=34, z=38}, {x=24, y=35, z=38}, {x=8, y=43, z=38}, {x=6, y=47, z=38}, {x=48, y=51, z=38}, {x=61, y=53, z=38}, {x=26, y=57, z=38}, {x=27, y=57, z=38}, {x=32, y=59, z=38}, {x=29, y=62, z=38}, {x=38, y=62, z=38}, {x=33, y=7, z=39}, {x=34, y=9, z=39}, {x=28, y=23, z=39}, {x=34, y=37, z=39}, {x=19, y=42, z=39}, {x=55, y=50, z=39}, {x=47, y=51, z=39}, {x=11, y=54, z=39}, {x=9, y=60, z=39}, {x=33, y=61, z=39}, {x=33, y=4, z=40}, {x=30, y=11, z=40}, {x=39, y=13, z=40}, {x=36, y=23, z=40}, {x=22, y=38, z=40}, {x=54, y=49, z=40}, {x=53, y=50, z=40}, {x=23, y=54, z=40}, {x=28, y=57, z=40}, {x=29, y=57, z=40}, {x=31, y=29, z=41}, {x=27, y=34, z=41}, {x=30, y=37, z=41}, {x=42, y=38, z=41}, {x=12, y=42, z=41}, {x=15, y=42, z=41}, {x=44, y=44, z=41}, {x=28, y=57, z=41}, {x=55, y=57, z=41}, {x=9, y=59, z=41}, {x=30, y=10, z=42}, {x=26, y=15, z=42}, {x=31, y=15, z=42}, {x=34, y=17, z=42}, {x=28, y=36, z=42}, {x=38, y=44, z=42}, {x=42, y=44, z=42}, {x=46, y=44, z=42}, {x=32, y=47, z=42}, {x=52, y=47, z=42}, {x=39, y=55, z=42}, {x=54, y=56, z=42}, {x=34, y=59, z=42}, {x=40, y=11, z=43}, {x=30, y=14, z=43}, {x=28, y=16, z=43}, {x=34, y=31, z=43}, {x=11, y=43, z=43}, {x=14, y=43, z=43}, {x=28, y=47, z=43}, {x=57, y=50, z=43}, {x=61, y=54, z=43}, {x=30, y=58, z=43}, {x=34, y=59, z=43}, {x=7, y=61, z=43}, {x=41, y=10, z=44}, {x=29, y=15, z=44}, {x=36, y=39, z=44}, {x=6, y=43, z=44}, {x=30, y=47, z=44}, {x=57, y=50, z=44}, {x=38, y=10, z=45}, {x=42, y=10, z=45}, {x=11, y=43, z=45}, {x=14, y=43, z=45}, {x=46, y=44, z=45}, {x=32, y=45, z=45}, {x=55, y=45, z=45}, {x=3, y=48, z=45}, {x=31, y=57, z=45}, {x=41, y=3, z=46}, {x=40, y=7, z=46}, {x=28, y=11, z=46}, {x=23, y=13, z=46}, {x=19, y=43, z=46}, {x=24, y=9, z=47}, {x=39, y=9, z=47}, {x=43, y=12, z=47}, {x=5, y=43, z=47}, {x=42, y=43, z=47}, {x=46, y=43, z=47}, {x=24, y=47, z=47}, {x=60, y=52, z=47}, {x=24, y=54, z=47}, {x=37, y=57, z=47}, {x=11, y=60, z=47}, {x=27, y=9, z=48}, {x=27, y=11, z=48}, {x=22, y=14, z=48}, {x=15, y=44, z=48}, {x=51, y=45, z=48}, {x=23, y=49, z=48}, {x=59, y=53, z=48}, {x=9, y=56, z=48}, {x=33, y=59, z=48}, {x=41, y=14, z=49}, {x=8, y=43, z=49}, {x=10, y=43, z=49}, {x=39, y=43, z=49}, {x=34, y=44, z=49}, {x=47, y=44, z=49}, {x=48, y=44, z=49}, {x=24, y=51, z=49}, {x=10, y=55, z=49}, {x=32, y=59, z=49}, {x=20, y=61, z=49}, {x=11, y=63, z=49}, {x=25, y=8, z=50}, {x=22, y=10, z=50}, {x=42, y=14, z=50}, {x=10, y=43, z=50}, {x=43, y=43, z=50}, {x=61, y=46, z=50}, {x=39, y=54, z=50}, {x=24, y=12, z=51}, {x=50, y=44, z=51}, {x=52, y=45, z=51}, {x=54, y=45, z=51}, {x=2, y=46, z=51}, {x=8, y=51, z=51}, {x=7, y=52, z=51}, {x=37, y=58, z=51}, {x=22, y=50, z=52}, {x=25, y=55, z=52}, {x=39, y=58, z=52}, {x=20, y=7, z=53}, {x=40, y=43, z=53}, {x=58, y=45, z=53}, {x=60, y=50, z=53}, {x=22, y=55, z=53}, {x=28, y=56, z=53}, {x=50, y=62, z=53}, {x=54, y=45, z=54}, {x=61, y=46, z=54}, {x=30, y=47, z=54}, {x=30, y=49, z=54}, {x=53, y=53, z=54}, {x=18, y=55, z=54}, {x=51, y=56, z=54}, {x=46, y=62, z=54}, {x=21, y=56, z=55}, {x=24, y=56, z=55}, {x=38, y=61, z=55}, {x=19, y=49, z=56}, {x=46, y=52, z=56}, {x=47, y=53, z=56}, {x=59, y=47, z=57}, {x=26, y=57, z=57}, {x=45, y=43, z=58}, {x=15, y=50, z=58}, {x=11, y=51, z=58}, {x=50, y=44, z=59}, {x=53, y=47, z=59}, {x=43, y=49, z=59}, {x=18, y=50, z=59}, {x=18, y=51, z=60}, {x=38, y=45, z=61}, {x=50, y=47, z=61}, {x=41, y=48, z=61} },
+      }
+    },
+    MODNAME = minetest.get_current_modname() -- don't hardcode incase it's copied into other mods
+  }
+
+  -- Must be called during mod load time, as it uses minetest.register_node()
+  -- (add an optional dependency for any mod where the tree & leaf textures might be 
+  -- sourced from, to ensure they are loaded before this is called)
+  SkyTrees.init = function()
+
+    SkyTrees.minimumIslandRadius = 100000
+    SkyTrees.minimumIslandDepth  = 100000
+    SkyTrees.maximumYOffset      = 0
+    SkyTrees.maximumHeight       = 0
+
+    SkyTrees.nodeName_sideVines   = interop.find_node_name(NODENAMES_VINES)
+    SkyTrees.nodeName_hangingVine = interop.find_node_name(NODENAMES_HANGINGVINE)
+    SkyTrees.nodeName_hangingRoot = interop.find_node_name(NODENAMES_HANGINGROOT)
+
+    for i,tree in pairs(SkyTrees.schematicInfo) do
+      local fullFilename = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. tree.filename
+  
+      if not file_exists(fullFilename) then
+        -- remove the schematic from the list
+        SkyTrees.schematicInfo[i] = nil
+      else
+        SkyTrees.minimumIslandRadius = math_min(SkyTrees.minimumIslandRadius, tree.requiredIslandRadius)
+        SkyTrees.minimumIslandDepth  = math_min(SkyTrees.minimumIslandDepth,  tree.requiredIslandDepth)
+        SkyTrees.maximumYOffset      = math_max(SkyTrees.maximumYOffset,      tree.center.y)
+        SkyTrees.maximumHeight       = math_max(SkyTrees.maximumHeight,       tree.size.y)            
+
+        tree.theme = {}
+        SkyTrees.schematicInfo[tree.filename] = tree -- so schematicInfo of trees can be indexed by name
+      end
+    end
+
+    local function generate_woodTypes(nodeName_templateWood, overlay, barkoverlay, nodesuffix, description, dropsTemplateWood)
+
+      local trunkNode = minetest.registered_nodes[nodeName_templateWood]
+      local newTrunkNode = {}
+      for key, value in pairs(trunkNode) do newTrunkNode[key] = value end
+      newTrunkNode.name = SkyTrees.MODNAME .. ":" .. nodesuffix
+      newTrunkNode.description = description
+      if dropsTemplateWood then 
+        newTrunkNode.drop = nodeName_templateWood 
+        if newTrunkNode.groups == nil then newTrunkNode.groups = {} end
+        newTrunkNode.groups.not_in_creative_inventory = 1
+      else 
+        newTrunkNode.drop = nil 
+      end
+      
+      local tiles = trunkNode.tiles
+      if type(tiles) == "table" then
+        newTrunkNode.tiles = {}
+        for key, value in pairs(tiles) do newTrunkNode.tiles[key] = value .. overlay end
+      else
+        newTrunkNode.tiles = tiles .. overlay
+      end
+      
+      local newBarkNode = {}
+      for key, value in pairs(newTrunkNode) do newBarkNode[key] = value end
+      newBarkNode.name = newBarkNode.name .. BARK_SUFFIX
+      newBarkNode.description = "Bark of " .. newBarkNode.description
+      -- .drop: leave the bark nodes dropping the trunk wood
+      
+      local tiles = trunkNode.tiles
+      if type(tiles) == "table" then
+        newBarkNode.tiles = { tiles[#tiles] .. barkoverlay }
+      end      
+
+      --minetest.log("info", newTrunkNode.name .. ": " .. dump(newTrunkNode))
+      minetest.register_node(newTrunkNode.name, newTrunkNode)
+      minetest.register_node(newBarkNode.name,  newBarkNode)
+      return newTrunkNode.name
+    end
+
+    local function generate_leafTypes(nodeName_templateLeaf, overlay, nodesuffix, description, dropsTemplateLeaf, glowVariantBrightness)
+
+      local leafNode = minetest.registered_nodes[nodeName_templateLeaf]
+      local newLeafNode = {}
+      for key, value in pairs(leafNode) do newLeafNode[key] = value end
+      newLeafNode.name = SkyTrees.MODNAME .. ":" .. nodesuffix
+      newLeafNode.description = description
+      newLeafNode.sunlight_propagates = true -- soo many leaves they otherwise blot out the sun.
+      if dropsTemplateLeaf then 
+        newLeafNode.drop = nodeName_templateLeaf 
+        if newLeafNode.groups == nil then newLeafNode.groups = {} end
+        newLeafNode.groups.not_in_creative_inventory = 1
+      else 
+        newLeafNode.drop = nil 
+      end
+      
+      local tiles = leafNode.tiles
+      if type(tiles) == "table" then
+        newLeafNode.tiles = {}
+        for key, value in pairs(tiles) do newLeafNode.tiles[key] = value .. overlay end
+      else
+        newLeafNode.tiles = tiles .. overlay
+      end
+      
+      minetest.register_node(newLeafNode.name, newLeafNode)
+
+      if glowVariantBrightness ~= nil and glowVariantBrightness > 0 and BIOLUMINESCENCE then
+        local glowingLeafNode = {}
+        for key, value in pairs(newLeafNode) do glowingLeafNode[key] = value end
+        glowingLeafNode.name = newLeafNode.name .. GLOW_SUFFIX
+        glowingLeafNode.description = "Glowing " .. description
+        glowingLeafNode.light_source = glowVariantBrightness
+        minetest.register_node(glowingLeafNode.name, glowingLeafNode)
+      end
+
+      return newLeafNode.name
+    end
+  
+    local templateWood = interop.find_node_name(NODENAMES_TREEWOOD)
+    if templateWood == 'ignore' then 
+      SkyTrees.disabled = "Could not find any tree nodes"
+      return
+    end
+    local normalwood = generate_woodTypes(templateWood, "", "", "tree", "Giant tree", true)
+    local darkwood   = generate_woodTypes(templateWood, "^[colorize:black:205", "^[colorize:black:205", "darkwood", "Giant Ziricote", false)
+    local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", "Dead bleached wood", false) -- make use of the bark blocks to introduce some color variance in the tree
+
+
+    local templateLeaf = interop.find_node_name(NODENAMES_TREELEAVES)
+    if templateLeaf == 'ignore' then 
+      SkyTrees.disabled = "Could not find any treeleaf nodes"
+      return
+    end
+    local greenleaf1       = generate_leafTypes(templateLeaf, "",                      "leaves",   "Leaves of a giant tree", true) -- drops templateLeaf because these look close enough to the original leaves that we won't clutter the game & creative-menu with tiny visual variants that other recipes/parts of the game won't know about
+    local greenleaf2       = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  "Leaves of a giant tree", false)
+    local greenleaf3       = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  "Leaves of a giant tree", false)
+
+    local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:alpha", "blossom_white1",    "Blossom", false)
+    local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:alpha", "blossom_white2",    "Blossom", false)
+    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:alpha", "blossom_whitepink", "Blossom", false, 5)
+
+    local sakurablossom1   = generate_leafTypes(templateLeaf, "^[colorize:#ea327c:alpha", "blossom_red",       "Sakura blossom", false, 5)
+    local sakurablossom2   = generate_leafTypes(templateLeaf, "^[colorize:#ffc3dd:alpha", "blossom_pink",      "Sakura blossom", false)
+    
+    local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8087ec:alpha", "blossom_wisteria1", "Wisteria blossom", false)
+    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:alpha", "blossom_wisteria2", "Wisteria blossom", false, 7)
+
+
+    local tree = SkyTrees.schematicInfo[TREE1_FILE]
+    if tree ~= nil then
+
+      tree.defaultThemeName = "Green foliage"
+      tree.theme[tree.defaultThemeName] = {
+        relativeProbability = 5,
+        trunk               = normalwood,
+        leaves1             = greenleaf1,
+        leaves2             = greenleaf2,
+        leaves_special      = greenleaf3,
+        vineflags           = { leaves = true, hanging_leaves = true },
+
+        init = function(self, position)
+          -- if it's hot and humid then add vines
+          local viney = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
+
+          if viney then
+            local flagSeed = position.x * 3 + position.z + ISLANDS_SEED
+            self.vineflags.hanging_leaves = (flagSeed % 10) <= 3 or (flagSeed % 10) >= 8
+            self.vineflags.leaves         = (flagSeed % 10) <= 5
+            self.vineflags.bark           = (flagSeed % 10) <= 2
+            self.vineflags.hanging_bark   = (flagSeed % 10) <= 1
+          end
+        end
+      }
+
+      tree.theme["Haunted"] = {
+        relativeProbability = 2,
+        trunk               = darkwood,
+        vineflags           = { hanging_roots = true },
+        hasHeart            = false,
+        hasSoil             = false,
+
+        init = function(self, position)
+          -- 60% of these trees are a hanging roots variant
+          self.vineflags.hanging_roots = (position.x * 3 + position.y + position.z + ISLANDS_SEED) % 10 < 60
+        end
+      }
+
+      tree.theme["Dead"] = {
+        relativeProbability = 0, -- 0 because this theme will be chosen based on location, rather than chance.
+        trunk = deadwood,
+        hasHeart = false
+      }
+
+      tree.theme["Sakura"] = {
+        relativeProbability = 2,
+        trunk               = darkwood,
+        leaves1             = sakurablossom2,
+        leaves2             = whiteblossom2,
+        leaves_special      = sakurablossom1,
+
+        init = function(self, position)
+          -- 40% of these trees are a glowing variant
+          self.glowing = (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE
+          self.leaves_special = sakurablossom1
+          if self.glowing then self.leaves_special = sakurablossom1 .. GLOW_SUFFIX end
+        end
+      }
+
+    end
+    
+    tree = SkyTrees.schematicInfo[TREE2_FILE]
+    if tree ~= nil then
+
+      -- copy the green leaves theme from tree1
+      tree.defaultThemeName = "Green foliage"
+      tree.theme[tree.defaultThemeName] = SkyTrees.schematicInfo[TREE1_FILE].theme["Green foliage"]
+
+      tree.theme["Wisteria"] = {
+        relativeProbability = 2.5,
+        trunk               = normalwood,
+        leaves1             = greenleaf1,
+        leaves2             = wisteriaBlossom1,
+        leaves_special      = wisteriaBlossom2,
+        vineflags           = { leaves = true, hanging_leaves = true, hanging_bark = true },
+
+        init = function(self, position)
+          -- 40% of these trees are a glowing variant
+          self.glowing = (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 3 and BIOLUMINESCENCE
+          self.leaves_special = wisteriaBlossom2
+          if self.glowing then self.leaves_special = wisteriaBlossom2 .. GLOW_SUFFIX end
+
+          -- if it's hot and humid then allow vines on the trunk as well
+          self.vineflags.bark = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
+        end
+      }
+
+      tree.theme["Blossom"] = {
+        relativeProbability = 1.5,
+        trunk               = normalwood,
+        leaves1             = whiteblossom1,
+        leaves2             = whiteblossom2,
+        leaves_special      = normalwood..BARK_SUFFIX,
+
+        init = function(self, position)
+          -- 30% of these trees are a glowing variant
+          self.glowing = (position.x * 3 + position.z + ISLANDS_SEED) % 10 <= 2 and BIOLUMINESCENCE
+          self.leaves_special = normalwood..BARK_SUFFIX
+          if self.glowing then self.leaves_special = pinkblossom .. GLOW_SUFFIX end
+        end
+      }      
+
+    end
+
+    -- fill in any omitted fields in the themes with default values
+    for _,tree in pairs(SkyTrees.schematicInfo) do
+      for _,theme in pairs(tree.theme) do
+        if theme.bark                == nil then theme.bark                = theme.trunk .. BARK_SUFFIX end
+        if theme.leaves1             == nil then theme.leaves1             = 'ignore'                   end
+        if theme.leaves2             == nil then theme.leaves2             = 'ignore'                   end
+        if theme.leaves_special      == nil then theme.leaves_special      = theme.leaves1              end
+
+        if theme.vineflags           == nil then theme.vineflags           = {}                         end
+        if theme.relativeProbability == nil then theme.relativeProbability = 1.0                        end
+        if theme.glowing             == nil then theme.glowing             = false                      end
+        if theme.hasSoil             == nil then theme.hasSoil             = true                       end
+        if theme.hasHeart            == nil then theme.hasHeart            = true                       end
+      end
+    end
+
+    -- The heart of the Tree
+    -- The difference between a living tree and and a haunted/darkened husk
+    --
+    -- Ideally trees would slowly fizzlefade to/from the Haunted theme depending on 
+    -- whether a player steals or restores the heart, meaning a house hollowed out inside 
+    -- a living tree would need the heart to still be kept inside it, perhaps on its 
+    -- own pedestal (unless wanting an Addam's Family treehouse).
+    local heartwoodTexture = minetest.registered_nodes[templateWood].tiles
+    if type(heartwoodTexture) == "table" then heartwoodTexture = heartwoodTexture[1] end
+    local heartwoodGlow = minetest.LIGHT_MAX -- plants can grow under the heart of the Tree
+    if not BIOLUMINESCENCE then heartwoodGlow = 0 end -- :(
+    minetest.register_node(
+      SkyTrees.MODNAME .. ":HeartWood", 
+      {
+        tiles = { heartwoodTexture },
+        description="Heart of the Tree",
+        groups = {oddly_breakable_by_hand = 3},
+        drawtype = "nodebox",
+        paramtype = "light",
+        light_source = heartwoodGlow, -- plants can grow under the heart of the Tree
+        node_box = {
+          type = "fixed",
+          fixed = {
+            --[[ Original heart
+            {-0.38, -0.38, -0.38, 0.38, 0.38, 0.38},
+            {0.15, 0.15, 0.15, 0.5, 0.5, 0.5}, 
+            {-0.5, 0.15, 0.15, -0.15, 0.5, 0.5},
+            {-0.5, 0.15, -0.5, -0.15, 0.5, -0.15},
+            {0.15, 0.15, -0.5, 0.5, 0.5, -0.15},
+            {0.15, -0.5, -0.5, 0.5, -0.15, -0.15},
+            {-0.5, -0.5, -0.5, -0.15, -0.15, -0.15},
+            {-0.5, -0.5, 0.15, -0.15, -0.15, 0.5},
+            {0.15, -0.5, 0.15, 0.5, -0.15, 0.5}
+            ]]
+      
+            {-0.38, -0.38, -0.38, 0.38, 0.38, 0.38},
+            {-0.5, -0.2, -0.2, 0.5, 0.2, 0.2},
+            {-0.2, -0.5, -0.2, 0.2, 0.5, 0.2},
+            {-0.2, -0.2, -0.5, 0.2, 0.2, 0.5}
+          }
+        }
+      }
+    )
+  end
+
+  -- this is hack to work around how place_schematic() never invalidates its cache
+  -- a unique schematic filename is generated for each unique theme
+  SkyTrees.getMalleatedFilename = function(schematicInfo, themeName)
+
+    -- create a unique id for the theme
+    local theme = schematicInfo.theme[themeName]
+    local flags = 0
+    if theme.glowing                  then flags = flags +   1 end
+    if theme.vineflags.leaves         then flags = flags +   2 end
+    if theme.vineflags.hanging_leaves then flags = flags +   4 end
+    if theme.vineflags.bark           then flags = flags +   8 end
+    if theme.vineflags.hanging_bark   then flags = flags +  16 end
+    if theme.vineflags.hanging_roots  then flags = flags +  32 end
+    if theme.hasSoil                  then flags = flags +  64 end
+    if theme.hasHeart                 then flags = flags + 128 end
+
+    local uniqueId = themeName .. flags
+
+    if schematicInfo.malleatedFilenames == nil then schematicInfo.malleatedFilenames = {} end
+
+    if schematicInfo.malleatedFilenames[uniqueId] == nil then
+
+      local malleationCount = 0
+      for _ in pairs(schematicInfo.malleatedFilenames) do malleationCount = malleationCount + 1 end
+
+      local malleatedFilename = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM
+      for i = 1, malleationCount do
+        malleatedFilename = malleatedFilename .. '.' .. DIR_DELIM -- should work on both Linux and Windows
+      end
+      malleatedFilename = malleatedFilename .. schematicInfo.filename
+      schematicInfo.malleatedFilenames[uniqueId] = malleatedFilename
+    end
+
+    --minetest.log("info", "Malleated file name for " .. uniqueId .. " is " .. schematicInfo.malleatedFilenames[uniqueId])
+    return schematicInfo.malleatedFilenames[uniqueId]
+  end
+
+
+  -- Returns true if a tree in this location would be dead
+  -- (checks for desert)
+  SkyTrees.isDead = function(position)
+    local heat     = minetest.get_heat(position)
+    local humidity = minetest.get_humidity(position)
+
+    if humidity <= 10 or (humidity <= 20 and heat >= 80) then
+      return true
+    end
+
+    local biomeId = minetest.get_biome_data(position).biome
+    local biome = biomes[biomeId]
+    if biome ~= nil and biome.node_top ~= nil then
+      local modname, nodename = interop.split_nodename(biome.node_top)
+      if string.find(nodename, "sand") or string.find(nodename, "desert") then
+        return true
+      end
+    end
+  end
+
+
+  -- Returns the name of a suitable theme
+  -- Picks a theme from the schematicInfo automatically, based on the themes' relativeProbability, and location.
+  SkyTrees.selectTheme = function(position, schematicInfo, choiceSeed)
+
+    local deadThemeName = "Dead"
+
+    if schematicInfo.theme[deadThemeName] ~= nil then 
+      -- Tree is dead and bleached in desert biomes
+      if SkyTrees.isDead(position) then
+        return deadThemeName
+      end
+    end
+
+    if choiceSeed == nil then choiceSeed = 0 end
+    -- Use a known PRNG implementation
+    local prng = PcgRandom(
+      position.x           * 65732 +
+      position.z           * 729   +
+      schematicInfo.size.x * 3     +
+      choiceSeed
+    )
+
+    local sumProbabilities = 0
+    for _,theme in pairs(schematicInfo.theme) do 
+      sumProbabilities = sumProbabilities + theme.relativeProbability
+    end
+
+    local selection = prng:next(0, sumProbabilities * 1000) / 1000
+    if DEBUG_SKYTREES then minetest.log("info", "Skytrees x: "..position.x.." y: ".. position.y .. " sumProbabilities: " .. sumProbabilities .. ", selection: " .. selection) end
+
+    sumProbabilities = 0
+    for themeName,theme in pairs(schematicInfo.theme) do 
+      if selection <= sumProbabilities + theme.relativeProbability then
+        return themeName
+      else            
+        sumProbabilities = sumProbabilities + theme.relativeProbability
+      end
+    end
+
+    error(SkyTrees.MODNAME .. " - SkyTrees.selectTheme failed to find a theme", 0) 
+    return schematicInfo.defaultThemeName
+  end
+
+
+  -- position is a vector {x, y, z}
+  -- rotation must be either 0, 90, 180, or 270
+  -- schematicInfo must be one of the items in SkyTrees.schematicInfo[]
+  -- topsoil [optional] is the biome's "node_top" - the ground node of the region.
+  SkyTrees.placeTree = function(position, rotation, schematicInfo, themeName, topsoil)
+
+    if SkyTrees.disabled ~= nil then 
+      error(SkyTrees.MODNAME .. " - SkyTrees are disabled: " .. SkyTrees.disabled, 0) 
+      return
+    end
+
+    -- returns a new position vector, rotated around (0, 0) to match the schematic rotation (provided the schematic_size is correct!)
+    local function rotatePositon(position, schematic_size, rotation)
+      local result = vector.new(position);
+      if rotation == 90 then
+        result.x = position.z
+        result.z = schematic_size.x - position.x - 1
+      elseif rotation == 180 then
+        result.x = schematic_size.x - position.x - 1
+        result.z = schematic_size.z - position.z - 1
+      elseif rotation == 270 then
+        result.x = schematic_size.z - position.z - 1
+        result.z = position.x
+      end
+      return result
+    end
+    
+    local rotatedCenter = rotatePositon(schematicInfo.center, schematicInfo.size, rotation);
+    local treePos = vector.subtract(position, rotatedCenter)
+
+    if themeName == nil then themeName = SkyTrees.selectTheme(position, schematicInfo) end
+    local theme = schematicInfo.theme[themeName]
+    if theme == nil then error(MODNAME .. ' called SkyTrees.placeTree("' .. schematicInfo.filename .. '") with invalid theme: ' .. themeName, 0) end    
+    if theme.init ~= nil then theme.init(theme, position) end
+
+    if theme.hasSoil then
+      if topsoil == nil then 
+        topsoil = 'ignore'
+        if minetest.get_biome_data == nil then error(SkyTrees.MODNAME .. " requires Minetest v5.0 or greater, or to have minor modifications to support v0.4.x", 0) end
+        local treeBiome = biomes[minetest.get_biome_data(position).biome]
+        if treeBiome ~= nil and treeBiome.node_top ~= nil then topsoil = treeBiome.node_top end
+      end
+    else 
+      topsoil = 'ignore'
+    end
+
+    local nodeName_heart = SkyTrees.MODNAME .. ":HeartWood"
+    if not theme.hasHeart then nodeName_heart = 'ignore' end
+
+    -- theme.init() may have changed the vineflags, so update the replacement node names
+    if theme.vineflags.hanging_leaves  == true and SkyTrees.nodeName_hangingVine == 'ignore' then theme.vineflags.leaves = true end -- if there are no hanging vines then substitute side_vines
+    if theme.vineflags.leaves          == true then theme.leaf_vines         = SkyTrees.nodeName_sideVines    else theme.leaf_vines         = 'ignore' end
+    if theme.vineflags.bark            == true then theme.bark_vines         = SkyTrees.nodeName_sideVines    else theme.bark_vines         = 'ignore' end
+    if theme.vineflags.hanging_leaves  == true then theme.hanging_leaf_vines = SkyTrees.nodeName_hangingVine else theme.hanging_leaf_vines = 'ignore' end
+    if theme.vineflags.hanging_bark    == true then theme.hanging_bark_vines = SkyTrees.nodeName_hangingVine else theme.hanging_bark_vines = 'ignore' end
+    if theme.vineflags.hanging_roots   == true and SkyTrees.nodeName_hangingRoot ~= 'ignore' then theme.hanging_bark_vines = SkyTrees.nodeName_hangingRoot end
+
+    local replacements = {
+      ['treebark\r\n\r\n~~~ Cloudlands_tree mts by Dr.Frankenstone: Amateur Arborist ~~~\r\n\r\n'] = theme.bark, -- because this node name is always replaced, it can double as space for a text header in the file.
+      ['default:tree']       = theme.trunk,
+      ['default:leaves']     = theme.leaves1,
+      ['leaves_alt']         = theme.leaves2,
+      ['leaves_special']     = theme.leaves_special,
+      ['leaf_vines']         = theme.leaf_vines,
+      ['bark_vines']         = theme.bark_vines,
+      ['hanging_leaf_vines'] = theme.hanging_leaf_vines,
+      ['hanging_bark_vines'] = theme.hanging_bark_vines,      
+      ['default:dirt']       = topsoil,
+      ['heart']              = nodeName_heart
+    }
+    
+    if minetest.global_exists("schemlib") then
+      -- Use schemlib instead minetest.place_schematic(), to avoid bugs in place_schematic()
+
+      local filename = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. schematicInfo.filename
+      local plan_obj = schemlib.plan.new()
+      plan_obj:read_from_schem_file(filename, replacements)
+      plan_obj.data.ground_y = -1 -- prevent read_from_schem_file() from automatically adjusting the height when it encounters dirt in the schematic (SkyTrees sometimes have dirt up in their nooks)
+      plan_obj.data.facedir = round(rotation / 90)
+      local rotatedCenter = plan_obj:get_world_pos(vector.add(vector.multiply(schematicInfo.center, -1), -1), position); -- this function performs the rotation I require, even if it's named/intended for something else.
+      plan_obj.data.anchor_pos = rotatedCenter
+      
+      if DEBUG_SKYTREES then minetest.log("info", "building tree at " .. dump(position) .. "rotated to " .. dump(treePos) .. "rotatedCenter " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename) end
+      plan_obj:set_status("build")
+
+    else -- fall back on minetest.place_schematic()  
+
+      local malleatedFilename = SkyTrees.getMalleatedFilename(schematicInfo, themeName)
+
+      if DEBUG_SKYTREES then minetest.log("info", "placing tree at " .. dump(position) .. "rotated to " .. dump(treePos) .. "rotatedCenter " .. dump(rotatedCenter) .. ", " .. schematicInfo.filename) end
+
+      -- Defering minetest.place_schematic() until after the lua emerge seems to reduce the likelyhood of 
+      -- having it draw the tree with pieces missing.
+      minetest.after(
+        0.1, 
+        function(treePos, malleatedFilename, rotation, replacements, schematicInfo)
+
+          minetest.place_schematic(treePos, malleatedFilename, rotation, replacements, true)
+
+          -- minetest.place_schematic() doesn't invoke node constructors, so use set_node() for any nodes requiring construction
+          for i, schematicCoords in pairs(schematicInfo.nodesWithConstructor) do
+            if rotation ~= 0 then schematicCoords = rotatePositon(schematicCoords, schematicInfo.size, rotation) end
+            local nodePos = vector.add(treePos, schematicCoords)
+            local nodeToConstruct = minetest.get_node(nodePos)
+            if nodeToConstruct.name == "air" or nodeToConstruct.name == "ignore" then
+              --this is now normal - e.g. if vines are set to 'ignore' then the nodeToConstruct won't be there.
+              --minetest.log("error", "nodesWithConstructor["..i.."] does not match schematic " .. schematicInfo.filename .. " at " .. nodePos.x..","..nodePos.y..","..nodePos.z.." rotation "..rotation)
+            else 
+              minetest.set_node(nodePos, nodeToConstruct)
+            end
+          end
+    
+        end,
+        treePos, malleatedFilename, rotation, replacements, schematicInfo
+      )
+
+    end
+  end
+
+end
+
+SkyTrees.init();
 
 
 --[[==============================
@@ -483,7 +1092,7 @@ local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
         local function isIsland(nodeId)
           return (nodeId == nodeId_filler    or nodeId == nodeId_top 
                or nodeId == nodeId_stoneBase or nodeId == nodeId_dust
-               or nodeId == nodeId_silt)
+               or nodeId == nodeId_silt      or nodeId == nodeId_water)
         end
 
         local function findHighestNodeFace(y, solidIndex, emptyIndex)
@@ -700,6 +1309,108 @@ local function addDetail_skyReef(decoration_list, core, data, area, minp, maxp)
   end
 
   return vi >= 0
+end
+
+-- A rarely occuring giant tree growing from the center of the island
+-- returns true if tree was added
+local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
+
+  if (core.radius < SkyTrees.minimumIslandRadius) or (core.depth < SkyTrees.minimumIslandDepth) then
+    --no tree here
+    return false
+  end
+
+  local coreTop          = ALTITUDE + core.y
+  local treeAltitude     = math_floor(coreTop + core.thickness)
+
+  if (maxp.y < treeAltitude - SkyTrees.maximumYOffset) or (minp.y > treeAltitude + SkyTrees.maximumHeight) then
+    --no tree here
+    return false
+  elseif SkyTrees.disabled ~= nil then 
+    -- can't find nodes/textures in this game that are needed to build trees
+    return false
+  end
+
+  local coreX = core.x --save doing a table lookups
+  local coreZ = core.z --save doing a table lookups
+
+  local fastHash = 3
+  fastHash = (37 * fastHash) + coreX
+  fastHash = (37 * fastHash) + coreZ
+  fastHash = (37 * fastHash) + math_floor(core.radius)
+  fastHash = (37 * fastHash) + math_floor(core.depth)
+  fastHash = (37 * fastHash) + ISLANDS_SEED
+  fastHash = (37 * fastHash) + 76276 -- to keep this probability distinct from reefs and atols
+  if (TREE_RARITY * 1000) < math_floor((math_abs(fastHash)) % 1000) then return false end
+
+  -- choose a tree that will fit on the island
+  local tree
+
+  local skipLargeTree = (fastHash % 10) < 3 -- to allow small trees a chance to spawn on large islands
+  if skipLargeTree then
+    if SkyTrees.isDead({x = coreX, y = treeAltitude, z = coreZ}) then
+      -- small tree currently doesn't have a dead theme, so don't skip the large tree
+      skipLargeTree = false
+    end
+  end
+
+
+  for i, treeType in pairs(SkyTrees.schematicInfo) do
+    if i == 1 and skipLargeTree then
+      -- 'continue', to allow small trees a chance to spawn on large islands
+    elseif (core.radius >= treeType.requiredIslandRadius) and (core.depth >= treeType.requiredIslandDepth) then
+      tree = treeType
+      break
+    end
+  end
+
+  local maxOffsetFromCenter = core.radius - (tree.requiredIslandRadius - 4); -- 4 is an arbitrary number, to allow trees to get closer to the edge
+  
+  -- Use a known PRNG implementation
+  local prng = PcgRandom(
+    coreX * 8973896 +
+    coreZ * 7467838 +
+    worldSeed + 43786
+  )
+
+  local treeAngle = 90 * prng:next(0, 3)
+  local treePos = {
+    x = coreX + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2), 
+    y = treeAltitude, 
+    z = coreZ + math_floor((prng:next(-maxOffsetFromCenter, maxOffsetFromCenter) + prng:next(-maxOffsetFromCenter, maxOffsetFromCenter)) / 2)
+  }
+
+  if minetest.global_exists("schemlib") then
+    -- This check is skipped when not using schemlib, because while redrawing the tree multiple times - every time a chunk it 
+    -- touches gets emitted - might be slower, it helps work around the bugs in minetest.place_schematic() where large schematics 
+    -- are spawned incompletely.
+    -- The bug in question: https://forum.minetest.net/viewtopic.php?f=6&t=22136
+    -- (it isn't an issue if schemlib is used)
+    if (maxp.y < treePos.y) or (minp.y > treePos.y) or (maxp.x < treePos.x) or (minp.x > treePos.x) or (maxp.z < treePos.z) or (minp.z > treePos.z) then
+      -- Now that we know the exact position of the tree, we know it's spawn point is not in this chunk.
+      -- In the interests of only drawing trees once, we only invoke placeTree when the chunk containing treePos is emitted.
+      return false
+    end
+  end
+
+  if tree.theme["Dead"] == nil then
+    if SkyTrees.isDead(treePos) then
+      -- Trees in this location should be dead, but this tree doesn't have a dead theme, so don't put a tree here
+      return false
+    end
+  end
+
+  if core.biome == nil then setCoreBiomeData(core) end -- We shouldn't assume the core biome has already been resolved, it might be below the emerged chunk and unrendered
+
+  if core.biome.node_top == nil then
+    -- solid stone isn't fertile enough for giant trees, and there's a solid stone biome in MT-Game: tundra_highland
+    return false
+  end
+
+  if DEBUG_SKYTREES then minetest.log("info", "core x: "..coreX.." y: ".. coreZ .. " treePos: " .. treePos.x .. ", y: " .. treePos.y) end
+
+  SkyTrees.placeTree(treePos, treeAngle, tree, nil, core.biome.node_top)
+  return true;
 end
 
 
@@ -1353,7 +2064,7 @@ local function renderCores(cores, minp, maxp, blockseed)
 
           local surfaceNoise = noise_surfaceMap:get2d({x = x, y = z})
           if DEBUG_GEOMETRIC then surfaceNoise = SURFACEMAP_OFFSET end
-          local surface = round(surfaceNoise * 3 * (core.thickness + 1) * horz_easing)
+          local surface = round(surfaceNoise * 3 * (core.thickness + 1) * horz_easing) -- if you change this formular then update maxSufaceRise in on_generated()
           local coreBottom = math_floor(coreTop - (core.thickness + core.depth))
           local noisyDepthOfFiller = depth_filler;
           if noisyDepthOfFiller >= 3 then noisyDepthOfFiller = noisyDepthOfFiller + math_floor(randomNumbers[(x + z) % 256] * 3) - 1 end
@@ -1452,10 +2163,12 @@ local function renderCores(cores, minp, maxp, blockseed)
                   if y > minp.y then data[vi - area.ystride] = pondBottom end
                   --remove any dust above ponds
                   if y < maxp.y and data[vi + area.ystride] == nodeId_dust then data[vi + area.ystride] = nodeId_air end
+                  data[vi] = pondWater -- to let isIsland() know not to put vines here (only seems to be an issue when pond is 2 deep or more)
                 else
                   -- make sure there are some walls to keep the water in
                   if y == coreTop then 
                     surfaceData[vi] = nodeId_top
+                    data[vi] = nodeId_top -- to let isIsland() know not to put vines here (only seems to be an issue when pond is 2 deep or more)
                   else
                     surfaceData[vi] = nodeId_air
                     data[vi] = nodeId_filler
@@ -1481,7 +2194,7 @@ local function renderCores(cores, minp, maxp, blockseed)
   if voxelsWereManipulated then
     -- Generate decorations on surfaceData only, then combine surfaceData and decorations
     -- with the main data buffer. This avoids trees growing off dirt exposed by maxp.y
-    -- (A faster way would be nice, overgeneration perhaps?)
+    -- (A faster way would be nice, overgeneration perhaps? Though not having two buffers would mean dust nodes must be deferred until after decorations -> still end up with two buffers of a sort)
     vm:set_data(surfaceData)
     minetest.generate_decorations(vm)
     vm:get_data(surfaceData)
@@ -1492,6 +2205,7 @@ local function renderCores(cores, minp, maxp, blockseed)
     vm:set_data(data)    
     if GENERATE_ORES then minetest.generate_ores(vm) end
 
+    for _,core in ipairs(cores) do addDetail_skyTree(decorations, core, vm, minp, maxp) end
     for _,decoration in ipairs(decorations) do
       local nodeAtPos = minetest.get_node(decoration.pos)
       if nodeAtPos.name == "air" or nodeAtPos.name == "ignore" then minetest.set_node(decoration.pos, decoration.node) end
@@ -1499,7 +2213,7 @@ local function renderCores(cores, minp, maxp, blockseed)
 
     vm:set_lighting({day=0, night=0}) -- Can't do the flags="nolight" trick here as mod is designed to run with other mapgens
     --vm:calc_lighting()
-    vm:calc_lighting(nil, nil, false) -- I can't see any effect from turning off propegation of shadows, but perhaps when islands cut the voxel area just right it might avoid shadows on the land?
+    vm:calc_lighting(nil, nil, false) -- turning off propegation of shadows from the chunk above will only avoid shadows on the land in some circumstances
     vm:write_to_map() -- seems to be unnecessary when other mods that use vm are running
   end
 end
@@ -1511,11 +2225,12 @@ local function on_generated(minp, maxp, blockseed)
   local osClockT0 = os.clock()
   if DEBUG then memUsageT0 = collectgarbage("count") end
 
-  local maxCoreThickness = coreTypes[1].thicknessMax
+  local maxCoreThickness = coreTypes[1].thicknessMax -- the first island type is the biggest/thickest
   local maxCoreDepth     = coreTypes[1].radiusMax * 3 / 2
+  local maxSufaceRise    = 3 * (maxCoreThickness + 1)
 
-  if minp.y > ALTITUDE + (ALTITUDE_AMPLITUDE + maxCoreThickness + 5) or
-     maxp.y < ALTITUDE - (ALTITUDE_AMPLITUDE + maxCoreThickness + maxCoreDepth + 1) then
+  if minp.y > ALTITUDE + (ALTITUDE_AMPLITUDE + maxSufaceRise + 10) or   -- the 10 is an arbitrary number because sometimes the noise values exceed their normal range.
+     maxp.y < ALTITUDE - (ALTITUDE_AMPLITUDE + maxCoreThickness + maxCoreDepth + 10) then
     -- Hallelujah Mountains don't generate here
     return
   end

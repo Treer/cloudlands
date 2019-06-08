@@ -51,3 +51,15 @@ cloudlands_limit_biome          (Limit island locations within listed biomes) st
 #      Set to about 10 to use ground level biomes (10 is higher than beaches)
 #      Leave blank to use the islands' altitudes.
 cloudlands_limit_biome_altitude (Altitude for listed biomes) string 
+
+# Set this to 0 to disable giant trees.
+#
+# A percentage value between 0 and 100 which controls the spread of the
+# rare and gigantic trees which can sometimes be found growing on islands.
+cloudlands_giant_tree_rarety    (Giant tree rarety %) int 5 0 100
+
+# Set true to allow glowing rarer variants of the rare and gigantic trees
+# which can sometimes be found growing on islands.
+#
+# This option is ignored if tree rarety is set to 0
+cloudlands_bioluminescence      (Allow glowing trees) bool false
