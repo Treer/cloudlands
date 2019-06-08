@@ -1,22 +1,20 @@
-local DEBUG                  = false -- dev logging
-local DEBUG_GEOMETRIC        = false -- turn off noise from island shapes
-local DEBUG_SKYTREES         = false -- dev logging
-local LOWLAND_BIOMES         = false -- If true then determine an island's biome using the biome at altitude "LOWLAND_BIOME_ALTITUDE"
-local LOWLAND_BIOME_ALTITUDE = 10    -- Higher than beaches, lower than mountains (See LOWLAND_BIOMES)
-local ALTITUDE               = 200   -- average altitude of islands
-local ALTITUDE_AMPLITUDE     = 40    -- rough island altitude variance (plus or minus)
-local EDDYFIELD_SIZE         = 1     -- size of the "eddy field-lines" that smaller islands follow
-local GENERATE_ORES          = false -- set to true for island core stone to contain patches of dirt and sand etc.
-local VINE_COVERAGE          = 0.3   -- set to 0 to turn off vines
-local REEF_RARITY            = 0.015 -- Chance of a viable island having a reef or atoll
-local TREE_RARITY            = 0.06  -- Chance of a viable island having a giant tree growing out of it
+local ALTITUDE               = 200      -- average altitude of islands
+local ALTITUDE_AMPLITUDE     = 40       -- rough island altitude variance (plus or minus)
+local GENERATE_ORES          = false    -- set to true for island core stone to contain patches of dirt and sand etc.
+local LOWLAND_BIOMES         = false or -- If true then determine an island's biome using the biome at altitude "LOWLAND_BIOME_ALTITUDE"
+                               minetest.get_modpath("ethereal")   ~= nil -- Ethereal has an alpine biome above altitude 40, so default to lowland biomes
+local LOWLAND_BIOME_ALTITUDE = 10       -- Higher than beaches, lower than mountains (See LOWLAND_BIOMES)
+local VINE_COVERAGE          = 0.3      -- set to 0 to turn off vines
+local REEF_RARITY            = 0.015    -- Chance of a viable island having a reef or atoll
+local TREE_RARITY            = 0.06     -- Chance of a viable island having a giant tree growing out of it
 local BIOLUMINESCENCE        = false or -- Allow giant trees variants which have glowing parts 
                                minetest.get_modpath("glowtest")   ~= nil or 
                                minetest.get_modpath("ethereal")   ~= nil or
                                minetest.get_modpath("glow")       ~= nil or
                                minetest.get_modpath("nsspf")      ~= nil or
                                minetest.get_modpath("moonflower") ~= nil -- a world using any of these mods is OK with bioluminescence
-local ISLANDS_SEED           = 1000  -- You only need to change this if you want to try different island layouts without changing the map seed
+local EDDYFIELD_SIZE         = 1        -- size of the "eddy field-lines" that smaller islands follow
+local ISLANDS_SEED           = 1000     -- You only need to change this if you want to try different island layouts without changing the map seed
 
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
 local NODENAMES_STONE       = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
@@ -34,6 +32,10 @@ local MODNAME                    = minetest.get_current_modname()
 local VINES_REQUIRED_HUMIDITY    = 45
 local VINES_REQUIRED_TEMPERATURE = 40
 local ICE_REQUIRED_TEMPERATURE   =  5
+
+local DEBUG                  = false -- dev logging
+local DEBUG_GEOMETRIC        = false -- turn off noise from island shapes
+local DEBUG_SKYTREES         = false -- dev logging
 
 local coreTypes = {
   {
@@ -61,7 +63,7 @@ local coreTypes = {
   {
     territorySize     = 30,
     coresPerTerritory = 3,
-    radiusMax         = 16,
+    radiusMax         = 16, -- I feel this and depthMax should be bigger, say 18, and territorySize increased to 34 to match, but I can't change it any more or existing worlds will mismatch along previously emerged chunk boundaries
     depthMax          = 16,
     thicknessMax      = 2,
     frequency         = 0.1,
