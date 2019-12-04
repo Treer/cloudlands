@@ -21,6 +21,7 @@ local NODENAMES_STONE       = {"mapgen_stone",        "mcl_core:stone",        "
 local NODENAMES_WATER       = {"mapgen_water_source", "mcl_core:water_source", "default:water_source"}
 local NODENAMES_ICE         = {"mapgen_ice",          "mcl_core:ice",          "pedology:ice_white", "default:ice"}
 local NODENAMES_GRAVEL      = {"mapgen_gravel",       "mcl_core:gravel",       "default:gravel"}
+local NODENAMES_DIRT        = {"mapgen_dirt",         "mcl_core:dirt",         "default:dirt"} -- currently only used with games that don't register biomes, e.g. Hades Revisted
 local NODENAMES_SILT        = {"mapgen_silt", "default:silt", "aotearoa:silt", "darkage:silt", "mapgen_sand", "mcl_core:sand", "default:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
 local NODENAMES_VINES       = {"mcl_core:vine", "vines:side_end", "ethereal:vine"} -- ethereal vines don't grow, so only select that if there's nothing else. 
 local NODENAMES_HANGINGVINE = {"vines:vine_end"} 
@@ -162,6 +163,7 @@ local worldSeed
 local nodeId_ignore   = minetest.CONTENT_IGNORE
 local nodeId_air
 local nodeId_stone
+local nodeId_dirt
 local nodeId_water
 local nodeId_ice
 local nodeId_silt
@@ -863,6 +865,7 @@ local function init_mapgen()
   nodeId_air      = minetest.get_content_id("air")
 
   nodeId_stone    = interop.find_node_id(NODENAMES_STONE)
+  nodeId_dirt     = interop.find_node_id(NODENAMES_DIRT)
   nodeId_water    = interop.find_node_id(NODENAMES_WATER)
   nodeId_ice      = interop.find_node_id(NODENAMES_ICE)
   nodeId_silt     = interop.find_node_id(NODENAMES_SILT)
@@ -1074,6 +1077,13 @@ local function setCoreBiomeData(core)
 
   if core.temperature == nil then core.temperature = 50 end
   if core.humidity    == nil then core.humidity    = 50 end
+
+  if core.biome == nil then
+    -- Some games don't use the biome list, so come up with some fallbacks
+    core.biome = {} 
+    core.biome.node_top = minetest.get_name_from_content_id(nodeId_dirt)
+  end
+
 end
 
 local function addDetail_vines(decoration_list, core, data, area, minp, maxp)
@@ -1664,8 +1674,8 @@ local function renderCores(cores, minp, maxp, blockseed)
   if voxelsWereManipulated then
 
     vm:set_data(data)
-    minetest.generate_decorations(vm)
     if GENERATE_ORES then minetest.generate_ores(vm) end
+    minetest.generate_decorations(vm)
 
     for _,core in ipairs(cores) do addDetail_skyTree(decorations, core, vm, minp, maxp) end
     for _,decoration in ipairs(decorations) do
