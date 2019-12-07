@@ -30,7 +30,7 @@ local NODENAMES_TREEWOOD    = {"mcl_core:tree",   "default:tree",   "mapgen_tree
 local NODENAMES_TREELEAVES  = {"mcl_core:leaves", "default:leaves", "mapgen_leaves"}
 
 local MODNAME                    = minetest.get_current_modname()
-local VINES_REQUIRED_HUMIDITY    = 45
+local VINES_REQUIRED_HUMIDITY    = 49
 local VINES_REQUIRED_TEMPERATURE = 40
 local ICE_REQUIRED_TEMPERATURE   =  5
 
