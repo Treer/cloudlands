@@ -1683,7 +1683,7 @@ local function renderCores(cores, minp, maxp, blockseed)
       if nodeAtPos.name == "air" or nodeAtPos.name == "ignore" then minetest.set_node(decoration.pos, decoration.node) end
     end
 
-    vm:set_lighting({day=0, night=0}) -- Can't do the flags="nolight" trick here as mod is designed to run with other mapgens
+    vm:set_lighting({day=4, night=0}) -- Can't do the flags="nolight" trick here as mod is designed to run with other mapgens
     --vm:calc_lighting()
     vm:calc_lighting(nil, nil, false) -- turning off propegation of shadows from the chunk above will only avoid shadows on the land in some circumstances
     vm:write_to_map() -- seems to be unnecessary when other mods that use vm are running
