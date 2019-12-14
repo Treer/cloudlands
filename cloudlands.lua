@@ -1329,7 +1329,7 @@ end
 
 -- A rarely occuring giant tree growing from the center of the island
 -- returns true if tree was added
-local function addDetail_skyTree(decoration_list, core, vm, minp, maxp)
+local function addDetail_skyTree(decoration_list, core, minp, maxp)
 
   if (core.radius < SkyTrees.minimumIslandRadius) or (core.depth < SkyTrees.minimumIslandDepth) then
     --no tree here
@@ -1473,7 +1473,7 @@ local function renderCores(cores, minp, maxp, blockseed)
 
         if distanceSquared <= radiusSquared then
 
-          -- get the biome details for this core
+          -- get the biome details for this core          
           if core.biome == nil then setCoreBiomeData(core) end          
           if currentBiomeId ~= core.biomeId then
             if core.biome.node_top    == nil then nodeId_top       = nodeId_stone  else nodeId_top       = minetest.get_content_id(core.biome.node_top)    end
@@ -1509,7 +1509,7 @@ local function renderCores(cores, minp, maxp, blockseed)
           if shapeType < 2 then
             -- convex
             -- squared easing function, e = 1 - x²
-              horz_easing = 1 - distanceSquared / radiusSquared
+            horz_easing = 1 - distanceSquared / radiusSquared
           elseif shapeType == 2 then
             -- conical
             -- linear easing function, e = 1 - x
@@ -1601,9 +1601,9 @@ local function renderCores(cores, minp, maxp, blockseed)
                 data[topBlockIndex] = nodeId_top
               end
               if nodeId_dust ~= nodeId_ignore and data[topBlockIndex + area.ystride] == nodeId_air then
-                -- TODO (or think about): Writing the dust to the data buffer before decoration means a snow layer
-                -- may prevent tree growth
-                data[topBlockIndex + area.ystride] = nodeId_dust
+                -- Delay writing dust to the data buffer until after decoration so avoid preventing tree growth etc
+                if core.dustLocations == nil then core.dustLocations = {} end    
+                core.dustLocations[#core.dustLocations + 1] = topBlockIndex + area.ystride                
               end
             end
 
@@ -1677,11 +1677,28 @@ local function renderCores(cores, minp, maxp, blockseed)
     if GENERATE_ORES then minetest.generate_ores(vm) end
     minetest.generate_decorations(vm)
 
-    for _,core in ipairs(cores) do addDetail_skyTree(decorations, core, vm, minp, maxp) end
+    for _,core in ipairs(cores) do addDetail_skyTree(decorations, core, minp, maxp) end
     for _,decoration in ipairs(decorations) do
       local nodeAtPos = minetest.get_node(decoration.pos)
       if nodeAtPos.name == "air" or nodeAtPos.name == "ignore" then minetest.set_node(decoration.pos, decoration.node) end
     end
+
+    local dustingInProgress = false
+    for _,core in ipairs(cores) do
+      if core.dustLocations ~= nil then
+        if not dustingInProgress then
+          vm:get_data(data)
+          dustingInProgress = true
+        end
+
+        local nodeId_dust = minetest.get_content_id(core.biome.node_dust)
+        for _, location in ipairs(core.dustLocations) do
+          if data[location] == nodeId_air then data[location] = nodeId_dust end
+        end
+      end
+    end
+    if dustingInProgress then vm:set_data(data) end
+
 
     -- Lighting is a problem. Two problems really...
     --
@@ -1709,10 +1726,10 @@ local function renderCores(cores, minp, maxp, blockseed)
     -- Workaround: zero an area that extends halfway into the overdraw region, then when 
     -- calc_lighting is called it will have daylight (or existing values) at the emerge boundary
     -- but not near the chunk boundary. calc_lighting causes the lighting extremes in the 
-    -- overdraw region to be blend together which reduces obvious bands of lighting running 
+    -- overdraw region to be blended together which reduces obvious bands of lighting running 
     -- along boundaries in chunks which get their lighting overwritten. This is not a 
     -- perfect solution, but allows shading without glaringly obvious lighting artifacts,
-    -- and any ill effects should be limited to the islands and corrected any time lighting
+    -- and any ill effects should be limited to the islands and be corrected any time lighting
     -- is updated.
     --
     --
