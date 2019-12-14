@@ -1448,6 +1448,7 @@ local function renderCores(cores, minp, maxp, blockseed)
   local vm, emerge_min, emerge_max = minetest.get_mapgen_object("voxelmanip")
   vm:get_data(data)        -- put all nodes except the ground surface in this array
   local area = VoxelArea:new{MinEdge=emerge_min, MaxEdge=emerge_max}
+  local overdrawTop = maxp.y + OVERDRAW
 
   local currentBiomeId = -1
   local nodeId_dust
@@ -1555,7 +1556,6 @@ local function renderCores(cores, minp, maxp, blockseed)
           local noisyDepthOfFiller = depth_filler;
           if noisyDepthOfFiller >= 3 then noisyDepthOfFiller = noisyDepthOfFiller + math_floor(randomNumbers[(x + z) % 256] * 3) - 1 end
           
-          local overdrawTop   = maxp.y + OVERDRAW
           local yBottom       = math_max(minp.y, coreBottom - 4) -- the -4 is for rare instances when density noise pushes the bottom of the island deeper
           local yBottomIndex  = dataBufferIndex + area.ystride * (yBottom - minp.y) -- equivalent to yBottomIndex = area:index(x, yBottom, z)
           local topBlockIndex = -1
@@ -1683,9 +1683,62 @@ local function renderCores(cores, minp, maxp, blockseed)
       if nodeAtPos.name == "air" or nodeAtPos.name == "ignore" then minetest.set_node(decoration.pos, decoration.node) end
     end
 
-    vm:set_lighting({day=4, night=0}) -- Can't do the flags="nolight" trick here as mod is designed to run with other mapgens
-    --vm:calc_lighting()
-    vm:calc_lighting(nil, nil, false) -- turning off propegation of shadows from the chunk above will only avoid shadows on the land in some circumstances
+    -- Lighting is a problem. Two problems really...
+    --
+    -- Problem 1: 
+    -- We can't use the usual lua mapgen lighting trick of flags="nolight" e.g.:
+    --    minetest.set_mapgen_params({mgname = "singlenode", flags = "nolight"})
+    -- (https://forum.minetest.net/viewtopic.php?t=19836)
+    --
+    -- because the mod is designed to run with other mapgens. So we must set the light 
+    -- values to zero at islands before calling calc_lighting() to propegate lighting 
+    -- down from above.
+    --
+    -- This causes lighting bugs if we zero the whole emerge_min-emerge_max area because
+    -- it leaves hard black at the edges of the emerged area (calc_lighting must assume
+    -- a value of zero for light outside the region, and be blending that in)
+    --
+    -- But we can't simply zero only the minp-maxp area instead, because then calc_lighting
+    -- reads the daylight values out of the overdraw area and blends those in, cutting
+    -- up shadows with lines of daylight along chunk boundaries.
+    --
+    -- The correct solution is to zero and calculate the whole emerge_min-emerge_max area,
+    -- but only write the calculated lighting information from minp-maxp back into the map, 
+    -- however the API doesn't appear to provide a fast way to do that.
+    --
+    -- Workaround: zero an area that extends halfway into the overdraw region, then when 
+    -- calc_lighting is called it will have daylight (or existing values) at the emerge boundary
+    -- but not near the chunk boundary. calc_lighting causes the lighting extremes in the 
+    -- overdraw region to be blend together which reduces obvious bands of lighting running 
+    -- along boundaries in chunks which get their lighting overwritten. This is not a 
+    -- perfect solution, but allows shading without glaringly obvious lighting artifacts,
+    -- and any ill effects should be limited to the islands and corrected any time lighting
+    -- is updated.
+    --
+    --
+    -- Problem 2:
+    -- We don't want islands to blacken the landscape below them in shadow.
+    --
+    -- Workaround 1: Instead of zeroing the lighting before propegating from above, set it
+    -- to 2, so that shadows are never pitch black.
+    --
+    -- Workaround 2: set the bottom of the chunk to full daylight, ensuring that full 
+    -- daylight is what propegates down below islands. This has the problem of causing a
+    -- bright horizontal band of light where islands approach a chunk floor or ceiling, 
+    -- but Hallelujah Mountains already had that issue due to having propagate_shadow
+    -- turned off when calling calc_lighting. This workaround has the same drawback, but 
+    -- does a much better job of preventing undesired shadows.
+
+    local shadowOverdraw = math_floor((minp.x - emerge_min.x) / 2.5 + 0.5)
+    local brightMin = {x = emerge_min.x + shadowOverdraw, y = minp.y    , z = emerge_min.z + shadowOverdraw}
+    local brightMax = {x = emerge_max.x - shadowOverdraw, y = minp.y + 1, z = emerge_max.z - shadowOverdraw}
+    local darkMin   = {x = emerge_min.x + shadowOverdraw, y = minp.y + 1, z = emerge_min.z + shadowOverdraw}
+    local darkMax   = {x = emerge_max.x - shadowOverdraw, y = maxp.y    , z = emerge_max.z - shadowOverdraw}
+
+    vm:set_lighting({day=2,  night=0}, darkMin, darkMax)
+    vm:calc_lighting()
+    vm:set_lighting({day=15, night=0}, brightMin, brightMax)
+
     vm:write_to_map() -- seems to be unnecessary when other mods that use vm are running
   end
 end
