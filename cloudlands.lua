@@ -32,7 +32,7 @@ local NODENAMES_TREELEAVES  = {"mcl_core:leaves", "default:leaves", "mapgen_leav
 local MODNAME                    = minetest.get_current_modname()
 local VINES_REQUIRED_HUMIDITY    = 49
 local VINES_REQUIRED_TEMPERATURE = 40
-local ICE_REQUIRED_TEMPERATURE   =  5
+local ICE_REQUIRED_TEMPERATURE   = 8
 
 local DEBUG                  = false -- dev logging
 local DEBUG_GEOMETRIC        = false -- turn off noise from island shapes
