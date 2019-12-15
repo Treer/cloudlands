@@ -1455,6 +1455,7 @@ local function renderCores(cores, minp, maxp, blockseed)
   local nodeId_top
   local nodeId_filler
   local nodeId_stoneBase
+  local nodeId_pondBottom
   local depth_top
   local depth_filler
   local fillerFallsWithGravity
@@ -1476,10 +1477,11 @@ local function renderCores(cores, minp, maxp, blockseed)
           -- get the biome details for this core          
           if core.biome == nil then setCoreBiomeData(core) end          
           if currentBiomeId ~= core.biomeId then
-            if core.biome.node_top    == nil then nodeId_top       = nodeId_stone  else nodeId_top       = minetest.get_content_id(core.biome.node_top)    end
-            if core.biome.node_filler == nil then nodeId_filler    = nodeId_stone  else nodeId_filler    = minetest.get_content_id(core.biome.node_filler) end
-            if core.biome.node_stone  == nil then nodeId_stoneBase = nodeId_stone  else nodeId_stoneBase = minetest.get_content_id(core.biome.node_stone)  end
-            if core.biome.node_dust   == nil then nodeId_dust      = nodeId_ignore else nodeId_dust      = minetest.get_content_id(core.biome.node_dust)   end
+            if core.biome.node_top      == nil then nodeId_top        = nodeId_stone  else nodeId_top        = minetest.get_content_id(core.biome.node_top)      end
+            if core.biome.node_filler   == nil then nodeId_filler     = nodeId_stone  else nodeId_filler     = minetest.get_content_id(core.biome.node_filler)   end
+            if core.biome.node_stone    == nil then nodeId_stoneBase  = nodeId_stone  else nodeId_stoneBase  = minetest.get_content_id(core.biome.node_stone)    end
+            if core.biome.node_dust     == nil then nodeId_dust       = nodeId_ignore else nodeId_dust       = minetest.get_content_id(core.biome.node_dust)     end
+            if core.biome.node_riverbed == nil then nodeId_pondBottom = nodeId_silt   else nodeId_pondBottom = minetest.get_content_id(core.biome.node_riverbed) end
 
             if core.biome.depth_top    == nil then depth_top    = 1 else depth_top    = core.biome.depth_top    end
             if core.biome.depth_filler == nil then depth_filler = 3 else depth_filler = core.biome.depth_filler end
@@ -1622,7 +1624,7 @@ local function renderCores(cores, minp, maxp, blockseed)
             local pondWater  = nodeId_water
             if radius > 18 and core.depth > 15 and nodeId_silt ~= nodeId_ignore then 
               -- only give ponds a sandbed when islands are large enough for it not to stick out the side or bottom
-              pondBottom = nodeId_silt 
+              pondBottom = nodeId_pondBottom
             end
             if core.temperature <= ICE_REQUIRED_TEMPERATURE and nodeId_ice ~= nodeId_ignore then pondWater = nodeId_ice end
 
