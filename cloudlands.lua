@@ -1642,10 +1642,9 @@ local function renderCores(cores, minp, maxp, blockseed)
 
                 if surfaceDensity > (REQUIRED_DENSITY + pondWallBuffer) and not onTheEdge then
                   data[vi] = pondWater
-                  if y > minp.y then data[vi - area.ystride] = pondBottom end
+                  if y > minp.y then data[vi - area.ystride] = pondBottom end                  
                   --remove any dust above ponds
-                  if y < overdrawTop and data[vi + area.ystride] == nodeId_dust then data[vi + area.ystride] = nodeId_air end
-                  data[vi] = pondWater -- to let isIsland() know not to put vines here (only seems to be an issue when pond is 2 deep or more)
+                  if core.dustLocations ~= nil and core.dustLocations[#core.dustLocations] == vi + area.ystride then core.dustLocations[#core.dustLocations] = nil end
                 else
                   -- make sure there are some walls to keep the water in
                   if y == coreTop then 
