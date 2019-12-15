@@ -1723,21 +1723,21 @@ local function renderCores(cores, minp, maxp, blockseed)
     -- but only write the calculated lighting information from minp-maxp back into the map, 
     -- however the API doesn't appear to provide a fast way to do that.
     --
-    -- Workaround: zero an area that extends halfway into the overdraw region, then when 
+    -- Workaround: zero an area that extends into the overdraw region, but keeps a gap around
+    -- the edges to preserve and allow the real light values to propegate in. Then when 
     -- calc_lighting is called it will have daylight (or existing values) at the emerge boundary
-    -- but not near the chunk boundary. calc_lighting causes the lighting extremes in the 
-    -- overdraw region to be blended together which reduces obvious bands of lighting running 
-    -- along boundaries in chunks which get their lighting overwritten. This is not a 
-    -- perfect solution, but allows shading without glaringly obvious lighting artifacts,
-    -- and any ill effects should be limited to the islands and be corrected any time lighting
-    -- is updated.
+    -- but not near the chunk boundary. calc_lighting is able to take the edge lighting into 
+    -- account instead of assuming zero. It's not a perfect solution, but allows shading without 
+    -- glaringly obvious lighting artifacts, and the minor ill effects should only affect the
+    -- islands and be corrected any time lighting is updated.
     --
     --
     -- Problem 2:
     -- We don't want islands to blacken the landscape below them in shadow.
     --
     -- Workaround 1: Instead of zeroing the lighting before propegating from above, set it
-    -- to 2, so that shadows are never pitch black.
+    -- to 2, so that shadows are never pitch black. Shadows will still go back to pitch black
+    -- though if lighting gets recalculated, e.g. player places a torch then removes it.
     --
     -- Workaround 2: set the bottom of the chunk to full daylight, ensuring that full 
     -- daylight is what propegates down below islands. This has the problem of causing a
@@ -1746,11 +1746,11 @@ local function renderCores(cores, minp, maxp, blockseed)
     -- turned off when calling calc_lighting. This workaround has the same drawback, but 
     -- does a much better job of preventing undesired shadows.
 
-    local shadowOverdraw = math_floor((minp.x - emerge_min.x) / 2.5 + 0.5)
-    local brightMin = {x = emerge_min.x + shadowOverdraw, y = minp.y    , z = emerge_min.z + shadowOverdraw}
-    local brightMax = {x = emerge_max.x - shadowOverdraw, y = minp.y + 1, z = emerge_max.z - shadowOverdraw}
-    local darkMin   = {x = emerge_min.x + shadowOverdraw, y = minp.y + 1, z = emerge_min.z + shadowOverdraw}
-    local darkMax   = {x = emerge_max.x - shadowOverdraw, y = maxp.y    , z = emerge_max.z - shadowOverdraw}
+    shadowGap = 1
+    local brightMin = {x = emerge_min.x + shadowGap, y = minp.y    , z = emerge_min.z + shadowGap}
+    local brightMax = {x = emerge_max.x - shadowGap, y = minp.y + 1, z = emerge_max.z - shadowGap}
+    local darkMin   = {x = emerge_min.x + shadowGap, y = minp.y + 1, z = emerge_min.z + shadowGap}
+    local darkMax   = {x = emerge_max.x - shadowGap, y = maxp.y    , z = emerge_max.z - shadowGap}
 
     vm:set_lighting({day=2,  night=0}, darkMin, darkMax)
     vm:calc_lighting()
