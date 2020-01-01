@@ -17,11 +17,12 @@ local EDDYFIELD_SIZE         = 1        -- size of the "eddy field-lines" that s
 local ISLANDS_SEED           = 1000     -- You only need to change this if you want to try different island layouts without changing the map seed
 
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
-local NODENAMES_STONE       = {"mapgen_stone",        "mcl_core:stone",        "default:stone"}
-local NODENAMES_WATER       = {"mapgen_water_source", "mcl_core:water_source", "default:water_source"}
-local NODENAMES_ICE         = {"mapgen_ice",          "mcl_core:ice",          "pedology:ice_white", "default:ice"}
-local NODENAMES_GRAVEL      = {"mapgen_gravel",       "mcl_core:gravel",       "default:gravel"}
-local NODENAMES_DIRT        = {"mapgen_dirt",         "mcl_core:dirt",         "default:dirt"} -- currently only used with games that don't register biomes, e.g. Hades Revisted
+local NODENAMES_STONE       = {"mapgen_stone",           "mcl_core:stone",           "default:stone"}
+local NODENAMES_WATER       = {"mapgen_water_source",    "mcl_core:water_source",    "default:water_source"}
+local NODENAMES_ICE         = {"mapgen_ice",             "mcl_core:ice",             "pedology:ice_white", "default:ice"}
+local NODENAMES_GRAVEL      = {"mapgen_gravel",          "mcl_core:gravel",          "default:gravel"}
+local NODENAMES_GRASS       = {"mapgen_dirt_with_grass", "mcl_core:dirt_with_grass", "default:dirt_with_grass"} -- currently only used with games that don't register biomes, e.g. Hades Revisted
+local NODENAMES_DIRT        = {"mapgen_dirt",            "mcl_core:dirt",            "default:dirt"}            -- currently only used with games that don't register biomes, e.g. Hades Revisted
 local NODENAMES_SILT        = {"mapgen_silt", "default:silt", "aotearoa:silt", "darkage:silt", "mapgen_sand", "mcl_core:sand", "default:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
 local NODENAMES_VINES       = {"mcl_core:vine", "vines:side_end", "ethereal:vine"} -- ethereal vines don't grow, so only select that if there's nothing else. 
 local NODENAMES_HANGINGVINE = {"vines:vine_end"} 
@@ -163,6 +164,7 @@ local worldSeed
 local nodeId_ignore   = minetest.CONTENT_IGNORE
 local nodeId_air
 local nodeId_stone
+local nodeId_grass
 local nodeId_dirt
 local nodeId_water
 local nodeId_ice
@@ -209,6 +211,23 @@ end
 --[[==============================
            Interop functions
     ==============================]]--
+
+local get_heat, get_humidity = minetest.get_heat, minetest.get_humidity
+
+local isMapgenV6 = minetest.get_mapgen_setting("mg_name") == "v6"
+if isMapgenV6 then
+  if biomeinfo == nil then
+    -- The biomeinfo mod by Wuzzy can be found at https://repo.or.cz/minetest_biomeinfo.git
+    minetest.log("warning", MODNAME .. " detected mapgen v6: Full mapgen v6 support requires adding the biomeinfo mod.")
+  else
+    get_heat = function(pos)
+      return biomeinfo.get_v6_heat(pos) * 100
+    end
+    get_humidity = function(pos)
+      return biomeinfo.get_v6_humidity(pos) * 100
+    end
+  end
+end
 
 local interop = {}
 -- returns the id of the first name in the list that resolves to a node id, or nodeId_ignore if not found
@@ -267,7 +286,14 @@ interop.split_nodename = function(nodeName)
   return result_modname, result_nodename
 end;
 
-
+-- returns a unique id for the biome, normally this is numeric but with mapgen v6 it can be a string name.
+interop.get_biome_key = function(pos)
+  if isMapgenV6 and biomeinfo ~= nil then
+    return biomeinfo.get_v6_biome(pos)
+  else
+    return minetest.get_biome_data(pos).biome
+  end
+end
 --[[==============================
               SkyTrees
     ==============================]]--
@@ -462,7 +488,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
 
         init = function(self, position)
           -- if it's hot and humid then add vines
-          local viney = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
+          local viney = get_heat(position) >= VINES_REQUIRED_TEMPERATURE and get_humidity(position) >= VINES_REQUIRED_HUMIDITY
 
           if viney then
             local flagSeed = position.x * 3 + position.z + ISLANDS_SEED
@@ -532,7 +558,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
           if self.glowing then self.leaves_special = wisteriaBlossom2 .. GLOW_SUFFIX end
 
           -- if it's hot and humid then allow vines on the trunk as well
-          self.vineflags.bark = minetest.get_heat(position) >= VINES_REQUIRED_TEMPERATURE and minetest.get_humidity(position) >= VINES_REQUIRED_HUMIDITY
+          self.vineflags.bark = get_heat(position) >= VINES_REQUIRED_TEMPERATURE and get_humidity(position) >= VINES_REQUIRED_HUMIDITY
         end
       }
 
@@ -655,14 +681,14 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
   -- Returns true if a tree in this location would be dead
   -- (checks for desert)
   SkyTrees.isDead = function(position)
-    local heat     = minetest.get_heat(position)
-    local humidity = minetest.get_humidity(position)
+    local heat     = get_heat(position)
+    local humidity = get_humidity(position)
 
     if humidity <= 10 or (humidity <= 20 and heat >= 80) then
       return true
     end
 
-    local biomeId = minetest.get_biome_data(position).biome
+    local biomeId = interop.get_biome_key(position)
     local biome = biomes[biomeId]
     if biome ~= nil and biome.node_top ~= nil then
       local modname, nodename = interop.split_nodename(biome.node_top)
@@ -756,7 +782,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       if topsoil == nil then 
         topsoil = 'ignore'
         if minetest.get_biome_data == nil then error(SkyTrees.MODNAME .. " requires Minetest v5.0 or greater, or to have minor modifications to support v0.4.x", 0) end
-        local treeBiome = biomes[minetest.get_biome_data(position).biome]
+        local treeBiome = biomes[interop.get_biome_key(position)]
         if treeBiome ~= nil and treeBiome.node_top ~= nil then topsoil = treeBiome.node_top end
       end
     else 
@@ -857,14 +883,23 @@ local function init_mapgen()
   local prng = PcgRandom(122456 + ISLANDS_SEED)
   for i = 0,255 do randomNumbers[i] = prng:next(0, 0x10000) / 0x10000 end
 
-  for k,v in pairs(minetest.registered_biomes) do
-    biomes[minetest.get_biome_id(k)] = v;
+  if isMapgenV6 then
+    biomes["Normal"] = {node_top="mapgen_dirt_with_grass", node_filler="mapgen_dirt",        node_stone="mapgen_stone"}
+    biomes["Desert"] = {node_top="mapgen_desert_sand",     node_filler="mapgen_desert_sand", node_stone="mapgen_desert_stone"}
+    biomes["Jungle"] = {node_top="mapgen_dirt_with_grass", node_filler="mapgen_dirt",        node_stone="mapgen_stone"}
+    biomes["Tundra"] = {node_top="mapgen_dirt_with_snow",  node_filler="mapgen_dirt",        node_stone="mapgen_stone"}
+    biomes["Taiga"]  = {node_top="mapgen_dirt_with_snow",  node_filler="mapgen_dirt",        node_stone="mapgen_stone"}
+  else
+    for k,v in pairs(minetest.registered_biomes) do
+      biomes[minetest.get_biome_id(k)] = v;
+    end
   end
   if DEBUG then minetest.log("info", "registered biomes: " .. dump(biomes)) end
 
   nodeId_air      = minetest.get_content_id("air")
 
   nodeId_stone    = interop.find_node_id(NODENAMES_STONE)
+  nodeId_grass    = interop.find_node_id(NODENAMES_GRASS)
   nodeId_dirt     = interop.find_node_id(NODENAMES_DIRT)
   nodeId_water    = interop.find_node_id(NODENAMES_WATER)
   nodeId_ice      = interop.find_node_id(NODENAMES_ICE)
@@ -1070,10 +1105,10 @@ end
 local function setCoreBiomeData(core)
   local pos = {x = core.x, y = ALTITUDE + core.y, z = core.z}
   if LOWLAND_BIOMES then pos.y = LOWLAND_BIOME_ALTITUDE end
-  core.biomeId     = minetest.get_biome_data(pos).biome
+  core.biomeId     = interop.get_biome_key(pos)
   core.biome       = biomes[core.biomeId]
-  core.temperature = minetest.get_heat(pos)
-  core.humidity    = minetest.get_humidity(pos)
+  core.temperature = get_heat(pos)
+  core.humidity    = get_humidity(pos)
 
   if core.temperature == nil then core.temperature = 50 end
   if core.humidity    == nil then core.humidity    = 50 end
@@ -1081,7 +1116,8 @@ local function setCoreBiomeData(core)
   if core.biome == nil then
     -- Some games don't use the biome list, so come up with some fallbacks
     core.biome = {} 
-    core.biome.node_top = minetest.get_name_from_content_id(nodeId_dirt)
+    core.biome.node_top    = minetest.get_name_from_content_id(nodeId_grass)
+    core.biome.node_filler = minetest.get_name_from_content_id(nodeId_dirt)
   end
 
 end
@@ -1747,7 +1783,7 @@ local function renderCores(cores, minp, maxp, blockseed)
     -- turned off when calling calc_lighting. This workaround has the same drawback, but 
     -- does a much better job of preventing undesired shadows.
 
-    shadowGap = 1
+    local shadowGap = 1
     local brightMin = {x = emerge_min.x + shadowGap, y = minp.y    , z = emerge_min.z + shadowGap}
     local brightMax = {x = emerge_max.x - shadowGap, y = minp.y + 1, z = emerge_max.z - shadowGap}
     local darkMin   = {x = emerge_min.x + shadowGap, y = minp.y + 1, z = emerge_min.z + shadowGap}
