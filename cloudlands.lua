@@ -262,7 +262,7 @@ interop.register_clone = function(node_name, clone_name)
   else 
     if clone_name == nil then clone_name = MODNAME .. ":" .. string.gsub(node.name, ":", "_") end
     if minetest.registered_nodes[clone_name] == nil then
-      minetest.log("info", "attempting to register: " .. clone_name)
+      if DEBUG then minetest.log("info", "attempting to register: " .. clone_name) end
       local clone = {}
       for key, value in pairs(node) do clone[key] = value end
       clone.name = clone_name
@@ -1468,34 +1468,23 @@ end
 
 
 ------------------------------------------------------------------------------
---  Functions needed for secrets (hiding in the middle of mapgen code)
+--  Secrets section
 ------------------------------------------------------------------------------
 
--- will be minified with https://mothereff.in/lua-minifier
-
-local function rot19(s)
-  -- use rot13.com set to rot 7 to encode
-
-  if type(s) == "table" then
-    for k,v in ipairs(s) do s[k] = rot19(v) end
-    return s
-  else
-    --return (s:gsub("%a", function(c) c=c:byte() return string.char(c+(c%32<14 and 13 or -13)) end))
-    return (s:gsub("%a", function(c) c=c:byte() return string.char(c + (c % 32 < 8 and 19 or -7)) end))
-  end
-end
-
+-- We might not need this stand-in cobweb, but unless we go overboard on listing many 
+-- optional dependencies we won't know whether there's a proper cobweb available to 
+-- use until after it's too late to register this one.
 if minetest.get_modpath("default") then
   -- the crack texture is probably available
-  local nodeName_standinCobweb = MODNAME .. rot19(":jvidli") -- ":cobweb" 
+  local nodeName_standinCobweb = MODNAME .. ":cobweb" 
   minetest.register_node(
     nodeName_standinCobweb, 
     {
       tiles = {
-        -- [Ab]Use the crack texture to avoid needing to include a cobweb texture and exposing that the mod contains secrets
+        -- [Ab]Use the crack texture to avoid needing to include a cobweb texture
         "crack_anylength.png^[verticalframe:5:4^[brighten"
       },
-      description=rot19("Jvidli"),
+      description = "Cobweb",
       groups = {snappy = 3, liquid = 3, flammable = 3, not_in_creative_inventory = 1},
       drawtype = "plantlike",
       walkable = false,
@@ -1510,33 +1499,38 @@ if minetest.get_modpath("default") then
     }
   )
 end
-local nodeName_egg = rot19("zljyla:mvzzpspglk_lnn") -- ":secret:fossilized_egg"
-local eggTextureName = rot19("klmhbsa_qbunslslhclz.wun") -- called "default_jungleleaves.png" in default/Voxelgarden/MineClone2
-if minetest.get_modpath("ethereal") ~= nil then eggTextureName = rot19("laolylhs_myvza_slhclz.wun") end -- called "ethereal_frost_leaves.png" in ethereal
-minetest.register_node(
-  ":"..nodeName_egg, 
-  {
-    tiles = {
-      -- [Ab]Use a leaf texture to avoid needing to include an egg texture and exposing that the mod contains secrets      
-      eggTextureName.."^[colorize:#280040E0^[noalpha"
-    },
-    description=rot19("Mvzzpspglk Lnn"), --"Fossilized Egg"
-    --drop = "secret:fossilized_egg",
-    groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
-    drawtype = "nodebox",
-    paramtype = "light",
-    node_box = {
-      type = "fixed",
-      fixed = {
-        {-0.066666, -0.5,      -0.066666, 0.066666, 0.5,     0.066666}, -- column1
-        {-0.133333, -0.476667, -0.133333, 0.133333, 0.42,    0.133333}, -- column2
-        {-0.2,      -0.435,    -0.2,      0.2,      0.31,    0.2     }, -- column3
-        {-0.2,      -0.36,     -0.28,     0.2,      0.16667, 0.28    }, -- side1
-        {-0.28,     -0.36,     -0.2,      0.28,     0.16667, 0.2     }  -- side2          
+
+
+local nodeName_egg = "secret:fossilized_egg"
+local eggTextureName = "default_jungleleaves.png" -- called this in default/Voxelgarden/MineClone2
+if minetest.get_modpath("ethereal") ~= nil then eggTextureName = "ethereal_frost_leaves.png" end -- called "ethereal_frost_leaves.png" in ethereal
+-- Since "secret:fossilized_egg" doesn't use this mod's name for the prefix, we can't assume 
+-- another mod isn't also using/providing it 
+if minetest.registered_nodes[eggTextureName] == nil then 
+  minetest.register_node(
+    ":"..nodeName_egg, 
+    {
+      tiles = {
+        -- [Ab]Use a leaf texture to avoid needing to include an egg texture and exposing that the mod contains secrets      
+        eggTextureName.."^[colorize:#280040E0^[noalpha"
+      },
+      description = "Fossilized Egg",
+      groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
+      drawtype = "nodebox",
+      paramtype = "light",
+      node_box = {
+        type = "fixed",
+        fixed = {
+          {-0.066666, -0.5,      -0.066666, 0.066666, 0.5,     0.066666}, -- column1
+          {-0.133333, -0.476667, -0.133333, 0.133333, 0.42,    0.133333}, -- column2
+          {-0.2,      -0.435,    -0.2,      0.2,      0.31,    0.2     }, -- column3
+          {-0.2,      -0.36,     -0.28,     0.2,      0.16667, 0.28    }, -- side1
+          {-0.28,     -0.36,     -0.2,      0.28,     0.16667, 0.2     }  -- side2          
+        }
       }
     }
-  }
-)
+  )
+end
 local nodeId_egg        = minetest.get_content_id(nodeName_egg)
 local nodeId_airStandIn = minetest.get_content_id(interop.register_clone("air"))
 
@@ -1553,7 +1547,7 @@ local nodeId_cobweb
 local nodeName_bookshelf
 local isMineCloneBookshelf
 
-local function addDetail_secrets__shhh_dont_tell_people(decoration_list, core, data, area, minp, maxp)
+local function addDetail_secrets(decoration_list, core, data, area, minp, maxp)
 
   -- if core.biome is nil then renderCores() never rendered it, which means it
   -- doesn't instersect this draw region.
@@ -1666,7 +1660,7 @@ local function addDetail_secrets__shhh_dont_tell_people(decoration_list, core, d
               -- place vines above the entrance, for concealment
               placeVine(node_vi + area.ystride, {x=node_x, y=node_y + 1, z=node_z})
             else
-              -- place vines on the floor, to allow explorers to climb to the burrow
+              -- place vines on the floor - perhaps explorers can climb to the burrow
               placeVine(node_vi, {x=node_x, y=node_y, z=node_z}, floorId)
             end
           end
@@ -1865,70 +1859,43 @@ local function addDetail_secrets__shhh_dont_tell_people(decoration_list, core, d
 
           if invBookshelf ~= nil or invChest ~= nil then
             -- create diary
-            local groundDesc = "yvjr" --"rock"
+            local groundDesc = "rock"
             if core.biome.node_filler ~= nil then 
               local earthNames = string.lower(core.biome.node_filler) .. string.lower(core.biome.node_top)
               if string.match(earthNames, "ice") or string.match(earthNames, "snow") or string.match(earthNames, "frozen") then
-                groundDesc = "pjl" --"ice"
+                groundDesc = "ice"
               end
             end
 
-            local stackName_writtenBook = rot19("klmhbsa:ivvr_dypaalu") --"default:book_written"
-            if isMineCloneBookshelf then stackName_writtenBook = rot19("tjs_ivvrz:dypaalu_ivvr") end --"mcl_books:written_book"
+            local stackName_writtenBook = "default:book_written"
+            if isMineCloneBookshelf then stackName_writtenBook = "mcl_books:written_book" end
             
             local book_itemstack = ItemStack(stackName_writtenBook)
             local book_data = {}
-            book_data.title = rot19("Dlkklss Vbawvza") -- "Weddell Outpost"
-            book_data.text = rot19(
-            "Aol hlyvzaha pz svza.\n\n"..
-            "Vby zhschnl haaltwaz aoyvbnovba aol upnoa zhclk tvza vm aol\n"..
-            "wyvcpzpvuz.\n"..
-            "                                    ---====---\n\n"..
-            "Aopz pzshuk pz opnosf lewvzlk huk aol dlhaoly kpk uva aylha\n"..
-            "aol aluaz dlss. Dl ohcl lushynlk h zolsalylk jyhn pu aol " .. groundDesc .. ",\n"..
-            "iba pa pz shivyvbz dvyr huk aol jvukpapvu vm zvtl vm aol whyaf\n"..
-            "pz iljvtpun jhbzl mvy jvujlyu.\n\n"..
-            "Xbpal h qvbyulf pz ylxbpylk. Uvivkf dpss svvr mvy bz olyl.\n\n"..
-            "TjUpzo pz haaltwapun av zaylunaolu aol nspklyz.\n\n"..
-            "                                    ---====---")            
-            --[[The aerostat is lost.
-            
-            Our salvage attempts throughout the night saved most of the
-            provisions.
-                                                ---====---
+            book_data.title = "Weddell Outpost"
+            book_data.text = [[The aerostat is lost.
 
-            This island is highly exposed and the weather did not treat
-            the tents well. We have enlarged a sheltered crag in the ice, 
-            but it is laborous work and the condition of some of the party 
-            is becoming cause for concern.
+However, salvage attempts throughout the night managed to save
+most provisions before the end.
+                                    ---====---
 
-            Quite a journey is required. Nobody will look for us here.
+This island is highly exposed and the weather did not treat
+the tents well. We have enlarged a sheltered crag in the {{groundDesc}}
+but it is laborous work and the condition of some of the party 
+is becoming cause for concern.
 
-            McNish is attempting to strengthen the gliders.
+Quite a journey is now required, we cannot stay put - nobody
+will look for us here.
 
-                                                ---====---]]          
-            local second_chapter =
-            "Zvtl vm aol mbu vm Tpuljyhma dhz wpjrpun hwhya ovd pa "..
-            "dvyrlk huk alhzpun vba hss paz zljylaz. P ovwl fvb luqvflk :)"..
-            "\n\n"..
-            "'uvivkf mvbuk pa! P dhz zv ohwwf hivba aoha, P mpuhssf ruld ".. 
-            "zvtlaopun hivba aol nhtl aol wshflyz kpku'a ruvd.' -- Uvajo 2012 "..
-            "(ylkkpa.jvt/y/Tpuljyhma/jvttluaz/xxlux/tpujlyhma_h_wvza_tvyalt/)"..
-            "\n\n"..
-            "Mlls myll av pucvscl aol lnn, vy Ilya, pu vaoly tvkz."
-          --[[Some of the fun of Minecraft was picking apart how it
-            worked and teasing out all its secrets. I hope you enjoyed :)
+McNish is attempting to strengthen the gliders.
 
-            "nobody found it! I was so happy about that, I finally knew 
-            something about the game the players didn't know." -- Notch 2012
-            (reddit.com/r/Minecraft/comments/qqenq/minceraft_a_post_mortem/)
+                                    ---====---]]
+            book_data.text = book_data.text:gsub("{{groundDesc}}", groundDesc)
 
-            Feel free to involve the egg, or Bert, in other mods.
-            ]]
             if isMineCloneBookshelf then book_data.text = book_data.title .. "\n\n" .. book_data.text end -- MineClone2 doesn't show the title
-            book_data.owner = rot19("Ilya Zohjrslavu") --"Bert Shackleton"
+            book_data.owner = "Bert Shackleton"
             book_data.author = book_data.owner
-            book_data.description = rot19("Kphyf vm Ilya Zohrslavu") --"Diary of Bert Shakleton"
+            book_data.description = "Diary of Bert Shakleton"
             book_data.page = 1
             book_data.page_max = 1
             book_data.generation = 0
@@ -1963,7 +1930,7 @@ local function addDetail_secrets__shhh_dont_tell_people(decoration_list, core, d
             addIfFound({"mcl_tools:pick_iron", "default:pick_steel"}, 1)
             addIfFound({"binoculars:binoculars"}, 1)
             addIfFound({"mcl_core:wood", "default:wood"}, 10)
-            addIfFound({"mcl_torches:torch",   "default:torch"}, 3)          
+            addIfFound({"mcl_torches:torch", "default:torch"}, 3)          
           end
 
         end
@@ -1972,22 +1939,22 @@ local function addDetail_secrets__shhh_dont_tell_people(decoration_list, core, d
   end
 end
 
-local function init_secrets__shhh_dont_tell_people()
-  nodeId_bed_top    = interop.find_node_id(rot19({"ilkz:ilk_avw"})) --{"beds:bed_top"}
-  nodeId_bed_bottom = interop.find_node_id(rot19({"ilkz:ilk_ivaavt"})) --{"beds:bed_bottom"}
-  nodeId_torch      = interop.find_node_id(rot19({"tjs_avyjolz:avyjo_dhss", "klmhbsa:avyjo_dhss"})) --{"mcl_torches:torch_wall", "default:torch_wall"}
-  nodeId_chest      = interop.find_node_id(rot19({"jolza", "tjs_jolzaz:jolza", "klmhbsa:jolza"})) --"chest", "mcl_chests:chest", "default:chest"
-  nodeId_junk       = interop.find_node_id(rot19({"ekljvy:ihyyls", "jvaahnlz:ihyyls", "ovtlkljvy:jvwwly_whuz", "clzzlsz:zalls_ivaasl", "tjs_msvdlywvaz:msvdly_wva"})) --{"xdecor:barrel", "cottages:barrel", "homedecor:copper_pans", "vessels:steel_bottle", "mcl_flowerpots:flower_pot"}
-  nodeId_anvil      = interop.find_node_id(rot19({"jhzasl:hucps", "jvaahnlz:hucps", "tjs_hucpsz:hucps", "klmhbsa:hucps" })) -- "default:anvil" isn't a thing, but perhaps one day. --{"castle:anvil", "cottages:anvil", "mcl_anvils:anvil", "default:anvil" }
-  nodeId_workbench  = interop.find_node_id(rot19({"ovtlkljvy:ahisl", "ekljvy:dvyrilujo", "tjs_jyhmapun_ahisl:jyhmapun_ahisl", "klmhbsa:ahisl", "yhukvt_ibpskpunz:ilujo"})) -- "default:table" isn't a thing, but perhaps one day. -- {"homedecor:table", "xdecor:workbench", "mcl_crafting_table:crafting_table", "default:table", "random_buildings:bench"}
-  nodeId_cobweb     = interop.find_node_id(rot19({"tjs_jvyl:jvidli", "ekljvy:jvidli", "ovtlkljvy:jvidli_wshuasprl", "klmhbsa:jvidli"})) --{"mcl_core:cobweb", "xdecor:cobweb", "homedecor:cobweb_plantlike", "default:cobweb"}
+local function init_secrets()
+  nodeId_bed_top    = interop.find_node_id({"beds:bed_top"})
+  nodeId_bed_bottom = interop.find_node_id({"beds:bed_bottom"})
+  nodeId_torch      = interop.find_node_id({"mcl_torches:torch_wall", "default:torch_wall"})
+  nodeId_chest      = interop.find_node_id({"chest", "mcl_chests:chest", "default:chest"})
+  nodeId_junk       = interop.find_node_id({"xdecor:barrel", "cottages:barrel", "homedecor:copper_pans", "vessels:steel_bottle", "mcl_flowerpots:flower_pot"})
+  nodeId_anvil      = interop.find_node_id({"castle:anvil", "cottages:anvil", "mcl_anvils:anvil", "default:anvil" }) -- "default:anvil" isn't a thing, but perhaps one day.
+  nodeId_workbench  = interop.find_node_id({"homedecor:table", "xdecor:workbench", "mcl_crafting_table:crafting_table", "default:table", "random_buildings:bench"}) -- "default:table" isn't a thing, but perhaps one day.
+  nodeId_cobweb     = interop.find_node_id({"mcl_core:cobweb", "xdecor:cobweb", "homedecor:cobweb_plantlike", "default:cobweb"})
 
-  local mineCloneBookshelfName = rot19("tjs_ivvrz:ivvrzolsm") --"mcl_books:bookshelf"
-  nodeId_bookshelf  = interop.find_node_id({mineCloneBookshelfName, rot19("klmhbsa:ivvrzolsm")}) --"default:bookshelf"
+  local mineCloneBookshelfName = "mcl_books:bookshelf"
+  nodeId_bookshelf  = interop.find_node_id({mineCloneBookshelfName, "default:bookshelf"})
   nodeName_bookshelf = minetest.get_name_from_content_id(nodeId_bookshelf)
   isMineCloneBookshelf = nodeName_bookshelf == mineCloneBookshelfName
   
-  local nodeName_standinCobweb = MODNAME .. rot19(":jvidli") -- ":cobweb"   
+  local nodeName_standinCobweb = MODNAME .. ":cobweb"
   if nodeId_cobweb ~= nodeId_ignore then
     -- This game has proper cobwebs, replace any cobwebs this mod may have generated 
     -- previously (when a cobweb mod wasn't included) with the proper cobwebs.
@@ -2230,7 +2197,7 @@ local function renderCores(cores, minp, maxp, blockseed)
   for _,core in ipairs(cores) do
     addDetail_vines(decorations, core, data, area, minp, maxp)
     voxelsWereManipulated = addDetail_skyReef(decorations, core, data, area, minp, maxp) or voxelsWereManipulated
-    addDetail_secrets__shhh_dont_tell_people(decorations, core, data, area, minp, maxp)
+    addDetail_secrets(decorations, core, data, area, minp, maxp)
   end
 
   if voxelsWereManipulated then
@@ -2341,7 +2308,7 @@ local function on_generated(minp, maxp, blockseed)
 
   if noise_eddyField == nil then 
     init_mapgen() 
-    init_secrets__shhh_dont_tell_people()
+    init_secrets()
   end
   local cores = getCores(minp, maxp)
 
