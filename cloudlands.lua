@@ -1803,7 +1803,7 @@ local function addDetail_secrets__shhh_dont_tell_people(decoration_list, core, d
           local stairsbottom  = vector.add(stairsStart, {x=0,y=0,z=1})
           local stairsMiddle1 = vector.add(stairsStart, {x=8,y=8,z=0})
           local stairsMiddle2 = vector.add(stairsMiddle1, {x=0,y=0,z=-1})
-          local stairsEnd     = vector.add(stairsMiddle2, {x=-16,y=16,z=0})
+          local stairsEnd     = vector.add(stairsMiddle2, {x=-20,y=20,z=0})
           
           carve(stairsEnd, stairsMiddle2, {{x=0,z=0}}, 3, floorId, 0)    
           carve(stairsMiddle1, stairsStart, {{x=0,z=0}}, 2, floorId, 0)    
