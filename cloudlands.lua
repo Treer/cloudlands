@@ -1720,7 +1720,6 @@ local function addDetail_secrets__shhh_dont_tell_people(decoration_list, core, d
         for _,stampedIndex in ipairs(stampedIndexes) do 
           if data[stampedIndex] == nodeId_airStandIn then 
             data[stampedIndex] = nodeId_air
-            surfaceData[stampedIndex] = nodeId_air
           end
         end
 
