@@ -1873,23 +1873,25 @@ local function addDetail_secrets(decoration_list, core, data, area, minp, maxp)
             local book_itemstack = ItemStack(stackName_writtenBook)
             local book_data = {}
             book_data.title = "Weddell Outpost"
+            -- Instead of being a stand-alone line, the McNish line is tacked on the end of the 
+            -- journey sentence because otherwise it gets truncated off by default:book_written
             book_data.text = [[The aerostat is lost.
 
-However, salvage attempts throughout the night managed to save
-most provisions before the end.
-                                    ---====---
+However, salvage attempts throughout the night managed to
+save most provisions before it finally broke apart and fell.
+
+                                     ---====---
 
 This island is highly exposed and the weather did not treat
-the tents well. We have enlarged a sheltered crag in the {{groundDesc}}
+the tents well. We have enlarged a sheltered crag in the {{groundDesc}},
 but it is laborous work and the condition of some of the party
 is becoming cause for concern.
 
-Quite a journey is now required, we cannot stay put - nobody
-will look for us here.
+Quite a journey is now required, we cannot stay - nobody will
+look for us here. McNish is attempting to strengthen the gliders.
 
-McNish is attempting to strengthen the gliders.
-
-                                    ---====---]]
+                                     ---====---
+]]
             book_data.text = book_data.text:gsub("{{groundDesc}}", groundDesc)
 
             if isMineCloneBookshelf then book_data.text = book_data.title .. "\n\n" .. book_data.text end -- MineClone2 doesn't show the title
@@ -2222,7 +2224,9 @@ local function renderCores(cores, minp, maxp, blockseed)
 
         nodeId_dust = minetest.get_content_id(core.biome.node_dust)
         for _, location in ipairs(core.dustLocations) do
-          if data[location] == nodeId_air then data[location] = nodeId_dust end
+          if data[location] == nodeId_air and data[location - area.ystride] ~= nodeId_air then 
+            data[location] = nodeId_dust 
+          end
         end
       end
     end
