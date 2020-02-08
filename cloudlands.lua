@@ -328,17 +328,17 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
         },
         scale = 1.5
       },
-      title = "Cloudlands Portal",
+      title = "Hallelujah Mountains Portal",
       book_of_portals_pagetext = 
         "Construction requires 14 blocks of Nether brick. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
         "There are floating islands of hills and forests up there, over the edges of which is a perilous drop all the way back down to sea level.",
 
-      is_within_realm = function(pos) -- return true if pos is inside the Nether
+      is_within_realm = function(pos) -- return true if pos is in the cloudlands
         return pos.y > cloudlands.realm_boundary_height
       end,
 
       find_realm_anchorPos = function(surface_anchorPos)
-        -- TODO: Once paramat finishes adjusting the floatlands, implement a surface algorithm that finds land
+        -- Find the nearest island and return a surface position on it
         local destination_pos = nil
         
         local island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 70) 
@@ -359,12 +359,41 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
         end
 
         return destination_pos
+      end,
+
+      on_ignite = function(portalDef, anchorPos, orientation)
+        -- make some sparks fly on ignition
+        local p1, p2 = portalDef.shape:get_p1_and_p2_from_anchorPos(anchorPos, orientation)
+        local pos = vector.divide(vector.add(p1, p2), 2)
+  
+        local textureName = portalDef.particle_texture
+        if type(textureName) == "table" then textureName = textureName.name end
+  
+        minetest.add_particlespawner({
+          amount = 110,
+          time   = 0.1,
+          minpos = {x = pos.x - 0.5, y = pos.y - 1.2, z = pos.z - 0.5},
+          maxpos = {x = pos.x + 0.5, y = pos.y + 1.2, z = pos.z + 0.5},
+          minvel = {x = -5, y = -1, z = -5},
+          maxvel = {x =  5, y =  1, z =  5},
+          minacc = {x =  0, y =  0, z =  0},
+          maxacc = {x =  0, y =  0, z =  0},
+          minexptime = 0.1,
+          maxexptime = 0.5,
+          minsize = 0.2 * portalDef.particle_texture_scale,
+          maxsize = 0.8 * portalDef.particle_texture_scale,
+          collisiondetection = false,
+          texture = textureName .. "^[colorize:#D08:alpha",
+          animation = portalDef.particle_texture_animation,
+          glow = 8
+        })
       end
+  
     })
   end
 
-  -- store a "realm_boundary_height", above which is probably cloudlands, and below which is probably the native mapgen
-  -- You must construct a portal below the realm_boundary_height for it to take you to the cloudlands
+  -- Store a "realm_boundary_height", above which is probably cloudlands, and below which is probably the native mapgen
+  -- You must construct a portal below this realm_boundary_height for it to take you to the cloudlands.
   local maxMapgenHeight  = 50 -- not really the max, close enough  
   cloudlands.realm_boundary_height = math_max(maxMapgenHeight, round((maxMapgenHeight + (ALTITUDE - ALTITUDE_AMPLITUDE)) / 2))
 end
@@ -1011,6 +1040,10 @@ end
 
 -- Updates coreList to include all cores of type coreType within the given bounds
 local function addCores(coreList, coreType, x1, z1, x2, z2)
+
+  -- this function is used by the API functions, so may be invoked without our on_generated
+  -- being called
+  cloudlands.init();
 
   for z = math_floor(z1 / coreType.territorySize), math_floor(z2 / coreType.territorySize) do
     for x = math_floor(x1 / coreType.territorySize), math_floor(x2 / coreType.territorySize) do
@@ -2467,6 +2500,13 @@ local function renderCores(cores, minp, maxp, blockseed)
 end
 
 
+cloudlands.init = function()
+  if noise_eddyField == nil then
+    init_mapgen()
+    init_secrets()
+  end
+end
+
 local function on_generated(minp, maxp, blockseed)
 
   local memUsageT0
@@ -2484,10 +2524,7 @@ local function on_generated(minp, maxp, blockseed)
     return
   end
 
-  if noise_eddyField == nil then
-    init_mapgen()
-    init_secrets()
-  end
+  cloudlands.init();
   local cores = cloudlands.get_island_details(minp, maxp)
 
   if DEBUG then
