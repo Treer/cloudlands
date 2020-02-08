@@ -46,7 +46,12 @@ local DEBUG_SKYTREES         = false -- dev logging
 -- notice problems requiring it.
 local OVERDRAW = 0
 
-local coreTypes = {
+cloudlands = {} -- API functions can be accessed via this global:
+                -- cloudlands.get_island_details(minp, maxp)           -- returns an array of island-information-tables, y is ignored.
+                -- cloudlands.find_nearest_island(x, z, search_radius) -- returns a single island-information-table, or nil
+                -- cloudlands.get_height_at(x, z)                      -- returns (y, isWater), or nil if no island here
+
+cloudlands.coreTypes = {
   {
     territorySize     = 200,
     coresPerTerritory = 3,
@@ -295,6 +300,75 @@ interop.get_biome_key = function(pos)
     return minetest.get_biome_data(pos).biome
   end
 end
+
+--[[==============================
+              Portals
+    ==============================]]--
+
+if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") and nether.register_portal ~= nil then
+  -- The Portals API is available
+  -- Register a test portal to Hallelujah Mountains. This is just testing out the API.
+  -- (The Portals API may still just be a pull-request https://github.com/minetest-mods/nether/pull/8)
+
+  local frameNode = "nether:brick"
+  if minetest.registered_nodes[frameNode] ~= nil then
+
+    nether.register_portal("cloudlands_portal", {
+      shape               = nether.PortalShape_Traditional,
+      frame_node_name     = frameNode,
+      wormhole_node_color = 5, -- 5 is red
+      particle_color      = "#D08",
+      particle_texture    = {
+        name      = "nether_particle_anim1.png",
+        animation = {
+          type = "vertical_frames",
+          aspect_w = 7,
+          aspect_h = 7,
+          length = 1,
+        },
+        scale = 1.5
+      },
+      title = "Cloudlands Portal",
+      book_of_portals_pagetext = 
+        "Construction requires 14 blocks of tin. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
+        "There are floating islands of hills and forests up there, over the edges of which is a perilous drop all the way back down to sea level.",
+
+      is_within_realm = function(pos) -- return true if pos is inside the Nether
+        return pos.y > cloudlands.realm_boundary_height
+      end,
+
+      find_realm_anchorPos = function(surface_anchorPos)
+        -- TODO: Once paramat finishes adjusting the floatlands, implement a surface algorithm that finds land
+        local destination_pos = nil
+        
+        local island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 70) 
+        if island == nil then island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 150) end
+        if island == nil then island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 400) end
+
+        if island ~= nil then
+          local y, isWater = cloudlands.get_height_at(island.x, island.z)
+          if y ~= nil and not isWater then
+            destination_pos = {x = island.x, y = y, z = island.z}
+
+            -- a y_factor of 0 makes the search ignore the altitude of the portals (as long as they are in the Cloudlands realm)
+            local existing_portal_location, existing_portal_orientation = nether.find_nearest_working_portal("cloudlands_portal", destination_pos, 10, 0)
+            if existing_portal_location ~= nil then
+              return existing_portal_location, existing_portal_orientation
+            end
+          end
+        end
+
+        return destination_pos
+      end
+    })
+  end
+
+  -- store a "realm_boundary_height", above which is probably cloudlands, and below which is probably the native mapgen
+  -- You must construct a portal below the realm_boundary_height for it to take you to the cloudlands
+  local maxMapgenHeight  = 50 -- not really the max, close enough  
+  cloudlands.realm_boundary_height = math_max(maxMapgenHeight, round((maxMapgenHeight + (ALTITUDE - ALTITUDE_AMPLITUDE)) / 2))
+end
+
 --[[==============================
               SkyTrees
     ==============================]]--
@@ -1082,10 +1156,10 @@ end
 
 
 -- gets an array of all cores which may intersect the draw distance
-local function getCores(minp, maxp)
+cloudlands.get_island_details = function(minp, maxp)
   local result = {}
 
-  for _,coreType in pairs(coreTypes) do
+  for _,coreType in pairs(cloudlands.coreTypes) do
     addCores(
       result,
       coreType,
@@ -1102,6 +1176,105 @@ local function getCores(minp, maxp)
 
   return result;
 end
+
+
+cloudlands.find_nearest_island = function(x, z, search_radius)
+
+  local coreList = {}
+  for _,coreType in pairs(cloudlands.coreTypes) do
+    addCores(
+      coreList,
+      coreType,
+      x - (search_radius + coreType.radiusMax),
+      z - (search_radius + coreType.radiusMax),
+      x + (search_radius + coreType.radiusMax),
+      z + (search_radius + coreType.radiusMax)
+    )
+  end
+  -- remove islands only after cores have all generated to avoid the restriction
+  -- settings from rearranging islands.
+  if region_restrictions then removeUnwantedIslands(coreList) end
+
+  local result = nil
+  for _,core in ipairs(coreList) do
+    local distance = math.hypot(core.x - x, core.z - z)
+    if distance >= core.radius then
+      core.distance = 1 + distance - core.radius
+    else
+      -- distance is fractional
+      core.distance = distance / (core.radius + 1)
+    end
+
+    if result == nil or core.distance < result.distance then result = core end
+  end
+
+  return result;
+end
+
+
+cloudlands.get_height_at = function(x, z)
+
+  local result, isWater = nil, false;
+
+  local pos = {x = x, z = z}
+  local coreList = cloudlands.get_island_details(pos, pos)
+  
+  for _,core in ipairs(coreList) do
+
+    -- duplicates the code from renderCores() to find surface height
+    -- See the renderCores() version for explanatory comments
+    local horz_easing
+    local distanceSquared = (x - core.x)*(x - core.x) + (z - core.z)*(z - core.z)
+    local radiusSquared = core.radius * core.radius
+
+    local noise_weighting = 1
+    local shapeType = math_floor(core.depth + core.radius + core.x) % 5
+    if shapeType < 2 then -- convex, see renderCores() implementatin for comments
+      horz_easing = 1 - distanceSquared / radiusSquared
+    elseif shapeType == 2 then -- conical, see renderCores() implementatin for comments
+      horz_easing = 1 - math_sqrt(distanceSquared) / core.radius
+    else -- concave, see renderCores() implementatin for comments
+      local radiusRoot = math_sqrt(core.radius)
+      local squared  = 1 - distanceSquared / radiusSquared
+      local distance = math_sqrt(distanceSquared)
+      local distance_normalized = distance / core.radius
+      local root = 1 - math_sqrt(distance) / radiusRoot
+      horz_easing = math_min(1, 0.8*distance_normalized*squared + 1.2*(1-distance_normalized)*root)
+      noise_weighting = 0.63
+    end
+    if core.radius + core.depth > 80  then noise_weighting = 0.6  end
+    if core.radius + core.depth > 120 then noise_weighting = 0.35 end
+
+    local surfaceNoise = noise_surfaceMap:get2d({x = x, y = z})
+    if DEBUG_GEOMETRIC then surfaceNoise = SURFACEMAP_OFFSET end
+    local coreTop = ALTITUDE + core.y
+    local surfaceHeight = coreTop + round(surfaceNoise * 3 * (core.thickness + 1) * horz_easing)
+
+    if result == nil or math_max(coreTop, surfaceHeight) > result then 
+
+      local coreBottom = math_floor(coreTop - (core.thickness + core.depth))      
+      local yBottom = coreBottom
+      if result ~= nil then yBottom = math_max(yBottom, result + 1) end
+      
+      for y = math_max(coreTop, surfaceHeight), yBottom, -1 do
+        local vert_easing = math_min(1, (y - coreBottom) / core.depth)
+
+        local densityNoise = noise_density:get3d({x = x, y = y - coreTop, z = z})
+        densityNoise = noise_weighting * densityNoise + (1 - noise_weighting) * DENSITY_OFFSET
+        if DEBUG_GEOMETRIC then densityNoise = DENSITY_OFFSET end
+
+        if densityNoise * ((horz_easing + vert_easing) / 2) >= REQUIRED_DENSITY then
+          result = surfaceHeight
+          isWater = y == coreTop and coreTop > surfaceHeight
+          break;
+        end
+      end
+    end
+  end
+
+  return result, isWater
+end
+
 
 local function setCoreBiomeData(core)
   local pos = {x = core.x, y = ALTITUDE + core.y, z = core.z}
@@ -1873,7 +2046,7 @@ local function addDetail_secrets(decoration_list, core, data, area, minp, maxp)
             local book_itemstack = ItemStack(stackName_writtenBook)
             local book_data = {}
             book_data.title = "Weddell Outpost"
-            -- Instead of being a stand-alone line, the McNish line is tacked on the end of the 
+            -- Instead of being a stand-alone line, the McNish line is tacked on the end of the
             -- journey sentence because otherwise it gets truncated off by default:book_written
             book_data.text = [[The aerostat is lost.
 
@@ -2224,8 +2397,8 @@ local function renderCores(cores, minp, maxp, blockseed)
 
         nodeId_dust = minetest.get_content_id(core.biome.node_dust)
         for _, location in ipairs(core.dustLocations) do
-          if data[location] == nodeId_air and data[location - area.ystride] ~= nodeId_air then 
-            data[location] = nodeId_dust 
+          if data[location] == nodeId_air and data[location - area.ystride] ~= nodeId_air then
+            data[location] = nodeId_dust
           end
         end
       end
@@ -2300,8 +2473,9 @@ local function on_generated(minp, maxp, blockseed)
   local osClockT0 = os.clock()
   if DEBUG then memUsageT0 = collectgarbage("count") end
 
-  local maxCoreThickness = coreTypes[1].thicknessMax -- the first island type is the biggest/thickest
-  local maxCoreDepth     = coreTypes[1].radiusMax * 3 / 2
+  local largestCoreType  = cloudlands.coreTypes[1] -- the first island type is the biggest/thickest
+  local maxCoreThickness = largestCoreType.thicknessMax
+  local maxCoreDepth     = largestCoreType.radiusMax * 3 / 2
   local maxSufaceRise    = 3 * (maxCoreThickness + 1)
 
   if minp.y > ALTITUDE + (ALTITUDE_AMPLITUDE + maxSufaceRise + 10) or   -- the 10 is an arbitrary number because sometimes the noise values exceed their normal range.
@@ -2314,7 +2488,7 @@ local function on_generated(minp, maxp, blockseed)
     init_mapgen()
     init_secrets()
   end
-  local cores = getCores(minp, maxp)
+  local cores = cloudlands.get_island_details(minp, maxp)
 
   if DEBUG then
     minetest.log("info", "Cores for on_generated(): " .. #cores)

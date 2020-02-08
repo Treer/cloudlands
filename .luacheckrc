@@ -10,6 +10,7 @@ read_globals = {
 	"default",
 	"biomeinfo",
 	"schemlib",
+	"nether",
 	"DIR_DELIM",
 	"intllib",
 	"ItemStack",
