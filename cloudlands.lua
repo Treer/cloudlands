@@ -330,7 +330,7 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
       },
       title = "Cloudlands Portal",
       book_of_portals_pagetext = 
-        "Construction requires 14 blocks of tin. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
+        "Construction requires 14 blocks of Nether brick. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
         "There are floating islands of hills and forests up there, over the edges of which is a perilous drop all the way back down to sea level.",
 
       is_within_realm = function(pos) -- return true if pos is inside the Nether
