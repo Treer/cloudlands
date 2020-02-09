@@ -310,87 +310,136 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
   -- Register a test portal to Hallelujah Mountains. This is just testing out the API.
   -- (The Portals API may still just be a pull-request https://github.com/minetest-mods/nether/pull/8)
 
-  local frameNode = "nether:brick"
-  if minetest.registered_nodes[frameNode] ~= nil then
-
-    nether.register_portal("cloudlands_portal", {
-      shape               = nether.PortalShape_Traditional,
-      frame_node_name     = frameNode,
-      wormhole_node_color = 5, -- 5 is red
-      particle_color      = "#D08",
-      particle_texture    = {
-        name      = "nether_particle_anim1.png",
-        animation = {
-          type = "vertical_frames",
-          aspect_w = 7,
-          aspect_h = 7,
-          length = 1,
-        },
-        scale = 1.5
+  -- Ideally the Nether mod will provide a block obtainable by exploring the Nether which is 
+  -- earmarked for mods like this one to use for portals, but until this happens I'll create a
+  -- temp one.
+  minetest.register_node("cloudlands:ancient_portalstone", {
+    description = "Ancient Portalstone",
+    tiles = {"default_diamond_block.png^(default_obsidian_block.png^[opacity:200)^[multiply:#F03"}, -- this gonna look bad with non-default texturepacks, hopefully Nether mod will provide a real block
+    sounds = default.node_sound_stone_defaults(),
+    groups = {cracky = 1, level = 2},
+    on_blast = function() --[[blast proof]] end
+  })
+  
+  minetest.register_ore({
+    ore_type       = "scatter",
+    ore            = "cloudlands:ancient_portalstone",
+    wherein        = "nether:rack",
+    clust_scarcity = 28 * 28 * 28,
+    clust_num_ores = 6,
+    clust_size     = 3,
+    y_max = nether.DEPTH,
+    y_min = nether.DEPTH_FLOOR or -32000,
+  })
+  
+  local _ = {name = "air",                            prob = 0}
+  local A = {name = "air",                            prob = 255, force_place = true}
+  local P = {name = "cloudlands:ancient_portalstone", prob = 255, force_place = true}
+  minetest.register_decoration({
+    name = "Ancient broken portal",
+    deco_type = "schematic",
+    place_on = "nether:rack",
+    sidelen = 80,
+    fill_ratio = 0.0003,
+    biomes = {"nether_caverns"},
+    y_max = nether.DEPTH,
+    y_min = nether.DEPTH_FLOOR or -32000,
+    schematic = {
+      size = {x = 4, y = 4, z = 1},
+      data = {
+          P, A, P, P,
+          P, A, A, P,
+          A, _, _, P,
+          _, _, _, P
       },
-      title = "Hallelujah Mountains Portal",
-      book_of_portals_pagetext = 
-        "Construction requires 14 blocks of Nether brick. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
-        "There are floating islands of hills and forests up there, over the edges of which is a perilous drop all the way back down to sea level.",
+      yslice_prob = {
+          {ypos = 3, prob = 92},
+          {ypos = 1, prob = 30},
+      }
+    },
+    place_offset_y = 1,
+    flags = "force_placement,all_floors",
+    rotation = "random"
+  })
+  
 
-      is_within_realm = function(pos) -- return true if pos is in the cloudlands
-        return pos.y > cloudlands.realm_boundary_height
-      end,
+  nether.register_portal("cloudlands_portal", {
+    shape               = nether.PortalShape_Traditional,
+    frame_node_name     = "cloudlands:ancient_portalstone",
+    wormhole_node_color = 5, -- 5 is red
+    particle_color      = "#D08",
+    particle_texture    = {
+      name      = "nether_particle_anim1.png",
+      animation = {
+        type = "vertical_frames",
+        aspect_w = 7,
+        aspect_h = 7,
+        length = 1,
+      },
+      scale = 1.5
+    },
+    title = "Hallelujah Mountains Portal",
+    book_of_portals_pagetext = 
+      "Construction requires 14 blocks of ancient portalstone. We have no knowledge of how portalstone was created, the means to craft it are likely lost to time, so our only source of it has been to scavenge the Nether for the remnants of ancient broken portals. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
+      "The only portal we managed to scavenge enough portalstone to build took us to a land of floating islands. There were hills and forests and even water up there, but the edges are a perilous drop, a depth of which we cannot even begin to plumb.",
 
-      find_realm_anchorPos = function(surface_anchorPos)
-        -- Find the nearest island and return a surface position on it
-        local destination_pos = nil
-        
-        local island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 70) 
-        if island == nil then island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 150) end
-        if island == nil then island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 400) end
+    is_within_realm = function(pos) -- return true if pos is in the cloudlands
+      return pos.y > cloudlands.realm_boundary_height
+    end,
 
-        if island ~= nil then
-          local y, isWater = cloudlands.get_height_at(island.x, island.z)
-          if y ~= nil and not isWater then
-            destination_pos = {x = island.x, y = y, z = island.z}
+    find_realm_anchorPos = function(surface_anchorPos)
+      -- Find the nearest island and return a surface position on it
+      local destination_pos = nil
+      
+      local island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 70) 
+      if island == nil then island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 150) end
+      if island == nil then island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 400) end
 
-            -- a y_factor of 0 makes the search ignore the altitude of the portals (as long as they are in the Cloudlands realm)
-            local existing_portal_location, existing_portal_orientation = nether.find_nearest_working_portal("cloudlands_portal", destination_pos, 10, 0)
-            if existing_portal_location ~= nil then
-              return existing_portal_location, existing_portal_orientation
-            end
+      if island ~= nil then
+        local y, isWater = cloudlands.get_height_at(island.x, island.z)
+        if y ~= nil and not isWater then
+          destination_pos = {x = island.x, y = y, z = island.z}
+
+          -- a y_factor of 0 makes the search ignore the altitude of the portals (as long as they are in the Cloudlands realm)
+          local existing_portal_location, existing_portal_orientation = nether.find_nearest_working_portal("cloudlands_portal", destination_pos, 10, 0)
+          if existing_portal_location ~= nil then
+            return existing_portal_location, existing_portal_orientation
           end
         end
-
-        return destination_pos
-      end,
-
-      on_ignite = function(portalDef, anchorPos, orientation)
-        -- make some sparks fly on ignition
-        local p1, p2 = portalDef.shape:get_p1_and_p2_from_anchorPos(anchorPos, orientation)
-        local pos = vector.divide(vector.add(p1, p2), 2)
-  
-        local textureName = portalDef.particle_texture
-        if type(textureName) == "table" then textureName = textureName.name end
-  
-        minetest.add_particlespawner({
-          amount = 110,
-          time   = 0.1,
-          minpos = {x = pos.x - 0.5, y = pos.y - 1.2, z = pos.z - 0.5},
-          maxpos = {x = pos.x + 0.5, y = pos.y + 1.2, z = pos.z + 0.5},
-          minvel = {x = -5, y = -1, z = -5},
-          maxvel = {x =  5, y =  1, z =  5},
-          minacc = {x =  0, y =  0, z =  0},
-          maxacc = {x =  0, y =  0, z =  0},
-          minexptime = 0.1,
-          maxexptime = 0.5,
-          minsize = 0.2 * portalDef.particle_texture_scale,
-          maxsize = 0.8 * portalDef.particle_texture_scale,
-          collisiondetection = false,
-          texture = textureName .. "^[colorize:#D08:alpha",
-          animation = portalDef.particle_texture_animation,
-          glow = 8
-        })
       end
-  
-    })
-  end
+
+      return destination_pos
+    end,
+
+    on_ignite = function(portalDef, anchorPos, orientation)
+      -- make some sparks fly on ignition
+      local p1, p2 = portalDef.shape:get_p1_and_p2_from_anchorPos(anchorPos, orientation)
+      local pos = vector.divide(vector.add(p1, p2), 2)
+
+      local textureName = portalDef.particle_texture
+      if type(textureName) == "table" then textureName = textureName.name end
+
+      minetest.add_particlespawner({
+        amount = 110,
+        time   = 0.1,
+        minpos = {x = pos.x - 0.5, y = pos.y - 1.2, z = pos.z - 0.5},
+        maxpos = {x = pos.x + 0.5, y = pos.y + 1.2, z = pos.z + 0.5},
+        minvel = {x = -5, y = -1, z = -5},
+        maxvel = {x =  5, y =  1, z =  5},
+        minacc = {x =  0, y =  0, z =  0},
+        maxacc = {x =  0, y =  0, z =  0},
+        minexptime = 0.1,
+        maxexptime = 0.5,
+        minsize = 0.2 * portalDef.particle_texture_scale,
+        maxsize = 0.8 * portalDef.particle_texture_scale,
+        collisiondetection = false,
+        texture = textureName .. "^[colorize:#D08:alpha",
+        animation = portalDef.particle_texture_animation,
+        glow = 8
+      })
+    end
+
+  })
 
   -- Store a "realm_boundary_height", above which is probably cloudlands, and below which is probably the native mapgen
   -- You must construct a portal below this realm_boundary_height for it to take you to the cloudlands.
