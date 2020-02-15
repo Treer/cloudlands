@@ -13,6 +13,7 @@ local BIOLUMINESCENCE        = false or -- Allow giant trees variants which have
                                minetest.get_modpath("glow")       ~= nil or
                                minetest.get_modpath("nsspf")      ~= nil or
                                minetest.get_modpath("moonflower") ~= nil -- a world using any of these mods is OK with bioluminescence
+local ENABLE_PORTALS         = true     -- Whether to allow players to build portals to islands. Portals require the Nether mod.
 local EDDYFIELD_SIZE         = 1        -- size of the "eddy field-lines" that smaller islands follow
 local ISLANDS_SEED           = 1000     -- You only need to change this if you want to try different island layouts without changing the map seed
 
@@ -106,6 +107,7 @@ VINE_COVERAGE        = fromSettings(MODNAME .. "_vine_coverage",      VINE_COVER
 LOWLAND_BIOMES       = fromSettings(MODNAME .. "_use_lowland_biomes", LOWLAND_BIOMES)
 TREE_RARITY          = fromSettings(MODNAME .. "_giant_tree_rarety",  TREE_RARITY * 100) / 100
 BIOLUMINESCENCE      = fromSettings(MODNAME .. "_bioluminescence",    BIOLUMINESCENCE)
+ENABLE_PORTALS       = fromSettings(MODNAME .. "_enable_portals",     ENABLE_PORTALS)
 
 local noiseparams_eddyField = {
 	offset      = -1,
@@ -197,7 +199,7 @@ local limit_to_biomes_altitude = nil
     ==============================]]--
 
 -- avoid having to perform table lookups each time a common math function is invoked
-local math_min, math_max, math_floor, math_sqrt, math_cos, math_abs, math_pow, PI = math.min, math.max, math.floor, math.sqrt, math.cos, math.abs, math.pow, math.pi
+local math_min, math_max, math_floor, math_sqrt, math_cos, math_sin, math_abs, math_pow, PI = math.min, math.max, math.floor, math.sqrt, math.cos, math.sin, math.abs, math.pow, math.pi
 
 local function clip(value, minValue, maxValue)
   if value <= minValue then
@@ -305,22 +307,83 @@ end
               Portals
     ==============================]]--
 
-if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") and nether.register_portal ~= nil then
+if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") and nether.register_portal ~= nil then
   -- The Portals API is available
-  -- Register a test portal to Hallelujah Mountains. This is just testing out the API.
-  -- (The Portals API may still just be a pull-request https://github.com/minetest-mods/nether/pull/8)
+  -- Register a player-buildable portal to Hallelujah Mountains.
 
-  -- Ideally the Nether mod will provide a block obtainable by exploring the Nether which is 
-  -- earmarked for mods like this one to use for portals, but until this happens I'll create a
-  -- temp one.
+  -- returns nil if no suitable location could be found, otherwise returns (portal_pos, island_info)
+  local function find_nearest_island_location_for_portal(surface_x, surface_z)
+
+    local result = nil
+
+    local island = cloudlands.find_nearest_island(surface_x, surface_z, 75)
+    if island == nil then island = cloudlands.find_nearest_island(surface_x, surface_z, 150) end
+    if island == nil then island = cloudlands.find_nearest_island(surface_x, surface_z, 400) end
+
+    if island ~= nil then
+      local searchRadius = island.radius * 0.55 -- islands normally don't reach their full radius, and lets not put portals too near the edge
+      local coreList = cloudlands.get_island_details(
+        {x = island.x - searchRadius, z = island.z - searchRadius},
+        {x = island.x + searchRadius, z = island.z + searchRadius}
+      );
+
+      -- Deterministically sample the island for a low location that isn't water.
+      -- Seed the prng so this function always returns the same coords for the island
+      local prng = PcgRandom(island.x * 65732 + island.z * 729 + minetest.get_mapgen_setting("seed") * 3)
+      local positions = {}
+
+      for attempt = 1, 15 do -- how many attempts we'll make at finding a good location
+        local angle = (prng:next(0, 10000) / 10000) * 2 * PI
+        local distance = math_sqrt(prng:next(0, 10000) / 10000) * searchRadius
+        if attempt == 1 then distance = 0 end -- Always sample the middle of the island, as it's the safest fallback location
+        local x = round(island.x + math_cos(angle) * distance)
+        local z = round(island.z + math_sin(angle) * distance)
+        local y, isWater = cloudlands.get_height_at(x, z, coreList)
+        if y ~= nil then
+          local weight = 0
+          if not isWater                          then weight = weight + 1 end -- avoid putting portals in ponds
+          if y > cloudlands.realm_boundary_height then weight = weight + 2 end -- avoid putting portals under the realm_boundary_height, if it can be avoided
+          positions[#positions + 1] = {x = x, y = y + 1, z = z, weight = weight}
+        end
+      end
+
+      -- Order the locations by how good they are
+      local compareFn = function(pos_a, pos_b)
+        if pos_a.weight > pos_b.weight then return true end
+        if pos_a.y < pos_b.y then return true end -- I can't justify why I think lower positions are better. I'm imagining portals nested in valleys rather than on ridges.
+        return false
+      end
+      table.sort(positions, compareFn)
+
+      -- Now the locations are sorted by how good they are, find the first/best that doesn't
+      -- grief a player build.
+      -- Ancient Portalstone has is_ground_content set to true, so we won't have to worry about
+      -- old/broken portal frames interfering with the results of nether.volume_is_natural()
+      for _, position in ipairs(positions) do
+        -- Unfortunately, at this point we don't know the orientation of the portal, so use worst case
+        local minp = {x = position.x - 2, y = position.y,     z = position.z - 2}
+        local maxp = {x = position.x + 3, y = position.y + 4, z = position.z + 3}
+        if nether.volume_is_natural(minp, maxp) then
+          result = position
+          break
+        end
+      end
+    end
+
+    return result, island
+  end
+
+  -- Ideally the Nether mod will provide a block obtainable by exploring the Nether which is
+  -- earmarked for mods like this one to use for portals, but until this happens I'll create
+  -- our own tempory placeholder "portalstone".
   minetest.register_node("cloudlands:ancient_portalstone", {
     description = "Ancient Portalstone",
-    tiles = {"default_diamond_block.png^(default_obsidian_block.png^[opacity:200)^[multiply:#F03"}, -- this gonna look bad with non-default texturepacks, hopefully Nether mod will provide a real block
+    tiles = {"default_furnace_top.png^(default_ice.png^[opacity:120)^[multiply:#668"}, -- this gonna look bad with non-default texturepacks, hopefully Nether mod will provide a real block
     sounds = default.node_sound_stone_defaults(),
     groups = {cracky = 1, level = 2},
     on_blast = function() --[[blast proof]] end
   })
-  
+
   minetest.register_ore({
     ore_type       = "scatter",
     ore            = "cloudlands:ancient_portalstone",
@@ -331,7 +394,7 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
     y_max = nether.DEPTH,
     y_min = nether.DEPTH_FLOOR or -32000,
   })
-  
+
   local _ = {name = "air",                            prob = 0}
   local A = {name = "air",                            prob = 255, force_place = true}
   local P = {name = "cloudlands:ancient_portalstone", prob = 255, force_place = true}
@@ -361,13 +424,13 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
     flags = "force_placement,all_floors",
     rotation = "random"
   })
-  
+
 
   nether.register_portal("cloudlands_portal", {
     shape               = nether.PortalShape_Traditional,
     frame_node_name     = "cloudlands:ancient_portalstone",
-    wormhole_node_color = 5, -- 5 is red
-    particle_color      = "#D08",
+    wormhole_node_color = 2, -- 2 is blue
+    particle_color      = "#77F",
     particle_texture    = {
       name      = "nether_particle_anim1.png",
       animation = {
@@ -379,32 +442,31 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
       scale = 1.5
     },
     title = "Hallelujah Mountains Portal",
-    book_of_portals_pagetext = 
-      "Construction requires 14 blocks of ancient portalstone. We have no knowledge of how portalstone was created, the means to craft it are likely lost to time, so our only source of it has been to scavenge the Nether for the remnants of ancient broken portals. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
-      "The only portal we managed to scavenge enough portalstone to build took us to a land of floating islands. There were hills and forests and even water up there, but the edges are a perilous drop, a depth of which we cannot even begin to plumb.",
+    book_of_portals_pagetext =
+      "Construction requires 14 blocks of ancient portalstone. We have no knowledge of how portalstones were created, the means to craft them are likely lost to time, so our only source has been to scavenge the Nether for the remnants of ancient broken portals. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
+      "The only portal we managed to scavenge enough portalstone to build took us to a land of floating islands. There were hills and forests and even water up there, but the edges are a perilous drop — a depth of which we cannot even begin to plumb.",
 
-    is_within_realm = function(pos) -- return true if pos is in the cloudlands
+    is_within_realm = function(pos)
+      -- return true if pos is in the cloudlands
+      -- (Using a simple comparison because this function should be fast)
       return pos.y > cloudlands.realm_boundary_height
     end,
 
     find_realm_anchorPos = function(surface_anchorPos)
-      -- Find the nearest island and return a surface position on it
-      local destination_pos = nil
-      
-      local island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 70) 
-      if island == nil then island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 150) end
-      if island == nil then island = cloudlands.find_nearest_island(surface_anchorPos.x, surface_anchorPos.z, 400) end
+      -- Find the nearest island and obtain a suitable surface position on it
+      local destination_pos, island = find_nearest_island_location_for_portal(surface_anchorPos.x, surface_anchorPos.z)
 
       if island ~= nil then
-        local y, isWater = cloudlands.get_height_at(island.x, island.z)
-        if y ~= nil and not isWater then
-          destination_pos = {x = island.x, y = y, z = island.z}
-
-          -- a y_factor of 0 makes the search ignore the altitude of the portals (as long as they are in the Cloudlands realm)
-          local existing_portal_location, existing_portal_orientation = nether.find_nearest_working_portal("cloudlands_portal", destination_pos, 10, 0)
-          if existing_portal_location ~= nil then
-            return existing_portal_location, existing_portal_orientation
-          end
+        -- Allow any existing or player-positioned portal on the island to be linked to
+        -- first before resorting to the island's default portal position
+        local existing_portal_location, existing_portal_orientation = nether.find_nearest_working_portal(
+          "cloudlands_portal",
+          {x = island.x, y = 0, z = island.z},
+          island.radius * 0.9,                  -- islands normally don't reach their full radius. Ensure this distance limit encompasses any location find_nearest_island_location_for_portal() can return.
+          cloudlands.realm_boundary_height + 1  -- a y_factor of 0 makes the search ignore the altitude of the portals (as long as they are in the Cloudlands realm)
+        )
+        if existing_portal_location ~= nil then
+          return existing_portal_location, existing_portal_orientation
         end
       end
 
@@ -430,10 +492,10 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
         maxacc = {x =  0, y =  0, z =  0},
         minexptime = 0.1,
         maxexptime = 0.5,
-        minsize = 0.2 * portalDef.particle_texture_scale,
+        minsize = 0.3 * portalDef.particle_texture_scale,
         maxsize = 0.8 * portalDef.particle_texture_scale,
         collisiondetection = false,
-        texture = textureName .. "^[colorize:#D08:alpha",
+        texture = textureName .. "^[colorize:#99F:alpha",
         animation = portalDef.particle_texture_animation,
         glow = 8
       })
@@ -443,7 +505,7 @@ if minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") an
 
   -- Store a "realm_boundary_height", above which is probably cloudlands, and below which is probably the native mapgen
   -- You must construct a portal below this realm_boundary_height for it to take you to the cloudlands.
-  local maxMapgenHeight  = 50 -- not really the max, close enough  
+  local maxMapgenHeight  = 50 -- not really the max, close enough
   cloudlands.realm_boundary_height = math_max(maxMapgenHeight, round((maxMapgenHeight + (ALTITUDE - ALTITUDE_AMPLITUDE)) / 2))
 end
 
@@ -1294,13 +1356,18 @@ cloudlands.find_nearest_island = function(x, z, search_radius)
 end
 
 
-cloudlands.get_height_at = function(x, z)
+-- coreList can be left as null, but if you wish to sample many heights in a small area
+-- then use cloudlands.get_island_details() to get the coreList for that area and save
+-- having to recalculate it during each call to get_height_at().
+cloudlands.get_height_at = function(x, z, coreList)
 
   local result, isWater = nil, false;
 
-  local pos = {x = x, z = z}
-  local coreList = cloudlands.get_island_details(pos, pos)
-  
+  if coreList == nil then
+    local pos = {x = x, z = z}
+    coreList = cloudlands.get_island_details(pos, pos)
+  end
+
   for _,core in ipairs(coreList) do
 
     -- duplicates the code from renderCores() to find surface height
@@ -1332,12 +1399,12 @@ cloudlands.get_height_at = function(x, z)
     local coreTop = ALTITUDE + core.y
     local surfaceHeight = coreTop + round(surfaceNoise * 3 * (core.thickness + 1) * horz_easing)
 
-    if result == nil or math_max(coreTop, surfaceHeight) > result then 
+    if result == nil or math_max(coreTop, surfaceHeight) > result then
 
-      local coreBottom = math_floor(coreTop - (core.thickness + core.depth))      
+      local coreBottom = math_floor(coreTop - (core.thickness + core.depth))
       local yBottom = coreBottom
       if result ~= nil then yBottom = math_max(yBottom, result + 1) end
-      
+
       for y = math_max(coreTop, surfaceHeight), yBottom, -1 do
         local vert_easing = math_min(1, (y - coreBottom) / core.depth)
 
@@ -1346,9 +1413,22 @@ cloudlands.get_height_at = function(x, z)
         if DEBUG_GEOMETRIC then densityNoise = DENSITY_OFFSET end
 
         if densityNoise * ((horz_easing + vert_easing) / 2) >= REQUIRED_DENSITY then
-          result = surfaceHeight
-          isWater = y == coreTop and coreTop > surfaceHeight
-          break;
+          result = y
+          isWater = surfaceNoise < 0
+          break
+
+          --[[abandoned because do we need to calc the bottom of ponds? It also needs the outer code refactored to work
+          if not isWater then
+            -- we've found the land height
+            break
+          else
+            -- find the pond bottom, since the water level is already given by (ALTITUDE + island.y)
+            local surfaceDensity = densityNoise * ((horz_easing + 1) / 2)
+            local onTheEdge = math_sqrt(distanceSquared) + 1 >= core.radius
+            if onTheEdge or surfaceDensity > (REQUIRED_DENSITY + core.type.pondWallBuffer) then
+              break
+            end
+          end]]
         end
       end
     end
