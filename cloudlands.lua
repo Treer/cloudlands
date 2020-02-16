@@ -48,9 +48,9 @@ local DEBUG_SKYTREES         = false -- dev logging
 local OVERDRAW = 0
 
 cloudlands = {} -- API functions can be accessed via this global:
-                -- cloudlands.get_island_details(minp, maxp)           -- returns an array of island-information-tables, y is ignored.
-                -- cloudlands.find_nearest_island(x, z, search_radius) -- returns a single island-information-table, or nil
-                -- cloudlands.get_height_at(x, z)                      -- returns (y, isWater), or nil if no island here
+                -- cloudlands.get_island_details(minp, maxp)                   -- returns an array of island-information-tables, y is ignored.
+                -- cloudlands.find_nearest_island(x, z, search_radius)         -- returns a single island-information-table, or nil
+                -- cloudlands.get_height_at(x, z, [island-information-tables]) -- returns (y, isWater), or nil if no island here
 
 cloudlands.coreTypes = {
   {
@@ -1299,7 +1299,8 @@ local function removeUnwantedIslands(coreList)
 end
 
 
--- gets an array of all cores which may intersect the draw distance
+-- gets an array of all cores which may intersect the (minp, maxp) area
+-- y is ignored
 cloudlands.get_island_details = function(minp, maxp)
   local result = {}
 
