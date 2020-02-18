@@ -47,6 +47,8 @@ local DEBUG_SKYTREES         = false -- dev logging
 -- notice problems requiring it.
 local OVERDRAW = 0
 
+local S = minetest.get_translator(minetest.get_current_modname())
+
 cloudlands = {} -- API functions can be accessed via this global:
                 -- cloudlands.get_island_details(minp, maxp)                   -- returns an array of island-information-tables, y is ignored.
                 -- cloudlands.find_nearest_island(x, z, search_radius)         -- returns a single island-information-table, or nil
@@ -377,7 +379,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
   -- earmarked for mods like this one to use for portals, but until this happens I'll create
   -- our own tempory placeholder "portalstone".
   minetest.register_node("cloudlands:ancient_portalstone", {
-    description = "Ancient Portalstone",
+    description = S("Ancient Portalstone"),
     tiles = {"default_furnace_top.png^(default_ice.png^[opacity:120)^[multiply:#668"}, -- this gonna look bad with non-default texturepacks, hopefully Nether mod will provide a real block
     sounds = default.node_sound_stone_defaults(),
     groups = {cracky = 1, level = 2},
@@ -441,10 +443,10 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
       },
       scale = 1.5
     },
-    title = "Hallelujah Mountains Portal",
+    title = S("Hallelujah Mountains Portal"),
     book_of_portals_pagetext =
-      "Construction requires 14 blocks of ancient portalstone. We have no knowledge of how portalstones were created, the means to craft them are likely lost to time, so our only source has been to scavenge the Nether for the remnants of ancient broken portals. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
-      "The only portal we managed to scavenge enough portalstone to build took us to a land of floating islands. There were hills and forests and even water up there, but the edges are a perilous drop — a depth of which we cannot even begin to plumb.",
+      S("Construction requires 14 blocks of ancient portalstone. We have no knowledge of how portalstones were created, the means to craft them are likely lost to time, so our only source has been to scavenge the Nether for the remnants of ancient broken portals. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
+      "The only portal we managed to scavenge enough portalstone to build took us to a land of floating islands. There were hills and forests and even water up there, but the edges are a perilous drop — a depth of which we cannot even begin to plumb."),
 
     is_within_realm = function(pos)
       -- return true if pos is in the cloudlands
@@ -607,7 +609,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       local newBarkNode = {}
       for key, value in pairs(newTrunkNode) do newBarkNode[key] = value end
       newBarkNode.name = newBarkNode.name .. BARK_SUFFIX
-      newBarkNode.description = "Bark of " .. newBarkNode.description
+      newBarkNode.description = S("Bark of @1", newBarkNode.description)
       -- .drop: leave the bark nodes dropping the trunk wood
 
       tiles = trunkNode.tiles
@@ -651,7 +653,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
         local glowingLeafNode = {}
         for key, value in pairs(newLeafNode) do glowingLeafNode[key] = value end
         glowingLeafNode.name = newLeafNode.name .. GLOW_SUFFIX
-        glowingLeafNode.description = "Glowing " .. description
+        glowingLeafNode.description = S("Glowing @1", description)
         glowingLeafNode.light_source = glowVariantBrightness
         minetest.register_node(glowingLeafNode.name, glowingLeafNode)
       end
@@ -664,9 +666,9 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       SkyTrees.disabled = "Could not find any tree nodes"
       return
     end
-    local normalwood = generate_woodTypes(templateWood, "", "", "tree", "Giant tree", true)
-    local darkwood   = generate_woodTypes(templateWood, "^[colorize:black:205", "^[colorize:black:205", "darkwood", "Giant Ziricote", false)
-    local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", "Dead bleached wood", false) -- make use of the bark blocks to introduce some color variance in the tree
+    local normalwood = generate_woodTypes(templateWood, "", "", "tree", S("Giant tree"), true)
+    local darkwood   = generate_woodTypes(templateWood, "^[colorize:black:205", "^[colorize:black:205", "darkwood", S("Giant Ziricote"), false)
+    local deadwood   = generate_woodTypes(templateWood, "^[colorize:#EFE6B9:110", "^[colorize:#E8D0A0:110", "deadbleachedwood", S("Dead bleached wood"), false) -- make use of the bark blocks to introduce some color variance in the tree
 
 
     local templateLeaf = interop.find_node_name(NODENAMES_TREELEAVES)
@@ -674,19 +676,19 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       SkyTrees.disabled = "Could not find any treeleaf nodes"
       return
     end
-    local greenleaf1       = generate_leafTypes(templateLeaf, "",                      "leaves",   "Leaves of a giant tree", true) -- drops templateLeaf because these look close enough to the original leaves that we won't clutter the game & creative-menu with tiny visual variants that other recipes/parts of the game won't know about
-    local greenleaf2       = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  "Leaves of a giant tree", false)
-    local greenleaf3       = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  "Leaves of a giant tree", false)
+    local greenleaf1       = generate_leafTypes(templateLeaf, "",                      "leaves",   S("Leaves of a giant tree"), true) -- drops templateLeaf because these look close enough to the original leaves that we won't clutter the game & creative-menu with tiny visual variants that other recipes/parts of the game won't know about
+    local greenleaf2       = generate_leafTypes(templateLeaf, "^[colorize:#00FF00:16", "leaves2",  S("Leaves of a giant tree"), false)
+    local greenleaf3       = generate_leafTypes(templateLeaf, "^[colorize:#90FF60:28", "leaves3",  S("Leaves of a giant tree"), false)
 
-    local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:alpha", "blossom_white1",    "Blossom", false)
-    local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:alpha", "blossom_white2",    "Blossom", false)
-    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:alpha", "blossom_whitepink", "Blossom", false, 5)
+    local whiteblossom1    = generate_leafTypes(templateLeaf, "^[colorize:#fffdfd:alpha", "blossom_white1",    S("Blossom"), false)
+    local whiteblossom2    = generate_leafTypes(templateLeaf, "^[colorize:#fff0f0:alpha", "blossom_white2",    S("Blossom"), false)
+    local pinkblossom      = generate_leafTypes(templateLeaf, "^[colorize:#FFE3E8:alpha", "blossom_whitepink", S("Blossom"), false, 5)
 
-    local sakurablossom1   = generate_leafTypes(templateLeaf, "^[colorize:#ea327c:alpha", "blossom_red",       "Sakura blossom", false, 5)
-    local sakurablossom2   = generate_leafTypes(templateLeaf, "^[colorize:#ffc3dd:alpha", "blossom_pink",      "Sakura blossom", false)
+    local sakurablossom1   = generate_leafTypes(templateLeaf, "^[colorize:#ea327c:alpha", "blossom_red",       S("Sakura blossom"), false, 5)
+    local sakurablossom2   = generate_leafTypes(templateLeaf, "^[colorize:#ffc3dd:alpha", "blossom_pink",      S("Sakura blossom"), false)
 
-    local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8087ec:alpha", "blossom_wisteria1", "Wisteria blossom", false)
-    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:alpha", "blossom_wisteria2", "Wisteria blossom", false, 7)
+    local wisteriaBlossom1 = generate_leafTypes(templateLeaf, "^[colorize:#8087ec:alpha", "blossom_wisteria1", S("Wisteria blossom"), false)
+    local wisteriaBlossom2 = generate_leafTypes(templateLeaf, "^[colorize:#ccc9ff:alpha", "blossom_wisteria2", S("Wisteria blossom"), false, 7)
 
 
     local tree = SkyTrees.schematicInfo[TREE1_FILE]
@@ -825,7 +827,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       SkyTrees.MODNAME .. ":HeartWood",
       {
         tiles = { heartwoodTexture },
-        description="Heart of the Tree",
+        description = S("Heart of the Tree"),
         groups = {oddly_breakable_by_hand = 3},
         drawtype = "nodebox",
         paramtype = "light",
@@ -1820,7 +1822,7 @@ if minetest.get_modpath("default") then
         -- [Ab]Use the crack texture to avoid needing to include a cobweb texture
         "crack_anylength.png^[verticalframe:5:4^[brighten"
       },
-      description = "Cobweb",
+      description = S("Cobweb"),
       groups = {snappy = 3, liquid = 3, flammable = 3, not_in_creative_inventory = 1},
       drawtype = "plantlike",
       walkable = false,
@@ -1850,7 +1852,7 @@ if minetest.registered_nodes[eggTextureName] == nil then
         -- [Ab]Use a leaf texture to avoid needing to include an egg texture and exposing that the mod contains secrets
         eggTextureName.."^[colorize:#280040E0^[noalpha"
       },
-      description = "Fossilized Egg",
+      description = S("Fossilized Egg"),
       groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
       drawtype = "nodebox",
       paramtype = "light",
@@ -2195,11 +2197,11 @@ local function addDetail_secrets(decoration_list, core, data, area, minp, maxp)
 
           if invBookshelf ~= nil or invChest ~= nil then
             -- create diary
-            local groundDesc = "rock"
+            local groundDesc = S("rock")
             if core.biome.node_filler ~= nil then
               local earthNames = string.lower(core.biome.node_filler) .. string.lower(core.biome.node_top)
               if string.match(earthNames, "ice") or string.match(earthNames, "snow") or string.match(earthNames, "frozen") then
-                groundDesc = "ice"
+                groundDesc = S("ice")
               end
             end
 
@@ -2208,10 +2210,10 @@ local function addDetail_secrets(decoration_list, core, data, area, minp, maxp)
 
             local book_itemstack = ItemStack(stackName_writtenBook)
             local book_data = {}
-            book_data.title = "Weddell Outpost"
+            book_data.title = S("Weddell Outpost")
             -- Instead of being a stand-alone line, the McNish line is tacked on the end of the
             -- journey sentence because otherwise it gets truncated off by default:book_written
-            book_data.text = [[The aerostat is lost.
+            book_data.text = S([[The aerostat is lost.
 
 However, salvage attempts throughout the night managed to
 save most provisions before it finally broke apart and fell.
@@ -2219,7 +2221,7 @@ save most provisions before it finally broke apart and fell.
                                      ---====---
 
 This island is highly exposed and the weather did not treat
-the tents well. We have enlarged a sheltered crag in the {{groundDesc}},
+the tents well. We have enlarged a sheltered crag in the @1,
 but it is laborous work and the condition of some of the party
 is becoming cause for concern.
 
@@ -2227,13 +2229,12 @@ Quite a journey is now required, we cannot stay - nobody will
 look for us here. McNish is attempting to strengthen the gliders.
 
                                      ---====---
-]]
-            book_data.text = book_data.text:gsub("{{groundDesc}}", groundDesc)
+]], groundDesc)
 
             if isMineCloneBookshelf then book_data.text = book_data.title .. "\n\n" .. book_data.text end -- MineClone2 doesn't show the title
-            book_data.owner = "Bert Shackleton"
+            book_data.owner = S("Bert Shackleton")
             book_data.author = book_data.owner
-            book_data.description = "Diary of Bert Shakleton"
+            book_data.description = S("Diary of Bert Shackleton")
             book_data.page = 1
             book_data.page_max = 1
             book_data.generation = 0
