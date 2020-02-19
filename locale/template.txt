@@ -1,3 +1,7 @@
+# textdomain: cloudlands
+
+
+# ./cloudlands.lua
 Ancient Portalstone=
 Bark of @1=
 Bert Shackleton=
@@ -19,5 +23,3 @@ Weddell Outpost=
 Wisteria blossom=
 ice=
 rock=
-test1=
-test2=
