@@ -6,6 +6,9 @@
 #
 # Copyright (C) 2019 Joachim Stolberg, 2020 FaceDeer, 2020 Louis Royer
 # LGPLv2.1+
+#
+# See https://github.com/FaceDeer/update_translations for
+# documentation and updates.
 
 from __future__ import print_function
 import os, fnmatch, re, shutil, errno
