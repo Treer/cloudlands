@@ -378,9 +378,12 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
   -- Ideally the Nether mod will provide a block obtainable by exploring the Nether which is
   -- earmarked for mods like this one to use for portals, but until this happens I'll create
   -- our own tempory placeholder "portalstone".
+  local portalstone_end = "default_furnace_top.png^(default_ice.png^[opacity:120)^[multiply:#668"  -- this gonna look bad with non-default texturepacks, hopefully Nether mod will provide a real block
+  local portalstone_side = "[combine:16x16:0,0=default_furnace_top.png:4,0=default_furnace_top.png:8,0=default_furnace_top.png:12,0=default_furnace_top.png:^(default_ice.png^[opacity:120)^[multiply:#668"
   minetest.register_node("cloudlands:ancient_portalstone", {
     description = S("Ancient Portalstone"),
-    tiles = {"default_furnace_top.png^(default_ice.png^[opacity:120)^[multiply:#668"}, -- this gonna look bad with non-default texturepacks, hopefully Nether mod will provide a real block
+    tiles = {portalstone_end, portalstone_end, portalstone_side, portalstone_side, portalstone_side, portalstone_side},
+    paramtype2 = "facedir",
     sounds = default.node_sound_stone_defaults(),
     groups = {cracky = 1, level = 2},
     on_blast = function() --[[blast proof]] end
@@ -397,9 +400,11 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     y_min = nether.DEPTH_FLOOR or -32000,
   })
 
-  local _ = {name = "air",                            prob = 0}
-  local A = {name = "air",                            prob = 255, force_place = true}
-  local P = {name = "cloudlands:ancient_portalstone", prob = 255, force_place = true}
+  local _  = {name = "air",                                         prob = 0}
+  local A  = {name = "air",                                         prob = 255, force_place = true}
+  local PU = {name = "cloudlands:ancient_portalstone", param2 =  0, prob = 255, force_place = true}
+  local PW = {name = "cloudlands:ancient_portalstone", param2 = 12, prob = 255, force_place = true}
+  local PN = {name = "cloudlands:ancient_portalstone", param2 =  4, prob = 255, force_place = true}
   minetest.register_decoration({
     name = "Ancient broken portal",
     deco_type = "schematic",
@@ -412,10 +417,10 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     schematic = {
       size = {x = 4, y = 4, z = 1},
       data = {
-          P, A, P, P,
-          P, A, A, P,
-          A, _, _, P,
-          _, _, _, P
+          PN, A, PW, PN,
+          PU, A,  A, PU,
+          A,  _,  _, PU,
+          _,  _,  _, PU
       },
       yslice_prob = {
           {ypos = 3, prob = 92},
