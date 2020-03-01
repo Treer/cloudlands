@@ -323,7 +323,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     if island == nil then island = cloudlands.find_nearest_island(surface_x, surface_z, 400) end
 
     if island ~= nil then
-      local searchRadius = island.radius * 0.55 -- islands normally don't reach their full radius, and lets not put portals too near the edge
+      local searchRadius = island.radius * 0.67 -- islands normally don't reach their full radius, and lets not put portals too near the edge
       local coreList = cloudlands.get_island_details(
         {x = island.x - searchRadius, z = island.z - searchRadius},
         {x = island.x + searchRadius, z = island.z + searchRadius}
@@ -344,7 +344,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
         if y ~= nil then
           local weight = 0
           if not isWater                          then weight = weight + 1 end -- avoid putting portals in ponds
-          if y > cloudlands.realm_boundary_height then weight = weight + 2 end -- avoid putting portals under the realm_boundary_height, if it can be avoided
+          if y >= island.y + ALTITUDE             then weight = weight + 2 end -- avoid putting portals down the sides of eroded cliffs
           positions[#positions + 1] = {x = x, y = y + 1, z = z, weight = weight}
         end
       end
@@ -352,7 +352,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
       -- Order the locations by how good they are
       local compareFn = function(pos_a, pos_b)
         if pos_a.weight > pos_b.weight then return true end
-        if pos_a.y < pos_b.y then return true end -- I can't justify why I think lower positions are better. I'm imagining portals nested in valleys rather than on ridges.
+        if pos_a.weight == pos_b.weight and pos_a.y < pos_b.y then return true end -- I can't justify why I think lower positions are better. I'm imagining portals nested in valleys rather than on ridges.
         return false
       end
       table.sort(positions, compareFn)
@@ -450,13 +450,16 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     },
     title = S("Hallelujah Mountains Portal"),
     book_of_portals_pagetext =
-      S("Construction requires 14 blocks of ancient portalstone. We have no knowledge of how portalstones were created, the means to craft them are likely lost to time, so our only source has been to scavenge the Nether for the remnants of ancient broken portals. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway." .. "\n\n" ..
-      "The only portal we managed to scavenge enough portalstone to build took us to a land of floating islands. There were hills and forests and even water up there, but the edges are a perilous drop — a depth of which we cannot even begin to plumb."),
+      S("Construction requires 14 blocks of ancient portalstone. We have no knowledge of how portalstones were created, the means to craft them are likely lost to time, so our only source has been to scavenge the Nether for the remnants of ancient broken portals. A finished frame is four blocks wide, five blocks high, and stands vertically, like a doorway.") .. "\n\n" ..
+      S("The only portal we managed to scavenge enough portalstone to build took us to a land of floating islands. There were hills and forests and even water up there, but the edges are a perilous drop — a depth of which we cannot even begin to plumb."),
 
     is_within_realm = function(pos)
       -- return true if pos is in the cloudlands
-      -- (Using a simple comparison because this function should be fast)
-      return pos.y > cloudlands.realm_boundary_height
+      -- I'm doing this based off height for speed, so it sometimes gets it wrong when the 
+      -- Hallelujah mountains start reaching the ground.
+      local largestCoreType  = cloudlands.coreTypes[1] -- the first island type is the biggest/thickest    
+      local island_bottom = ALTITUDE - (largestCoreType.depthMax * 0.66) + round(noise_heightMap:get2d({x = pos.x, y = pos.z}))
+      return pos.y > math_max(40, island_bottom)
     end,
 
     find_realm_anchorPos = function(surface_anchorPos)
@@ -470,7 +473,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
           "cloudlands_portal",
           {x = island.x, y = 0, z = island.z},
           island.radius * 0.9,                  -- islands normally don't reach their full radius. Ensure this distance limit encompasses any location find_nearest_island_location_for_portal() can return.
-          cloudlands.realm_boundary_height + 1  -- a y_factor of 0 makes the search ignore the altitude of the portals (as long as they are in the Cloudlands realm)
+          0 -- a y_factor of 0 makes the search ignore the altitude of the portals (as long as they are in the Cloudlands realm)
         )
         if existing_portal_location ~= nil then
           return existing_portal_location, existing_portal_orientation
@@ -509,11 +512,6 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     end
 
   })
-
-  -- Store a "realm_boundary_height", above which is probably cloudlands, and below which is probably the native mapgen
-  -- You must construct a portal below this realm_boundary_height for it to take you to the cloudlands.
-  local maxMapgenHeight  = 50 -- not really the max, close enough
-  cloudlands.realm_boundary_height = math_max(maxMapgenHeight, round((maxMapgenHeight + (ALTITUDE - ALTITUDE_AMPLITUDE)) / 2))
 end
 
 --[[==============================
@@ -1201,7 +1199,7 @@ local function addCores(coreList, coreType, x1, z1, x2, z2)
 
           if nexusConditionMet then
             local radius     = (coreType.radiusMax + prng:next(0, coreType.radiusMax) * 2) / 3 -- give a 33%/66% weighting split between max-radius and random
-            local depth      = (coreType.depthMax + prng:next(0, coreType.depthMax) * 2) / 2
+            local depth      = (coreType.depthMax  + prng:next(0, coreType.depthMax)  * 2) / 2 -- ERROR!! fix this bug! should be dividing by 3. But should not change worldgen now, so adjust depthMax of islands so nothing changes when bug is fixed?
             local thickness  = prng:next(0, coreType.thicknessMax)
 
 
@@ -2651,7 +2649,7 @@ local function on_generated(minp, maxp, blockseed)
 
   local largestCoreType  = cloudlands.coreTypes[1] -- the first island type is the biggest/thickest
   local maxCoreThickness = largestCoreType.thicknessMax
-  local maxCoreDepth     = largestCoreType.radiusMax * 3 / 2
+  local maxCoreDepth     = largestCoreType.radiusMax * 3 / 2 -- todo: not sure why this is radius based and not maxDepth based??
   local maxSufaceRise    = 3 * (maxCoreThickness + 1)
 
   if minp.y > ALTITUDE + (ALTITUDE_AMPLITUDE + maxSufaceRise + 10) or   -- the 10 is an arbitrary number because sometimes the noise values exceed their normal range.
