@@ -241,26 +241,24 @@ end
 
 local interop = {}
 -- returns the id of the first name in the list that resolves to a node id, or nodeId_ignore if not found
-interop.find_node_id = function (node_aliases)
+interop.find_node_id = function (node_contender_names)
   local result = nodeId_ignore
-  for _,alias in ipairs(node_aliases) do
+  for _,contenderName in ipairs(node_contender_names) do
 
-    if minetest.registered_nodes[alias] ~= nil then result = minetest.get_content_id(alias) end
-    --if DEBUG then minetest.log("info", alias .. " returned " .. result) end
-
-    if result == nodeId_ignore then
-      -- registered_aliases isn't documented - not sure I'm using it right
-      local altAlias = minetest.registered_aliases[alias]
-      if altAlias ~= nil then result = minetest.get_content_id(altAlias) end
+    local nonAliasName = minetest.registered_aliases[contenderName] or contenderName
+    if minetest.registered_nodes[nonAliasName] ~= nil then 
+      result = minetest.get_content_id(nonAliasName)
     end
+
+    --if DEBUG then minetest.log("info", contenderName .. " returned " .. result) end
     if result ~= nodeId_ignore then return result end
   end
   return result
 end
 
 -- returns the name of the first name in the list that resolves to a node id, or 'ignore' if not found
-interop.find_node_name = function (node_aliases)
-  return minetest.get_name_from_content_id(interop.find_node_id(node_aliases))
+interop.find_node_name = function (node_contender_names)
+  return minetest.get_name_from_content_id(interop.find_node_id(node_contender_names))
 end
 
 -- returns the node name of the clone node.
