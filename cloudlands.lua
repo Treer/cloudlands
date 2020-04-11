@@ -242,9 +242,10 @@ end
 local interop = {}
 -- returns the id of the first name in the list that resolves to a node id, or nodeId_ignore if not found
 interop.find_node_id = function (node_aliases)
-  local result
+  local result = nodeId_ignore
   for _,alias in ipairs(node_aliases) do
-    result = minetest.get_content_id(alias)
+
+    if minetest.registered_nodes[alias] ~= nil then result = minetest.get_content_id(alias) end
     --if DEBUG then minetest.log("info", alias .. " returned " .. result) end
 
     if result == nodeId_ignore then
@@ -302,6 +303,17 @@ interop.get_biome_key = function(pos)
     return biomeinfo.get_v6_biome(pos)
   else
     return minetest.get_biome_data(pos).biome
+  end
+end
+
+-- returns true if filename is a file that exists.
+interop.file_exists = function(filename)
+  local f = io.open(filename, "r")
+  if f == nil then
+    return false
+  else
+    f:close()
+    return true
   end
 end
 
@@ -605,7 +617,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
     for i,tree in pairs(SkyTrees.schematicInfo) do
       local fullFilename = minetest.get_modpath(SkyTrees.MODNAME) .. DIR_DELIM .. tree.filename
 
-      if not file_exists(fullFilename) then
+      if not interop.file_exists(fullFilename) then
         -- remove the schematic from the list
         SkyTrees.schematicInfo[i] = nil
       else
@@ -1880,7 +1892,7 @@ local eggTextureName = "default_jungleleaves.png" -- called this in default/Voxe
 if minetest.get_modpath("ethereal") ~= nil then eggTextureName = "ethereal_frost_leaves.png" end -- called "ethereal_frost_leaves.png" in ethereal
 -- Since "secret:fossilized_egg" doesn't use this mod's name for the prefix, we can't assume
 -- another mod isn't also using/providing it
-if minetest.registered_nodes[eggTextureName] == nil then
+if minetest.registered_nodes[nodeName_egg] == nil then
   minetest.register_node(
     ":"..nodeName_egg,
     {
