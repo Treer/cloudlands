@@ -7,6 +7,7 @@ local LOWLAND_BIOME_ALTITUDE = 10       -- Higher than beaches, lower than mount
 local VINE_COVERAGE          = 0.3      -- set to 0 to turn off vines
 local REEF_RARITY            = 0.015    -- Chance of a viable island having a reef or atoll
 local TREE_RARITY            = 0.06     -- Chance of a viable island having a giant tree growing out of it
+local PORTAL_RARITY          = 0.04     -- Chance of a viable island having some ancient portalstone on it (If portals API available and ENABLE_PORTALS is true)
 local BIOLUMINESCENCE        = false or -- Allow giant trees variants which have glowing parts
                                minetest.get_modpath("glowtest")   ~= nil or
                                minetest.get_modpath("ethereal")   ~= nil or
@@ -319,42 +320,41 @@ end
               Portals
     ==============================]]--
 
+local addDetail_ancientPortal = nil;
+
 if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_exists("nether") and nether.register_portal ~= nil then
   -- The Portals API is available
   -- Register a player-buildable portal to Hallelujah Mountains.
 
-  -- returns nil if no suitable location could be found, otherwise returns (portal_pos, island_info)
-  local function find_nearest_island_location_for_portal(surface_x, surface_z)
+
+  -- returns a position on the island which is suitable for a portal to be placed, or nil if none can be found
+  local function find_potential_portal_location_on_island(island_info)
 
     local result = nil
 
-    local island = cloudlands.find_nearest_island(surface_x, surface_z, 75)
-    if island == nil then island = cloudlands.find_nearest_island(surface_x, surface_z, 150) end
-    if island == nil then island = cloudlands.find_nearest_island(surface_x, surface_z, 400) end
-
-    if island ~= nil then
-      local searchRadius = island.radius * 0.67 -- islands normally don't reach their full radius, and lets not put portals too near the edge
+    if island_info ~= nil then
+      local searchRadius = island_info.radius * 0.6 -- islands normally don't reach their full radius, and lets not put portals too near the edge
       local coreList = cloudlands.get_island_details(
-        {x = island.x - searchRadius, z = island.z - searchRadius},
-        {x = island.x + searchRadius, z = island.z + searchRadius}
+        {x = island_info.x - searchRadius, z = island_info.z - searchRadius},
+        {x = island_info.x + searchRadius, z = island_info.z + searchRadius}
       );
 
       -- Deterministically sample the island for a low location that isn't water.
       -- Seed the prng so this function always returns the same coords for the island
-      local prng = PcgRandom(island.x * 65732 + island.z * 729 + minetest.get_mapgen_setting("seed") * 3)
+      local prng = PcgRandom(island_info.x * 65732 + island_info.z * 729 + minetest.get_mapgen_setting("seed") * 3)
       local positions = {}
 
       for attempt = 1, 15 do -- how many attempts we'll make at finding a good location
         local angle = (prng:next(0, 10000) / 10000) * 2 * PI
         local distance = math_sqrt(prng:next(0, 10000) / 10000) * searchRadius
         if attempt == 1 then distance = 0 end -- Always sample the middle of the island, as it's the safest fallback location
-        local x = round(island.x + math_cos(angle) * distance)
-        local z = round(island.z + math_sin(angle) * distance)
+        local x = round(island_info.x + math_cos(angle) * distance)
+        local z = round(island_info.z + math_sin(angle) * distance)
         local y, isWater = cloudlands.get_height_at(x, z, coreList)
         if y ~= nil then
           local weight = 0
           if not isWater                          then weight = weight + 1 end -- avoid putting portals in ponds
-          if y >= island.y + ALTITUDE             then weight = weight + 2 end -- avoid putting portals down the sides of eroded cliffs
+          if y >= island_info.y + ALTITUDE             then weight = weight + 2 end -- avoid putting portals down the sides of eroded cliffs
           positions[#positions + 1] = {x = x, y = y + 1, z = z, weight = weight}
         end
       end
@@ -380,6 +380,23 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
           break
         end
       end
+    end
+
+    return result
+  end
+
+
+  -- returns nil if no suitable location could be found, otherwise returns (portal_pos, island_info)
+  local function find_nearest_island_location_for_portal(surface_x, surface_z)
+
+    local result = nil
+
+    local island = cloudlands.find_nearest_island(surface_x, surface_z, 75)
+    if island == nil then island = cloudlands.find_nearest_island(surface_x, surface_z, 150) end
+    if island == nil then island = cloudlands.find_nearest_island(surface_x, surface_z, 400) end
+
+    if island ~= nil then
+      result = find_potential_portal_location_on_island(island)
     end
 
     return result, island
@@ -442,6 +459,46 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     rotation = "random"
   })
 
+  addDetail_ancientPortal = function(core)
+
+    if (core.radius < 8 or PORTAL_RARITY == 0) then return false end -- avoid portals hanging off the side of small islands
+
+    local fastHash = 3
+    fastHash = (37 * fastHash) + core.x
+    fastHash = (37 * fastHash) + core.z
+    fastHash = (37 * fastHash) + math_floor(core.radius)
+    fastHash = (37 * fastHash) + math_floor(core.depth)
+    fastHash = (37 * fastHash) + ISLANDS_SEED
+    fastHash = (37 * fastHash) + 9354 -- to keep this probability distinct from reefs and atols
+    if (PORTAL_RARITY * 10000) < math_floor((math_abs(fastHash)) % 10000) then return false end
+
+    local portalPos = find_potential_portal_location_on_island(core)
+
+    if portalPos ~= nil then
+      local orientation = (fastHash % 2) * 90
+      portalPos.y = portalPos.y - ((core.x + core.z) % 3) -- partially bury some ancient portals
+
+      minetest.place_schematic(
+        portalPos,
+        {
+          size = {x = 4, y = 5, z = 1},
+          data = {
+              PN, PW, PW, PN,
+              PU,  _,  _, PU,
+              PU,  _,  _, PU,
+              PU,  _,  _, PU,
+              PN, PW, PW, PN
+          },
+        },
+        orientation,
+        { -- node replacements
+          ["default:obsidian"] = "cloudlands:ancient_portalstone",
+        },
+        true
+      )
+    end
+  end
+  
 
   nether.register_portal("cloudlands_portal", {
     shape               = nether.PortalShape_Traditional,
@@ -2591,7 +2648,10 @@ local function renderCores(cores, minp, maxp, blockseed)
     if GENERATE_ORES then minetest.generate_ores(vm) end
     minetest.generate_decorations(vm)
 
-    for _,core in ipairs(cores) do addDetail_skyTree(decorations, core, minp, maxp) end
+    for _,core in ipairs(cores) do 
+      addDetail_skyTree(decorations, core, minp, maxp) 
+      if addDetail_ancientPortal ~= nil then addDetail_ancientPortal(core) end
+    end
     for _,decoration in ipairs(decorations) do
       local nodeAtPos = minetest.get_node(decoration.pos)
       if nodeAtPos.name == "air" or nodeAtPos.name == "ignore" then minetest.set_node(decoration.pos, decoration.node) end
