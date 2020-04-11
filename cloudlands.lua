@@ -471,8 +471,8 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
         -- first before resorting to the island's default portal position
         local existing_portal_location, existing_portal_orientation = nether.find_nearest_working_portal(
           "cloudlands_portal",
-          {x = island.x, y = 0, z = island.z},
-          island.radius * 0.9,                  -- islands normally don't reach their full radius. Ensure this distance limit encompasses any location find_nearest_island_location_for_portal() can return.
+          {x = island.x, y = 100000, z = island.z}, -- Using 100000 for y to ensure the position is in the cloudlands realm and so find_nearest_working_portal() will only returns island portals.
+          island.radius * 0.9,                      -- Islands normally don't reach their full radius. Ensure this distance limit encompasses any location find_nearest_island_location_for_portal() can return.
           0 -- a y_factor of 0 makes the search ignore the altitude of the portals (as long as they are in the Cloudlands realm)
         )
         if existing_portal_location ~= nil then
@@ -483,6 +483,26 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
       return destination_pos
     end,
 
+    find_surface_anchorPos = function(realm_anchorPos)
+      -- This function isn't needed since find_surface_target_y() will be used by default, 
+      -- but by implementing it I can look for any existing nearby portals before falling
+      -- back to find_surface_target_y.
+
+      -- Using -100000 for y to ensure the position is outside the cloudlands realm and so 
+      -- find_nearest_working_portal() will only returns surface portals.
+      -- a y_factor of 0 makes the search ignore the -100000 altitude of the portals (as 
+      -- long as they are outside the cloudlands realm)
+      local existing_portal_location, existing_portal_orientation =
+        nether.find_nearest_working_portal("cloudlands_portal", {x = realm_anchorPos.x, y = -100000, z = realm_anchorPos.z}, 150, 0)
+
+      if existing_portal_location ~= nil then
+        return existing_portal_location, existing_portal_orientation
+      else
+        local y = nether.find_surface_target_y(realm_anchorPos.x, realm_anchorPos.z, "cloudlands_portal")
+        return {x = realm_anchorPos.x, y = y, z = realm_anchorPos.z}
+      end
+    end,
+
     on_ignite = function(portalDef, anchorPos, orientation)
       -- make some sparks fly on ignition
       local p1, p2 = portalDef.shape:get_p1_and_p2_from_anchorPos(anchorPos, orientation)
@@ -491,13 +511,20 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
       local textureName = portalDef.particle_texture
       if type(textureName) == "table" then textureName = textureName.name end
 
-      minetest.add_particlespawner({
-        amount = 110,
-        time   = 0.1,
-        minpos = {x = pos.x - 0.5, y = pos.y - 1.2, z = pos.z - 0.5},
-        maxpos = {x = pos.x + 0.5, y = pos.y + 1.2, z = pos.z + 0.5},
-        minvel = {x = -5, y = -1, z = -5},
-        maxvel = {x =  5, y =  1, z =  5},
+      local velocity
+      if orientation == 0 then
+        velocity = {x = 0, y = 0, z = 7}
+      else
+        velocity = {x = 7, y = 0, z = 0}
+      end
+
+      local particleSpawnerDef = {
+        amount = 180,
+        time   = 0.15,
+        minpos = {x = pos.x - 1, y = pos.y - 1.5, z = pos.z - 1},
+        maxpos = {x = pos.x + 1, y = pos.y + 1.5, z = pos.z + 1},
+        minvel = velocity,
+        maxvel = velocity,
         minacc = {x =  0, y =  0, z =  0},
         maxacc = {x =  0, y =  0, z =  0},
         minexptime = 0.1,
@@ -508,7 +535,13 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
         texture = textureName .. "^[colorize:#99F:alpha",
         animation = portalDef.particle_texture_animation,
         glow = 8
-      })
+      }
+
+      minetest.add_particlespawner(particleSpawnerDef)
+
+      velocity = vector.multiply(velocity, -1);
+      particleSpawnerDef.minvel, particleSpawnerDef.maxvel = velocity, velocity
+      minetest.add_particlespawner(particleSpawnerDef)
     end
 
   })
