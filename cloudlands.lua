@@ -31,6 +31,7 @@ local NODENAMES_HANGINGVINE = {"vines:vine_end"}
 local NODENAMES_HANGINGROOT = {"vines:root_end"}
 local NODENAMES_TREEWOOD    = {"mcl_core:tree",   "default:tree",   "mapgen_tree"}
 local NODENAMES_TREELEAVES  = {"mcl_core:leaves", "default:leaves", "mapgen_leaves"}
+local NODENAMES_FRAMEGLASS  = {"xpanes:obsidian_pane_flat", "xpanes:pane_flat", "default:glass", "xpanes:pane_natural_flat", "mcl_core:glass"}
 
 local MODNAME                    = minetest.get_current_modname()
 local VINES_REQUIRED_HUMIDITY    = 49
@@ -1943,18 +1944,21 @@ end
 
 
 local nodeName_egg = "secret:fossilized_egg"
-local eggTextureName = "default_jungleleaves.png" -- called this in default/Voxelgarden/MineClone2
-if minetest.get_modpath("ethereal") ~= nil then eggTextureName = "ethereal_frost_leaves.png" end -- called "ethereal_frost_leaves.png" in ethereal
+local eggTextureBaseName = "default_jungleleaves.png" -- called this in default/Voxelgarden/MineClone2
+if minetest.get_modpath("ethereal") ~= nil then eggTextureBaseName = "ethereal_frost_leaves.png" end -- called "ethereal_frost_leaves.png" in ethereal
+
+-- [Ab]Use a leaf texture. Originally this was to avoid needing to include an egg texture (extra files) and 
+-- exposing that the mod contains secrets, however both those reasons are obsolete and the mod could have textures
+-- added in future
+local eggTextureName = eggTextureBaseName.."^[colorize:#280040E0^[noalpha"
+
 -- Since "secret:fossilized_egg" doesn't use this mod's name for the prefix, we can't assume
 -- another mod isn't also using/providing it
 if minetest.registered_nodes[nodeName_egg] == nil then
   minetest.register_node(
     ":"..nodeName_egg,
     {
-      tiles = {
-        -- [Ab]Use a leaf texture to avoid needing to include an egg texture and exposing that the mod contains secrets
-        eggTextureName.."^[colorize:#280040E0^[noalpha"
-      },
+      tiles = { eggTextureName },
       description = S("Fossilized Egg"),
       groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
       drawtype = "nodebox",
@@ -1972,6 +1976,80 @@ if minetest.registered_nodes[nodeName_egg] == nil then
     }
   )
 end
+
+-- Allow the player to craft their egg into an egg in a display case
+local nodeName_eggDisplay = nodeName_egg .. "_display"
+local nodeName_displayPane = interop.find_node_name(NODENAMES_FRAMEGLASS)
+local frameTexture = nill
+if minetest.get_modpath("default") ~= nil then 
+  --frameTexture = "default_obsidian_glass.png"
+  -- Oddly, I think the abomination made out of default_wood texture modifiers looks more suitable as 
+  -- a display case than default_obsidian_glass.
+  frameTexture = "([combine:16x16:0,0=default_wood.png\\^[colorize\\:black\\:170:1,1=default_wood.png\\^[colorize\\:#0F0\\:255\\^[resize\\:14x14^[makealpha:0,255,0)"
+elseif minetest.get_modpath("mcl_core") ~= nil then 
+  -- I can't find a good frame texture in MineClone, perhaps it's time for cloudlands to contain textures.
+  -- frameTexture = "default_glass.png" 
+  frameTexture = "([combine:16x16:0,0=default_wood.png\\^[colorize\\:black\\:170:1,1=default_wood.png\\^[colorize\\:#0F0\\:255\\^[resize\\:14x14^[makealpha:0,255,0)"
+end
+
+-- Since "secret:fossilized_egg_display" doesn't use this mod's name as the prefix, we shouldn't
+-- assume another mod isn't also using/providing it.
+if frameTexture ~= nil and nodeName_displayPane ~= "ignore" and minetest.registered_nodes[nodeName_eggDisplay] == nil then
+  minetest.register_node(
+    ":"..nodeName_eggDisplay,
+    {
+      tiles = { eggTextureName .. "^" .. frameTexture },
+      description = S("Fossil Display"),
+      groups = {oddly_breakable_by_hand = 3},--, not_in_creative_inventory = 1},
+      drop = "",
+      sounds = minetest.registered_nodes[nodeName_displayPane].sounds,
+      drawtype = "nodebox",
+      paramtype = "light",
+      node_box = {
+        type = "fixed",
+        fixed = {
+          {-0.066666, -0.5,    -0.066666, 0.066666, 0.4375, 0.066666}, -- column1
+          {-0.133333, -0.5,    -0.133333, 0.133333, 0.375,  0.133333}, -- column2
+          {-0.2,      -0.4375, -0.2,      0.2,      0.285,   0.2     }, -- column3
+          {-0.2,      -0.36,   -0.28,     0.2,      0.14,  0.28    }, -- side1
+          {-0.28,     -0.36,   -0.2,      0.28,     0.14,  0.2     }, -- side2
+
+          -- corner frame (courtesy of NodeBox Editor Abuse mod)
+          {-0.4375, 0.4375, 0.4375, 0.4375, 0.5, 0.5},
+          {-0.4375, -0.5, 0.4375, 0.4375, -0.4375, 0.5},
+          {-0.5, -0.5, 0.4375, -0.4375, 0.5, 0.5},
+          {0.4375, -0.5, 0.4375, 0.5, 0.5, 0.5},
+          {-0.5, 0.4375, -0.4375, -0.4375, 0.5, 0.4375},
+          {-0.5, -0.5, -0.4375, -0.4375, -0.4375, 0.4375},
+          {0.4375, 0.4375, -0.4375, 0.5, 0.5, 0.4375},
+          {0.4375, -0.5, -0.4375, 0.5, -0.4375, 0.4375},
+          {-0.5, 0.4375, -0.5, 0.5, 0.5, -0.4375},
+          {-0.5, -0.5, -0.5, 0.5, -0.4375, -0.4375},
+          {0.4375, -0.4375, -0.5, 0.5, 0.4375, -0.4375},
+          {-0.5, -0.4375, -0.5, -0.4375, 0.4375, -0.4375}          
+        }
+      },
+      after_destruct = function(pos,node)
+        minetest.set_node(pos, {name = nodeName_egg, param2 = node.param2})
+      end,  
+    }
+  )
+
+  minetest.register_craft({
+    output = nodeName_eggDisplay,
+    type = "shapeless",
+    recipe = {
+      nodeName_egg,
+      nodeName_displayPane,
+      nodeName_displayPane,
+      nodeName_displayPane,
+      nodeName_displayPane,
+      nodeName_displayPane,
+      nodeName_displayPane
+    },
+  })
+end
+
 local nodeId_egg        = minetest.get_content_id(nodeName_egg)
 local nodeId_airStandIn = minetest.get_content_id(interop.register_clone("air"))
 

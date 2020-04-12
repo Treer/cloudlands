@@ -13,6 +13,7 @@ Construction requires 14 blocks of ancient portalstone. We have no knowledge of 
 
 Dead bleached wood=
 Diary of Bert Shackleton=
+Fossil Display=
 Fossilized Egg=
 Giant Ziricote=
 Giant tree=
