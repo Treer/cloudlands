@@ -2000,7 +2000,7 @@ if frameTexture ~= nil and nodeName_displayPane ~= "ignore" and minetest.registe
     {
       tiles = { eggTextureName .. "^" .. frameTexture },
       description = S("Fossil Display"),
-      groups = {oddly_breakable_by_hand = 3},--, not_in_creative_inventory = 1},
+      groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
       drop = "",
       sounds = minetest.registered_nodes[nodeName_displayPane].sounds,
       drawtype = "nodebox",
