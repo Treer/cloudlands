@@ -6,7 +6,7 @@ local LOWLAND_BIOMES         = false or -- If true then determine an island's bi
 local LOWLAND_BIOME_ALTITUDE = 10       -- Higher than beaches, lower than mountains (See LOWLAND_BIOMES)
 local VINE_COVERAGE          = 0.3      -- set to 0 to turn off vines
 local REEF_RARITY            = 0.015    -- Chance of a viable island having a reef or atoll
-local TREE_RARITY            = 0.06     -- Chance of a viable island having a giant tree growing out of it
+local TREE_RARITY            = 0.08     -- Chance of a viable island having a giant tree growing out of it
 local PORTAL_RARITY          = 0.04     -- Chance of a viable island having some ancient portalstone on it (If portals API available and ENABLE_PORTALS is true)
 local BIOLUMINESCENCE        = false or -- Allow giant trees variants which have glowing parts
                                minetest.get_modpath("glowtest")   ~= nil or
@@ -1701,7 +1701,7 @@ local function addDetail_skyReef(decoration_list, core, data, area, minp, maxp)
   fastHash = (37 * fastHash) + math_floor(core.depth)
   if ISLANDS_SEED ~= 1000 then fastHash = (37 * fastHash) + ISLANDS_SEED end
   local rarityAdj = 1
-  if core.type.requiresNexus and isAtoll then rarityAdj = 4 end -- humongous islands are very rare, and look good as a atoll
+  if core.type.requiresNexus and isAtoll then rarityAdj = 4 end -- humongous islands are very rare, and look good as an atoll
   if (REEF_RARITY * rarityAdj * 1000) < math_floor((math_abs(fastHash)) % 1000) then return false end
 
   local coreX = core.x --save doing a table lookup in the loop
