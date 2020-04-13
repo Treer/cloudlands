@@ -932,7 +932,8 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       {
         tiles = { heartwoodTexture },
         description = S("Heart of the Tree"),
-        groups = {oddly_breakable_by_hand = 3},
+        groups = {oddly_breakable_by_hand = 3, handy = 1},
+        _mcl_hardness = 0.4,
         drawtype = "nodebox",
         paramtype = "light",
         light_source = heartwoodGlow, -- plants can grow under the heart of the Tree
@@ -1960,7 +1961,8 @@ if minetest.registered_nodes[nodeName_egg] == nil then
     {
       tiles = { eggTextureName },
       description = S("Fossilized Egg"),
-      groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
+      groups = {oddly_breakable_by_hand = 3, handy = 1, not_in_creative_inventory = 1},
+      _mcl_hardness = 0.4,
       drawtype = "nodebox",
       paramtype = "light",
       node_box = {
@@ -1979,7 +1981,7 @@ end
 
 -- Allow the player to craft their egg into an egg in a display case
 local nodeName_eggDisplay = nodeName_egg .. "_display"
-local nodeName_displayPane = interop.find_node_name(NODENAMES_FRAMEGLASS)
+local nodeName_frameGlass = interop.find_node_name(NODENAMES_FRAMEGLASS)
 local frameTexture = nill
 if minetest.get_modpath("default") ~= nil then 
   --frameTexture = "default_obsidian_glass.png"
@@ -1994,15 +1996,16 @@ end
 
 -- Since "secret:fossilized_egg_display" doesn't use this mod's name as the prefix, we shouldn't
 -- assume another mod isn't also using/providing it.
-if frameTexture ~= nil and nodeName_displayPane ~= "ignore" and minetest.registered_nodes[nodeName_eggDisplay] == nil then
+if frameTexture ~= nil and nodeName_frameGlass ~= "ignore" and minetest.registered_nodes[nodeName_eggDisplay] == nil then
   minetest.register_node(
     ":"..nodeName_eggDisplay,
     {
       tiles = { eggTextureName .. "^" .. frameTexture },
       description = S("Fossil Display"),
       groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
+      _mcl_hardness = 0.2,
       drop = "",
-      sounds = minetest.registered_nodes[nodeName_displayPane].sounds,
+      sounds = minetest.registered_nodes[nodeName_frameGlass].sounds,
       drawtype = "nodebox",
       paramtype = "light",
       node_box = {
@@ -2035,19 +2038,26 @@ if frameTexture ~= nil and nodeName_displayPane ~= "ignore" and minetest.registe
     }
   )
 
-  minetest.register_craft({
-    output = nodeName_eggDisplay,
-    type = "shapeless",
-    recipe = {
-      nodeName_egg,
-      nodeName_displayPane,
-      nodeName_displayPane,
-      nodeName_displayPane,
-      nodeName_displayPane,
-      nodeName_displayPane,
-      nodeName_displayPane
-    },
-  })
+  if minetest.get_modpath("xpanes") ~= nil then
+    minetest.register_craft({
+        output = nodeName_eggDisplay,
+        recipe = {
+            {"group:stick", "group:pane", "group:stick"},
+            {"group:pane",  nodeName_egg, "group:pane"},
+            {"group:stick", "group:pane", "group:stick"}
+        }
+    })
+  else
+    -- Game doesn't have glass panes, so just use glass
+    minetest.register_craft({
+      output = nodeName_eggDisplay,
+      recipe = {
+          {"group:stick",       nodeName_frameGlass, "group:stick"},
+          {nodeName_frameGlass, nodeName_egg,        nodeName_frameGlass},
+          {"group:stick",       nodeName_frameGlass, "group:stick"}
+      }
+    })
+  end
 end
 
 local nodeId_egg        = minetest.get_content_id(nodeName_egg)
@@ -2726,7 +2736,8 @@ local function renderCores(cores, minp, maxp, blockseed)
     if GENERATE_ORES then minetest.generate_ores(vm) end
     minetest.generate_decorations(vm)
 
-    for _,core in ipairs(cores) do 
+    for _,core in ipairs(cores) do
+      -- todo: can this be moved to after vm:write_to_map(), or addDetail_ancientPortal add the scematic to vm
       addDetail_skyTree(decorations, core, minp, maxp) 
       if addDetail_ancientPortal ~= nil then addDetail_ancientPortal(core) end
     end
