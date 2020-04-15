@@ -23,11 +23,11 @@ Heart of the Tree=
 Leaves of a giant tree=
 Sakura blossom=
 
-The aerostat is lost.@n@nHowever, salvage attempts throughout the night managed to@nsave most provisions before it finally broke apart and fell.@n@n                                     ---@=@=@=@=---@n@nThis island is highly exposed and the weather did not treat@nthe tents well. We have enlarged a sheltered crag in the @1,@nbut it is laborous work and the condition of some of the party@nis becoming cause for concern.@n@nQuite a journey is now required, we cannot stay - nobody will@nlook for us here. McNish is attempting to strengthen the gliders.@n@n                                     ---@=@=@=@=---@n=
+The aerostat is lost.@n@nHowever, salvage attempts throughout the night managed to@nsave most provisions before it finally broke apart and fell.@n@n                                     ---@=@=@=@=---@n@nThis island is highly exposed and the weather did not treat@nthe tents well. We have enlarged a sheltered crag in the @1,@nbut it is laborous work and the condition of some of the party@nis becoming cause for concern.@n@nQuite a journey is now required, we cannot stay - nobody will@nlook for us here. McNish is attempting to strengthen the gliders.@n@n                                     ---@=@=@=@=---=
 
 The only portal we managed to scavenge enough portalstone to build took us to a land of floating islands. There were hills and forests and even water up there, but the edges are a perilous drop — a depth of which we cannot even begin to plumb.=
 
-Weddell Outpost=
+Weddell Outpost, November 21=
 Wisteria blossom=
 ice=
 rock=

@@ -13,25 +13,27 @@ local BIOLUMINESCENCE        = false or -- Allow giant trees variants which have
                                minetest.get_modpath("ethereal")   ~= nil or
                                minetest.get_modpath("glow")       ~= nil or
                                minetest.get_modpath("nsspf")      ~= nil or
+                               minetest.get_modpath("nightscape") ~= nil or
                                minetest.get_modpath("moonflower") ~= nil -- a world using any of these mods is OK with bioluminescence
 local ENABLE_PORTALS         = true     -- Whether to allow players to build portals to islands. Portals require the Nether mod.
 local EDDYFIELD_SIZE         = 1        -- size of the "eddy field-lines" that smaller islands follow
 local ISLANDS_SEED           = 1000     -- You only need to change this if you want to try different island layouts without changing the map seed
 
 -- Some lists of known node aliases (any nodes which can't be found won't be used).
-local NODENAMES_STONE       = {"mapgen_stone",           "mcl_core:stone",           "default:stone"}
-local NODENAMES_WATER       = {"mapgen_water_source",    "mcl_core:water_source",    "default:water_source"}
-local NODENAMES_ICE         = {"mapgen_ice",             "mcl_core:ice",             "pedology:ice_white", "default:ice"}
-local NODENAMES_GRAVEL      = {"mapgen_gravel",          "mcl_core:gravel",          "default:gravel"}
-local NODENAMES_GRASS       = {"mapgen_dirt_with_grass", "mcl_core:dirt_with_grass", "default:dirt_with_grass"} -- currently only used with games that don't register biomes, e.g. Hades Revisted
-local NODENAMES_DIRT        = {"mapgen_dirt",            "mcl_core:dirt",            "default:dirt"}            -- currently only used with games that don't register biomes, e.g. Hades Revisted
-local NODENAMES_SILT        = {"mapgen_silt", "default:silt", "aotearoa:silt", "darkage:silt", "mapgen_sand", "mcl_core:sand", "default:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
-local NODENAMES_VINES       = {"mcl_core:vine", "vines:side_end", "ethereal:vine"} -- ethereal vines don't grow, so only select that if there's nothing else.
+local NODENAMES_STONE       = {"mapgen_stone",           "mcl_core:stone",           "default:stone",        "main:stone"}
+local NODENAMES_WATER       = {"mapgen_water_source",    "mcl_core:water_source",    "default:water_source", "main:water"}
+local NODENAMES_ICE         = {"mapgen_ice",             "mcl_core:ice",             "pedology:ice_white", "default:ice", "main:ice"}
+local NODENAMES_GRAVEL      = {"mapgen_gravel",          "mcl_core:gravel",          "default:gravel",       "main:gravel"}
+local NODENAMES_GRASS       = {"mapgen_dirt_with_grass", "mcl_core:dirt_with_grass", "default:dirt_with_grass", "main:grass"} -- currently only used with games that don't register biomes, e.g. Hades Revisted
+local NODENAMES_DIRT        = {"mapgen_dirt",            "mcl_core:dirt",            "default:dirt",         "main:dirt"}            -- currently only used with games that don't register biomes, e.g. Hades Revisted
+local NODENAMES_SILT        = {"mapgen_silt", "default:silt", "aotearoa:silt", "darkage:silt", "mapgen_sand", "mcl_core:sand", "default:sand", "main:sand"} -- silt isn't a thing yet, but perhaps one day it will be. Use sand for the bottom of ponds in the meantime.
+local NODENAMES_VINES       = {"mcl_core:vine", "vines:side_end", "ethereal:vine", "main:vine"} -- ethereal vines don't grow, so only select that if there's nothing else.
 local NODENAMES_HANGINGVINE = {"vines:vine_end"}
 local NODENAMES_HANGINGROOT = {"vines:root_end"}
-local NODENAMES_TREEWOOD    = {"mcl_core:tree",   "default:tree",   "mapgen_tree"}
-local NODENAMES_TREELEAVES  = {"mcl_core:leaves", "default:leaves", "mapgen_leaves"}
-local NODENAMES_FRAMEGLASS  = {"xpanes:obsidian_pane_flat", "xpanes:pane_flat", "default:glass", "xpanes:pane_natural_flat", "mcl_core:glass"}
+local NODENAMES_TREEWOOD    = {"mcl_core:tree",   "default:tree",   "mapgen_tree",   "main:tree"}
+local NODENAMES_TREELEAVES  = {"mcl_core:leaves", "default:leaves", "mapgen_leaves", "main:leaves"}
+local NODENAMES_FRAMEGLASS  = {"xpanes:obsidian_pane_flat", "xpanes:pane_flat", "default:glass", "xpanes:pane_natural_flat", "mcl_core:glass", "walls:window"}
+local NODENAMES_WOOD        = {"default:wood", "mcl_core:wood", "main:wood"}
 
 local MODNAME                    = minetest.get_current_modname()
 local VINES_REQUIRED_HUMIDITY    = 49
@@ -49,7 +51,7 @@ local DEBUG_SKYTREES         = false -- dev logging
 -- notice problems requiring it.
 local OVERDRAW = 0
 
-local S = minetest.get_translator(minetest.get_current_modname())
+local S = minetest.get_translator(MODNAME)
 
 cloudlands = {} -- API functions can be accessed via this global:
                 -- cloudlands.get_island_details(minp, maxp)                   -- returns an array of island-information-tables, y is ignored.
@@ -172,7 +174,7 @@ local noise_surfaceMap
 local noise_skyReef
 
 local worldSeed
-local nodeId_ignore   = minetest.CONTENT_IGNORE
+local nodeId_ignore = minetest.CONTENT_IGNORE
 local nodeId_air
 local nodeId_stone
 local nodeId_grass
@@ -183,6 +185,7 @@ local nodeId_silt
 local nodeId_gravel
 local nodeId_vine
 local nodeName_vine
+local nodeName_ignore = minetest.get_name_from_content_id(nodeId_ignore)
 
 local REQUIRED_DENSITY = 0.4
 
@@ -242,25 +245,45 @@ if isMapgenV6 then
 end
 
 local interop = {}
--- returns the id of the first name in the list that resolves to a node id, or nodeId_ignore if not found
+-- returns the id of the first nodename in the list that resolves to a node id, or nodeId_ignore if not found
 interop.find_node_id = function (node_contender_names)
   local result = nodeId_ignore
   for _,contenderName in ipairs(node_contender_names) do
 
     local nonAliasName = minetest.registered_aliases[contenderName] or contenderName
-    if minetest.registered_nodes[nonAliasName] ~= nil then 
+    if minetest.registered_nodes[nonAliasName] ~= nil then
       result = minetest.get_content_id(nonAliasName)
     end
 
-    --if DEBUG then minetest.log("info", contenderName .. " returned " .. result) end
+    --if DEBUG then minetest.log("info", contenderName .. " returned " .. result .. " (" .. minetest.get_name_from_content_id(result) .. ")") end
     if result ~= nodeId_ignore then return result end
   end
   return result
 end
 
--- returns the name of the first name in the list that resolves to a node id, or 'ignore' if not found
+-- returns the name of the first nodename in the list that resolves to a node id, or 'ignore' if not found
 interop.find_node_name = function (node_contender_names)
   return minetest.get_name_from_content_id(interop.find_node_id(node_contender_names))
+end
+
+interop.get_first_element_in_table = function(tbl)
+  for k,v in pairs(tbl) do return v end
+  return nil
+end
+
+-- returns the top-texture name of the first nodename in the list that resolves to a node id, or nil if not found
+interop.find_node_texture = function (node_contender_names)
+  local result = nil
+  local nodeName = minetest.get_name_from_content_id(interop.find_node_id(node_contender_names))
+  if nodeName ~= nil then
+    local node = minetest.registered_nodes[nodeName]
+    if node ~= nil then
+      result = node.tiles
+      if type(result) == "table" then result = result["name"] or interop.get_first_element_in_table(result) end -- incase it's not a string
+      if type(result) == "table" then result = result["name"] or interop.get_first_element_in_table(result) end -- incase multiple tile definitions
+    end
+  end
+  return result
 end
 
 -- returns the node name of the clone node.
@@ -315,6 +338,43 @@ interop.file_exists = function(filename)
     f:close()
     return true
   end
+end
+
+-- returns a written book item (technically an item stack), or nil if no books mod available
+interop.write_book = function(title, author, text, description)
+
+  local stackName_writtenBook
+  if minetest.get_modpath("mcl_books") then
+    stackName_writtenBook = "mcl_books:written_book"
+    text = title .. "\n\n" .. text -- MineClone2 books doen't show a title (or author)
+
+  elseif minetest.get_modpath("book") ~= nil then
+    stackName_writtenBook = "book:book_written"
+    text = "\n\n" .. text -- Crafter books put the text immediately under the title
+
+  elseif minetest.get_modpath("default") ~= nil then
+    stackName_writtenBook = "default:book_written"
+
+  else
+    return nil
+  end
+
+  local book_itemstack = ItemStack(stackName_writtenBook)
+  local book_data = {}
+  book_data.title = title
+  book_data.text  = text
+  book_data.owner = author
+  book_data.author = author
+  book_data.description = description
+  book_data.page = 1
+  book_data.page_max = 1
+  book_data.generation = 0
+  book_data["book.book_title"] = title -- Crafter book title
+  book_data["book.book_text"]  = text  -- Crafter book text
+
+  book_itemstack:get_meta():from_table({fields = book_data})
+
+  return book_itemstack
 end
 
 --[[==============================
@@ -406,6 +466,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
   -- Ideally the Nether mod will provide a block obtainable by exploring the Nether which is
   -- earmarked for mods like this one to use for portals, but until this happens I'll create
   -- our own tempory placeholder "portalstone".
+  -- The Portals API is currently provided by nether, which depends on default, so we can assume default textures are available
   local portalstone_end = "default_furnace_top.png^(default_ice.png^[opacity:120)^[multiply:#668"  -- this gonna look bad with non-default texturepacks, hopefully Nether mod will provide a real block
   local portalstone_side = "[combine:16x16:0,0=default_furnace_top.png:4,0=default_furnace_top.png:8,0=default_furnace_top.png:12,0=default_furnace_top.png:^(default_ice.png^[opacity:120)^[multiply:#668"
   minetest.register_node("cloudlands:ancient_portalstone", {
@@ -465,12 +526,12 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     if (core.radius < 8 or PORTAL_RARITY == 0) then return false end -- avoid portals hanging off the side of small islands
 
     local fastHash = 3
+    fastHash = (37 * fastHash) + 9354 -- to keep this probability distinct from reefs and atols
+    fastHash = (37 * fastHash) + ISLANDS_SEED
     fastHash = (37 * fastHash) + core.x
     fastHash = (37 * fastHash) + core.z
     fastHash = (37 * fastHash) + math_floor(core.radius)
     fastHash = (37 * fastHash) + math_floor(core.depth)
-    fastHash = (37 * fastHash) + ISLANDS_SEED
-    fastHash = (37 * fastHash) + 9354 -- to keep this probability distinct from reefs and atols
     if (PORTAL_RARITY * 10000) < math_floor((math_abs(fastHash)) % 10000) then return false end
 
     local portalPos = find_potential_portal_location_on_island(core)
@@ -499,7 +560,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
       )
     end
   end
-  
+
 
   nether.register_portal("cloudlands_portal", {
     shape               = nether.PortalShape_Traditional,
@@ -523,9 +584,9 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
 
     is_within_realm = function(pos)
       -- return true if pos is in the cloudlands
-      -- I'm doing this based off height for speed, so it sometimes gets it wrong when the 
+      -- I'm doing this based off height for speed, so it sometimes gets it wrong when the
       -- Hallelujah mountains start reaching the ground.
-      local largestCoreType  = cloudlands.coreTypes[1] -- the first island type is the biggest/thickest    
+      local largestCoreType  = cloudlands.coreTypes[1] -- the first island type is the biggest/thickest
       local island_bottom = ALTITUDE - (largestCoreType.depthMax * 0.66) + round(noise_heightMap:get2d({x = pos.x, y = pos.z}))
       return pos.y > math_max(40, island_bottom)
     end,
@@ -552,13 +613,13 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     end,
 
     find_surface_anchorPos = function(realm_anchorPos)
-      -- This function isn't needed since find_surface_target_y() will be used by default, 
+      -- This function isn't needed since find_surface_target_y() will be used by default,
       -- but by implementing it I can look for any existing nearby portals before falling
       -- back to find_surface_target_y.
 
-      -- Using -100000 for y to ensure the position is outside the cloudlands realm and so 
-      -- find_nearest_working_portal() will only returns surface portals.
-      -- a y_factor of 0 makes the search ignore the -100000 altitude of the portals (as 
+      -- Using -100000 for y to ensure the position is outside the cloudlands realm and so
+      -- find_nearest_working_portal() will only returns ground portals.
+      -- a y_factor of 0 makes the search ignore the -100000 altitude of the portals (as
       -- long as they are outside the cloudlands realm)
       local existing_portal_location, existing_portal_orientation =
         nether.find_nearest_working_portal("cloudlands_portal", {x = realm_anchorPos.x, y = -100000, z = realm_anchorPos.z}, 150, 0)
@@ -694,6 +755,11 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
       for key, value in pairs(trunkNode) do newTrunkNode[key] = value end
       newTrunkNode.name = SkyTrees.MODNAME .. ":" .. nodesuffix
       newTrunkNode.description = description
+      if newTrunkNode.paramtype2 == nil then newTrunkNode.paramtype2 = "facedir" end
+      if newTrunkNode.on_dig ~= nil and minetest.get_modpath("main") then
+        newTrunkNode.on_dig = nil -- Crafter has special trunk auto-digging logic that doesn't make sense for giant trees
+      end
+
       if dropsTemplateWood then
         newTrunkNode.drop = nodeName_templateWood
         if newTrunkNode.groups == nil then newTrunkNode.groups = {} end
@@ -1169,7 +1235,7 @@ if not minetest.global_exists("SkyTrees") then -- If SkyTrees added into other m
             if rotation ~= 0 then schematicCoords = rotatePositon(schematicCoords, schematicInfo.size, rotation) end
             local nodePos = vector.add(treePos, schematicCoords)
             local nodeToConstruct = minetest.get_node(nodePos)
-            if nodeToConstruct.name == "air" or nodeToConstruct.name == "ignore" then
+            if nodeToConstruct.name == "air" or nodeToConstruct.name == nodeName_ignore then
               --this is now normal - e.g. if vines are set to 'ignore' then the nodeToConstruct won't be there.
               --minetest.log("error", "nodesWithConstructor["..i.."] does not match schematic " .. schematicInfo.filename .. " at " .. nodePos.x..","..nodePos.y..","..nodePos.z.." rotation "..rotation)
             else
@@ -1917,38 +1983,35 @@ end
 -- We might not need this stand-in cobweb, but unless we go overboard on listing many
 -- optional dependencies we won't know whether there's a proper cobweb available to
 -- use until after it's too late to register this one.
-if minetest.get_modpath("default") then
-  -- the crack texture is probably available
-  local nodeName_standinCobweb = MODNAME .. ":cobweb"
-  minetest.register_node(
-    nodeName_standinCobweb,
-    {
-      tiles = {
-        -- [Ab]Use the crack texture to avoid needing to include a cobweb texture
-        "crack_anylength.png^[verticalframe:5:4^[brighten"
-      },
-      description = S("Cobweb"),
-      groups = {snappy = 3, liquid = 3, flammable = 3, not_in_creative_inventory = 1},
-      drawtype = "plantlike",
-      walkable = false,
-      liquid_viscosity = 8,
-      liquidtype = "source",
-      liquid_alternative_flowing = nodeName_standinCobweb,
-      liquid_alternative_source  = nodeName_standinCobweb,
-      liquid_renewable = false,
-      liquid_range = 0,
-      sunlight_propagates = true,
-      paramtype = "light"
-    }
-  )
-end
+local nodeName_standinCobweb = MODNAME .. ":cobweb"
+minetest.register_node(
+  nodeName_standinCobweb,
+  {
+    tiles = {
+      -- [Ab]Use the crack texture to avoid needing to include a cobweb texture
+      -- crack_anylength.png is required by the engine, so all games will have it.
+      "crack_anylength.png^[verticalframe:5:4^[brighten"
+    },
+    description = S("Cobweb"),
+    groups = {snappy = 3, liquid = 3, flammable = 3, not_in_creative_inventory = 1},
+    drawtype = "plantlike",
+    walkable = false,
+    liquid_viscosity = 8,
+    liquidtype = "source",
+    liquid_alternative_flowing = nodeName_standinCobweb,
+    liquid_alternative_source  = nodeName_standinCobweb,
+    liquid_renewable = false,
+    liquid_range = 0,
+    sunlight_propagates = true,
+    paramtype = "light"
+  }
+)
 
 
 local nodeName_egg = "secret:fossilized_egg"
-local eggTextureBaseName = "default_jungleleaves.png" -- called this in default/Voxelgarden/MineClone2
-if minetest.get_modpath("ethereal") ~= nil then eggTextureBaseName = "ethereal_frost_leaves.png" end -- called "ethereal_frost_leaves.png" in ethereal
+local eggTextureBaseName = interop.find_node_texture({"default:jungleleaves", "mcl_core:jungleleaves", "ethereal:frost_leaves", "main:leaves"})
 
--- [Ab]Use a leaf texture. Originally this was to avoid needing to include an egg texture (extra files) and 
+-- [Ab]Use a leaf texture. Originally this was to avoid needing to include an egg texture (extra files) and
 -- exposing that the mod contains secrets, however both those reasons are obsolete and the mod could have textures
 -- added in future
 local eggTextureName = eggTextureBaseName.."^[colorize:#280040E0^[noalpha"
@@ -1956,13 +2019,24 @@ local eggTextureName = eggTextureBaseName.."^[colorize:#280040E0^[noalpha"
 -- Since "secret:fossilized_egg" doesn't use this mod's name for the prefix, we can't assume
 -- another mod isn't also using/providing it
 if minetest.registered_nodes[nodeName_egg] == nil then
+
+  local fossilSounds = nil
+  local nodeName_stone = interop.find_node_name(NODENAMES_STONE)
+  if nodeName_stone ~= nodeName_ignore then fossilSounds = minetest.registered_nodes[nodeName_stone].sounds end
+
   minetest.register_node(
     ":"..nodeName_egg,
     {
       tiles = { eggTextureName },
       description = S("Fossilized Egg"),
-      groups = {oddly_breakable_by_hand = 3, handy = 1, not_in_creative_inventory = 1},
+      groups = {
+        oddly_breakable_by_hand = 3, -- MTG
+        handy = 1,                   -- MCL
+        stone = 1,                   -- Crafter needs to know the material in order to be breakable by hand
+        not_in_creative_inventory = 1
+      },
       _mcl_hardness = 0.4,
+      sounds = fossilSounds,
       drawtype = "nodebox",
       paramtype = "light",
       node_box = {
@@ -1982,27 +2056,25 @@ end
 -- Allow the player to craft their egg into an egg in a display case
 local nodeName_eggDisplay = nodeName_egg .. "_display"
 local nodeName_frameGlass = interop.find_node_name(NODENAMES_FRAMEGLASS)
+local woodTexture = interop.find_node_texture(NODENAMES_WOOD)
 local frameTexture = nil
-if minetest.get_modpath("default") ~= nil then 
-  --frameTexture = "default_obsidian_glass.png"
-  -- Oddly, I think the abomination made out of default_wood texture modifiers looks more suitable as 
-  -- a display case than default_obsidian_glass.
-  frameTexture = "([combine:16x16:0,0=default_wood.png\\^[colorize\\:black\\:170:1,1=default_wood.png\\^[colorize\\:#0F0\\:255\\^[resize\\:14x14^[makealpha:0,255,0)"
-elseif minetest.get_modpath("mcl_core") ~= nil then 
-  -- I can't find a good frame texture in MineClone, perhaps it's time for cloudlands to contain textures.
-  -- frameTexture = "default_glass.png" 
-  frameTexture = "([combine:16x16:0,0=default_wood.png\\^[colorize\\:black\\:170:1,1=default_wood.png\\^[colorize\\:#0F0\\:255\\^[resize\\:14x14^[makealpha:0,255,0)"
+if woodTexture ~= nil then
+  -- perhaps it's time for cloudlands to contain textures.
+  frameTexture = "([combine:16x16:0,0="..woodTexture.."\\^[colorize\\:black\\:170:1,1="..woodTexture.."\\^[colorize\\:#0F0\\:255\\^[resize\\:14x14^[makealpha:0,255,0)"
 end
 
 -- Since "secret:fossilized_egg_display" doesn't use this mod's name as the prefix, we shouldn't
 -- assume another mod isn't also using/providing it.
-if frameTexture ~= nil and nodeName_frameGlass ~= "ignore" and minetest.registered_nodes[nodeName_eggDisplay] == nil then
+if frameTexture ~= nil and nodeName_frameGlass ~= nodeName_ignore and minetest.registered_nodes[nodeName_eggDisplay] == nil then
   minetest.register_node(
     ":"..nodeName_eggDisplay,
     {
       tiles = { eggTextureName .. "^" .. frameTexture },
       description = S("Fossil Display"),
-      groups = {oddly_breakable_by_hand = 3, not_in_creative_inventory = 1},
+      groups = {
+        oddly_breakable_by_hand = 3,
+        glass = 1, -- Crafter needs to know the material in order to be breakable by hand
+        not_in_creative_inventory = 1},
       _mcl_hardness = 0.2,
       drop = "",
       sounds = minetest.registered_nodes[nodeName_frameGlass].sounds,
@@ -2029,12 +2101,12 @@ if frameTexture ~= nil and nodeName_frameGlass ~= "ignore" and minetest.register
           {-0.5, 0.4375, -0.5, 0.5, 0.5, -0.4375},
           {-0.5, -0.5, -0.5, 0.5, -0.4375, -0.4375},
           {0.4375, -0.4375, -0.5, 0.5, 0.4375, -0.4375},
-          {-0.5, -0.4375, -0.5, -0.4375, 0.4375, -0.4375}          
+          {-0.5, -0.4375, -0.5, -0.4375, 0.4375, -0.4375}
         }
       },
       after_destruct = function(pos,node)
         minetest.set_node(pos, {name = nodeName_egg, param2 = node.param2})
-      end,  
+      end,
     }
   )
 
@@ -2396,15 +2468,10 @@ local function addDetail_secrets(decoration_list, core, data, area, minp, maxp)
               end
             end
 
-            local stackName_writtenBook = "default:book_written"
-            if isMineCloneBookshelf then stackName_writtenBook = "mcl_books:written_book" end
-
-            local book_itemstack = ItemStack(stackName_writtenBook)
-            local book_data = {}
-            book_data.title = S("Weddell Outpost")
-            -- Instead of being a stand-alone line, the McNish line is tacked on the end of the
-            -- journey sentence because otherwise it gets truncated off by default:book_written
-            book_data.text = S([[The aerostat is lost.
+            local book_itemstack = interop.write_book(
+              S("Weddell Outpost, November 21"), -- title
+              S("Bert Shackleton"),              -- owner/author
+              S([[The aerostat is lost.
 
 However, salvage attempts throughout the night managed to
 save most provisions before it finally broke apart and fell.
@@ -2419,29 +2486,23 @@ is becoming cause for concern.
 Quite a journey is now required, we cannot stay - nobody will
 look for us here. McNish is attempting to strengthen the gliders.
 
-                                     ---====---
-]], groundDesc)
+                                     ---====---]], groundDesc),
+              S("Diary of Bert Shackleton") -- description
+            )
 
-            if isMineCloneBookshelf then book_data.text = book_data.title .. "\n\n" .. book_data.text end -- MineClone2 doesn't show the title
-            book_data.owner = S("Bert Shackleton")
-            book_data.author = book_data.owner
-            book_data.description = S("Diary of Bert Shackleton")
-            book_data.page = 1
-            book_data.page_max = 1
-            book_data.generation = 0
-            book_itemstack:get_meta():from_table({fields = book_data})
-
-            if invBookshelf == nil then
-              -- mineclone bookshelves are decorational like Minecraft, put the book in the chest instead
-              -- (also testing for nil invBookshelf because it can happen. Weird race condition??)
-              if invChest ~= nil then invChest:add_item("main", book_itemstack) end
-            else
-              -- add the book to the bookshelf and manually trigger update_bookshelf() so its
-              -- name will reflect the new contents.
-              invBookshelf:add_item("books", book_itemstack)
-              local dummyPlayer = {}
-              dummyPlayer.get_player_name = function() return "server" end
-              minetest.registered_nodes[nodeName_bookshelf].on_metadata_inventory_put(bookshelf_pos, "books", 1, book_itemstack, dummyPlayer)
+            if book_itemstack ~= nil then
+              if invBookshelf == nil then
+                -- mineclone bookshelves are decorational like Minecraft, put the book in the chest instead
+                -- (also testing for nil invBookshelf because it can happen. Weird race condition??)
+                if invChest ~= nil then invChest:add_item("main", book_itemstack) end
+              else
+                -- add the book to the bookshelf and manually trigger update_bookshelf() so its
+                -- name will reflect the new contents.
+                invBookshelf:add_item("books", book_itemstack)
+                local dummyPlayer = {}
+                dummyPlayer.get_player_name = function() return "server" end
+                minetest.registered_nodes[nodeName_bookshelf].on_metadata_inventory_put(bookshelf_pos, "books", 1, book_itemstack, dummyPlayer)
+              end
             end
           end
 
@@ -2457,10 +2518,10 @@ look for us here. McNish is attempting to strengthen the gliders.
                 end
               end
             end
-            addIfFound({"mcl_tools:pick_iron", "default:pick_steel"}, 1)
+            addIfFound({"mcl_tools:pick_iron", "default:pick_steel", "main:ironpick"}, 1)
             addIfFound({"binoculars:binoculars"}, 1)
-            addIfFound({"mcl_core:wood", "default:wood"}, 10)
-            addIfFound({"mcl_torches:torch", "default:torch"}, 3)
+            addIfFound(NODENAMES_WOOD, 10)
+            addIfFound({"mcl_torches:torch", "default:torch", "torch:torch"}, 3)
           end
 
         end
@@ -2470,26 +2531,25 @@ look for us here. McNish is attempting to strengthen the gliders.
 end
 
 local function init_secrets()
-  nodeId_bed_top    = interop.find_node_id({"beds:bed_top"})
-  nodeId_bed_bottom = interop.find_node_id({"beds:bed_bottom"})
-  nodeId_torch      = interop.find_node_id({"mcl_torches:torch_wall", "default:torch_wall"})
-  nodeId_chest      = interop.find_node_id({"chest", "mcl_chests:chest", "default:chest"})
+  nodeId_bed_top    = interop.find_node_id({"beds:bed_top", "bed:bed_front"})
+  nodeId_bed_bottom = interop.find_node_id({"beds:bed_bottom", "bed:bed_back"})
+  nodeId_torch      = interop.find_node_id({"mcl_torches:torch_wall", "default:torch_wall", "torch:wall"})
+  nodeId_chest      = interop.find_node_id({"chest", "mcl_chests:chest", "default:chest", "utility:chest"})
   nodeId_junk       = interop.find_node_id({"xdecor:barrel", "cottages:barrel", "homedecor:copper_pans", "vessels:steel_bottle", "mcl_flowerpots:flower_pot"})
-  nodeId_anvil      = interop.find_node_id({"castle:anvil", "cottages:anvil", "mcl_anvils:anvil", "default:anvil" }) -- "default:anvil" isn't a thing, but perhaps one day.
-  nodeId_workbench  = interop.find_node_id({"homedecor:table", "xdecor:workbench", "mcl_crafting_table:crafting_table", "default:table", "random_buildings:bench"}) -- "default:table" isn't a thing, but perhaps one day.
-  nodeId_cobweb     = interop.find_node_id({"mcl_core:cobweb", "xdecor:cobweb", "homedecor:cobweb_plantlike", "default:cobweb"})
+  nodeId_anvil      = interop.find_node_id({"castle:anvil", "cottages:anvil", "mcl_anvils:anvil", "default:anvil", "main:anvil" }) -- "default:anvil" and "main:anvil" aren't a thing, but perhaps one day.
+  nodeId_workbench  = interop.find_node_id({"homedecor:table", "xdecor:workbench", "mcl_crafting_table:crafting_table", "default:table", "random_buildings:bench", "craftingtable:craftingtable"}) -- "default:table" isn't a thing, but perhaps one day.
+  nodeId_cobweb     = interop.find_node_id({"mcl_core:cobweb", "xdecor:cobweb", "homedecor:cobweb_plantlike", "default:cobweb", "main:cobweb"})
 
   local mineCloneBookshelfName = "mcl_books:bookshelf"
   nodeId_bookshelf  = interop.find_node_id({mineCloneBookshelfName, "default:bookshelf"})
   nodeName_bookshelf = minetest.get_name_from_content_id(nodeId_bookshelf)
   isMineCloneBookshelf = nodeName_bookshelf == mineCloneBookshelfName
 
-  local nodeName_standinCobweb = MODNAME .. ":cobweb"
   if nodeId_cobweb ~= nodeId_ignore then
     -- This game has proper cobwebs, replace any cobwebs this mod may have generated
     -- previously (when a cobweb mod wasn't included) with the proper cobwebs.
     minetest.register_alias(nodeName_standinCobweb, minetest.get_name_from_content_id(nodeId_cobweb))
-  else
+  elseif minetest.registered_nodes[nodeName_standinCobweb] ~= nil then
     -- use a stand-in cobweb created by this mod
     nodeId_cobweb = minetest.get_content_id(nodeName_standinCobweb)
   end
@@ -2680,7 +2740,7 @@ local function renderCores(cores, minp, maxp, blockseed)
             local pondWallBuffer = core.type.pondWallBuffer
             local pondBottom = nodeId_filler
             local pondWater  = nodeId_water
-            if radius > 18 and core.depth > 15 and nodeId_silt ~= nodeId_ignore then
+            if radius > 18 and core.depth > 15 and nodeId_pondBottom ~= nodeId_ignore then
               -- only give ponds a sandbed when islands are large enough for it not to stick out the side or bottom
               pondBottom = nodeId_pondBottom
             end
@@ -2738,12 +2798,12 @@ local function renderCores(cores, minp, maxp, blockseed)
 
     for _,core in ipairs(cores) do
       -- todo: can this be moved to after vm:write_to_map(), or addDetail_ancientPortal add the scematic to vm
-      addDetail_skyTree(decorations, core, minp, maxp) 
+      addDetail_skyTree(decorations, core, minp, maxp)
       if addDetail_ancientPortal ~= nil then addDetail_ancientPortal(core) end
     end
     for _,decoration in ipairs(decorations) do
       local nodeAtPos = minetest.get_node(decoration.pos)
-      if nodeAtPos.name == "air" or nodeAtPos.name == "ignore" then minetest.set_node(decoration.pos, decoration.node) end
+      if nodeAtPos.name == "air" or nodeAtPos.name == nodeName_ignore then minetest.set_node(decoration.pos, decoration.node) end
     end
 
     local dustingInProgress = false
