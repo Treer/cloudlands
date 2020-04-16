@@ -1982,7 +1982,7 @@ end
 -- Allow the player to craft their egg into an egg in a display case
 local nodeName_eggDisplay = nodeName_egg .. "_display"
 local nodeName_frameGlass = interop.find_node_name(NODENAMES_FRAMEGLASS)
-local frameTexture = nill
+local frameTexture = nil
 if minetest.get_modpath("default") ~= nil then 
   --frameTexture = "default_obsidian_glass.png"
   -- Oddly, I think the abomination made out of default_wood texture modifiers looks more suitable as 
