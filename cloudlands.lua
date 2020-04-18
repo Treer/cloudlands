@@ -271,7 +271,7 @@ interop.get_first_element_in_table = function(tbl)
   return nil
 end
 
--- returns the top-texture name of the first nodename in the list that resolves to a node id, or nil if not found
+-- returns the top-texture name of the first nodename in the list that's a registered node, or nil if not found
 interop.find_node_texture = function (node_contender_names)
   local result = nil
   local nodeName = minetest.get_name_from_content_id(interop.find_node_id(node_contender_names))
@@ -521,6 +521,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     rotation = "random"
   })
 
+  -- this uses place_schematic() without minetest.after(), so should be called after vm:write_to_map()
   addDetail_ancientPortal = function(core)
 
     if (core.radius < 8 or PORTAL_RARITY == 0) then return false end -- avoid portals hanging off the side of small islands
@@ -2797,9 +2798,7 @@ local function renderCores(cores, minp, maxp, blockseed)
     minetest.generate_decorations(vm)
 
     for _,core in ipairs(cores) do
-      -- todo: can this be moved to after vm:write_to_map(), or addDetail_ancientPortal add the scematic to vm
       addDetail_skyTree(decorations, core, minp, maxp)
-      if addDetail_ancientPortal ~= nil then addDetail_ancientPortal(core) end
     end
     for _,decoration in ipairs(decorations) do
       local nodeAtPos = minetest.get_node(decoration.pos)
@@ -2882,6 +2881,11 @@ local function renderCores(cores, minp, maxp, blockseed)
     vm:set_lighting({day=15, night=0}, brightMin, brightMax)
 
     vm:write_to_map() -- seems to be unnecessary when other mods that use vm are running
+
+    for _,core in ipairs(cores) do
+      -- place any schematics which should be placed after the landscape
+      if addDetail_ancientPortal ~= nil then addDetail_ancientPortal(core) end
+    end
   end
 end
 
