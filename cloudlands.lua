@@ -482,10 +482,10 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     ore_type       = "scatter",
     ore            = "cloudlands:ancient_portalstone",
     wherein        = "nether:rack",
-    clust_scarcity = 28 * 28 * 28,
+    clust_scarcity = 32 * 32 * 32,
     clust_num_ores = 6,
     clust_size     = 3,
-    y_max = nether.DEPTH,
+    y_max = nether.DEPTH_CEILING or nether.DEPTH,
     y_min = nether.DEPTH_FLOOR or -32000,
   })
 
@@ -499,9 +499,9 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
     deco_type = "schematic",
     place_on = "nether:rack",
     sidelen = 80,
-    fill_ratio = 0.0003,
+    fill_ratio = 0.0002,
     biomes = {"nether_caverns"},
-    y_max = nether.DEPTH,
+    y_max = nether.DEPTH_CEILING or nether.DEPTH,
     y_min = nether.DEPTH_FLOOR or -32000,
     schematic = {
       size = {x = 4, y = 4, z = 1},
@@ -2062,6 +2062,8 @@ local frameTexture = nil
 if woodTexture ~= nil then
   -- perhaps it's time for cloudlands to contain textures.
   frameTexture = "([combine:16x16:0,0="..woodTexture.."\\^[colorize\\:black\\:170:1,1="..woodTexture.."\\^[colorize\\:#0F0\\:255\\^[resize\\:14x14^[makealpha:0,255,0)"
+  --frameTexture = "([combine:16x16:0,0="..woodTexture.."\\^[resize\\:16x16\\^[colorize\\:black\\:170:1,1="..woodTexture.."\\^[colorize\\:#0F0\\:255\\^[resize\\:14x14^[makealpha:0,255,0)"
+  --frameTexture = "(("..woodTexture.."^[colorize:black:170)^([combine:16x16:1,1="..woodTexture.."\\^[resize\\:14x14\\^[colorize\\:#0F0\\:255))"
 end
 
 -- Since "secret:fossilized_egg_display" doesn't use this mod's name as the prefix, we shouldn't
