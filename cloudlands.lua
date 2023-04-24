@@ -2511,6 +2511,9 @@ look for us here. McNish is attempting to strengthen the gliders.
                 invBookshelf:add_item("books", book_itemstack)
                 local dummyPlayer = {}
                 dummyPlayer.get_player_name = function() return "server" end
+                dummyPlayer.is_fake_player = true
+                dummyPlayer.is_player = function() return false end -- it's unclear whether this should return false for fake players
+
                 minetest.registered_nodes[nodeName_bookshelf].on_metadata_inventory_put(bookshelf_pos, "books", 1, book_itemstack, dummyPlayer)
               end
             end
