@@ -2202,7 +2202,8 @@ if frameTexture ~= nil and nodeName_frameGlass ~= nodeName_ignore and minetest.r
   end
 end
 
-local nodeId_egg        = minetest.get_content_id(nodeName_egg)
+local nodeId_egg        = interop.find_node_id({"draconis:egg_fire_green", nodeName_egg})
+local nodeId_eggNest    = interop.find_node_id(table.insert_all({"draconis:bone_pile_scorched"}, NODENAMES_GRAVEL))
 local nodeId_airStandIn = minetest.get_content_id(interop.register_clone("air"))
 
 -- defer assigning the following until all mods are loaded
@@ -2452,7 +2453,7 @@ local function addDetail_secrets(decoration_list, core, data, area, minp, maxp)
         local eggX = core.x
         local eggZ = core.z - directionOffsetZ * 0.75 -- move the egg away from where the burrow entrance is carved
         placeNode(eggX, burrowFloor, eggZ, nodeId_egg)
-        if nodeId_gravel ~= nodeId_ignore then placeNode(eggX, burrowFloor - 1, eggZ, nodeId_gravel) end
+        if nodeId_eggNest ~= nodeId_ignore then placeNode(eggX, burrowFloor - 1, eggZ, nodeId_eggNest) end
         if nodeId_cobweb ~= nodeId_ignore then
           placeNode(core.x - 6, burrowFloor + 3, core.z - 1, nodeId_cobweb)
           placeNode(core.x + 4, burrowFloor + 4, core.z + 3, nodeId_cobweb)
@@ -2595,6 +2596,7 @@ look for us here. McNish is attempting to strengthen the gliders.
             addIfFound({"binoculars:binoculars"}, 1)
             addIfFound(NODENAMES_WOOD, 10)
             addIfFound({"mcl_torches:torch", "default:torch", "torch:torch"}, 3)
+            addIfFound({"hangglider:hangglider"}, 1)
           end
 
         end
