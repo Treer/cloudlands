@@ -490,7 +490,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
   -- The Portals API is currently provided by nether, which depends on default, so we can assume default textures are available
   local portalstone_end = "default_furnace_top.png^(default_ice.png^[opacity:120)^[multiply:#668"  -- this gonna look bad with non-default texturepacks, hopefully Nether mod will provide a real block
   local portalstone_side = "[combine:16x16:0,0=default_furnace_top.png:4,0=default_furnace_top.png:8,0=default_furnace_top.png:12,0=default_furnace_top.png:^(default_ice.png^[opacity:120)^[multiply:#668"
-  minetest.register_node("cloudlands:ancient_portalstone", {
+  minetest.register_node(MODNAME .. ":ancient_portalstone", {
     description = S("Ancient Portalstone"),
     tiles = {portalstone_end, portalstone_end, portalstone_side, portalstone_side, portalstone_side, portalstone_side},
     paramtype2 = "facedir",
@@ -678,6 +678,7 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
 
   minetest.register_on_mods_loaded(function()
     -- wait until all the other mods are loaded to see if "nether:basalt_chiselled" is still available to use as a portalstone
+    -- (another mod might be using it for portals)
 
     local useBasalt = false
     if USE_NETHER_BASALT and
@@ -690,16 +691,22 @@ if ENABLE_PORTALS and minetest.get_modpath("nether") ~= nil and minetest.global_
 
     if useBasalt then
       nodeName_portalStone = "nether:basalt_chiselled"
-      -- Alias any legacy ancient_portalstone to be nether:basalt_chiselled
-      minetest.register_alias(nodeName_portalStone, "cloudlands:ancient_portalstone")
+
+      -- We want to alias any legacy ancient_portalstone to be nether:basalt_chiselled.
+      -- Players may have already built portals out of "cloudlands:ancient_portalstone" and we
+      -- want those portals to continue to work.
+
+      -- use _force() to Unregister ancient_portalstone and make it an alias of nether:basalt_chiselled
+      minetest.register_alias_force(MODNAME .. ":ancient_portalstone", nodeName_portalStone)
+
     else
-      nodeName_portalStone = "cloudlands:ancient_portalstone"
+      nodeName_portalStone = MODNAME .. ":ancient_portalstone"
       register_portal(nodeName_portalStone, bookOfPortalsText_AncientPortalstone)
 
       -- Ensure Ancient Portalstone can be obtained from the Nether
       minetest.register_ore({
         ore_type       = "scatter",
-        ore            = "cloudlands:ancient_portalstone",
+        ore            = MODNAME .. ":ancient_portalstone",
         wherein        = "nether:rack",
         clust_scarcity = 32 * 32 * 32,
         clust_num_ores = 6,
